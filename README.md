@@ -10,6 +10,8 @@ Day 1 includes core and operational database migrations, client/editor registrat
 
 Phase 3 now includes admin plans/custom pricing, commercial terms, client quotes, saved order agreements, paid/unpaid order filters, payment history and an isolated signed-payment sandbox. See [Phase 3 behavior, tests and remaining decisions](docs/PHASE_3.md). Real checkout, automated assignment, revisions/acceptance, earnings/redemption, and production deployment are not active. See also [Day 1 evidence](docs/DAY_1_VERIFICATION.md) and [architecture](docs/ARCHITECTURE.md).
 
+Phase 4 adds editor capacity controls, manual complexity review, paid queues, audited assignment/reassignment and persistent round robin with configurable skip/wait behavior. See [Phase 4 evidence and activation settings](docs/PHASE_4.md). Allocation is implemented but remains disabled in the connected environment until operating policies are configured; AI classification is not integrated.
+
 ## Read before developing
 
 | Document | Purpose |
@@ -20,6 +22,7 @@ Phase 3 now includes admin plans/custom pricing, commercial terms, client quotes
 | [Day 1 plan](docs/DAY_1.md) | Hamsa and Dheeraj's foundation tasks, integration contract, and mandatory proof |
 | [Day 1 verification](docs/DAY_1_VERIFICATION.md) | Implemented behavior, actual checks, and remaining limits |
 | [Phase 3 milestone](docs/PHASE_3.md) | Catalog/quote workflow, payment sandbox, verification and live-checkout blockers |
+| [Phase 4 milestone](docs/PHASE_4.md) | Editor workload, paid queues, allocation policy, concurrency and reassignment |
 | [Architecture](docs/ARCHITECTURE.md) | Stack, models, session/permission flow, and private storage contract |
 | [Supabase connection](docs/SUPABASE.md) | Selected cloud project, private schema, configuration, and verification |
 | [Open decisions](docs/DECISIONS.md) | Unresolved business and architecture choices; decision record |

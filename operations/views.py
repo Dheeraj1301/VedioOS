@@ -9,6 +9,7 @@ from core.models import Client, Order
 from core.permissions import role_required, visible_projects
 from core.views import audit, auth_rate_limited
 
+from .assignments import approve_proficiency, change_availability, editor_roster, open_workload
 from .forms import AvailabilityForm, EditorRegistrationForm
 from .models import Editor, EditorAvailability, EditorCoins, EditorProficiency
 
@@ -76,6 +77,7 @@ def editor_dashboard(request):
         {
             "title": "Assigned projects",
             "editor": request.user.editor_profile,
+            "active_count": open_workload(request.user.editor_profile),
             "projects": visible_projects(request.user),
         },
     )
@@ -94,14 +96,7 @@ def editor_page(request, page):
             if set(request.POST) - {"csrfmiddlewaretoken", "status"}:
                 raise PermissionDenied
             if form.is_valid():
-                with transaction.atomic():
-                    form.save()
-                    audit(
-                        request.user,
-                        "editor.availability_changed",
-                        editor.id,
-                        {"status": form.cleaned_data["status"]},
-                    )
+                change_availability(request.user, form.cleaned_data["status"])
                 messages.success(
                     request, "Availability updated. Approval is still required before assignment."
                 )
@@ -152,7 +147,7 @@ def admin_page(request, page):
             "operations/editors.html",
             {
                 "title": "Editors",
-                "editors": Editor.objects.select_related("user", "proficiency", "availability"),
+                "editors": editor_roster(),
                 "levels": EditorProficiency.objects.all(),
             },
         )
@@ -196,14 +191,6 @@ def admin_page(request, page):
 def approve_editor(request, editor_id):
     editor = get_object_or_404(Editor, pk=editor_id)
     level = get_object_or_404(EditorProficiency, pk=request.POST.get("proficiency"))
-    with transaction.atomic():
-        previous = editor.proficiency_id
-        editor.proficiency = level
-        editor.approved = True
-        editor.approved_by = request.user
-        editor.save(update_fields=["proficiency", "approved", "approved_by", "updated_at"])
-        audit(
-            request.user, "editor.proficiency_approved", editor.id, {"previous": previous, "level": level.pk}
-        )
+    approve_proficiency(request.user, editor.id, level.pk)
     messages.success(request, f"{editor.user.name} approved as {level.get_level_display()}.")
     return redirect("/admin/editors/")

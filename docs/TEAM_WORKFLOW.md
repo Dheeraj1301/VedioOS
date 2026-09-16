@@ -12,7 +12,7 @@ git switch codex/foundation-and-commerce
 
 Follow [README setup](../README.md). Each developer generates their own local `.env`, database and S3 credentials using `scripts/setup_local.py`. The app works with local SQLite when no cloud database URL is configured. Supabase credentials must be shared separately through an approved private channel, never committed or pasted into issues.
 
-The shared Supabase project is already migrated through `core.0002`. Routine tests use an isolated test database. Prefer your own local database for development fixtures, pricing experiments and migrations; never flush the shared cloud database. Media in another developer's local SeaweedFS instance is not available on your machine. Cloud media deployment remains pending.
+The shared Supabase project is already migrated through `core.0002` and `operations.0003`. Routine tests use an isolated test database. Prefer your own local database for development fixtures, pricing experiments and migrations; never flush the shared cloud database. Media in another developer's local SeaweedFS instance is not available on your machine. Cloud media deployment remains pending.
 
 ## Work without overwriting each other
 
@@ -38,4 +38,4 @@ Routine non-destructive migrations are already authorized; do not ask for permis
 
 ## Current boundary
 
-Catalog/quote screens and sandbox verification are available. Real payments, automatic assignment, production storage and deployment remain disabled or pending. No subscription was purchased for this milestone. Tell the owner before a paid subscription or upgrade is needed.
+Catalog/quote screens and sandbox verification are available. [Allocation workflows](PHASE_4.md) are implemented but require explicit policy configuration before activation. Use application operations for live payment/assignment changes so their transaction and audit guards apply. Real payments, AI classification, production storage and deployment remain pending. No subscription was purchased for these milestones. Tell the owner before a paid subscription or upgrade is needed.

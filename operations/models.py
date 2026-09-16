@@ -12,6 +12,9 @@ class EditorProficiency(models.Model):
     )
     criteria = models.JSONField(default=dict)
 
+    def __str__(self):
+        return self.get_level_display()
+
     class Meta:
         db_table = "editor_proficiency"
         constraints = [
@@ -88,6 +91,7 @@ class ProjectComplexity(Record):
     rule_version = models.CharField(max_length=100, blank=True)
     internal_reason = models.TextField(blank=True)
     overridden_by = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, on_delete=models.PROTECT)
+    revision = models.PositiveIntegerField(default=1)
 
     class Meta:
         db_table = "project_complexity"
@@ -99,6 +103,7 @@ class EditorAssignment(Record):
     assigned_by = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, on_delete=models.PROTECT)
     reason = models.TextField(blank=True)
     ended_at = models.DateTimeField(null=True, blank=True)
+    policy_snapshot = models.JSONField(default=dict)
 
     class Meta:
         db_table = "editor_assignments"
@@ -113,9 +118,53 @@ class AssignmentQueue(Record):
     project = models.OneToOneField(Project, on_delete=models.PROTECT)
     proficiency = models.ForeignKey(EditorProficiency, on_delete=models.PROTECT)
     status = models.CharField(max_length=20, default="waiting")
+    blocked_reason = models.CharField(max_length=300, blank=True)
+    attempts = models.PositiveIntegerField(default=0)
+    last_attempt_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:
         db_table = "assignment_queue"
+        indexes = [models.Index(fields=["status", "created_at"], name="assignment_queue_wait_idx")]
+
+
+class AssignmentPolicy(models.Model):
+    """Explicit operational choices; disabled until an administrator configures them."""
+
+    id = models.PositiveSmallIntegerField(primary_key=True, default=1, editable=False)
+    manual_enabled = models.BooleanField(default=False)
+    automatic_enabled = models.BooleanField(default=False)
+    busy_strategy = models.CharField(
+        max_length=10,
+        blank=True,
+        choices=[("skip", "Skip to next eligible editor"), ("wait", "Wait for the next editor in rotation")],
+    )
+    manual_pointer = models.CharField(
+        max_length=10,
+        blank=True,
+        choices=[
+            ("preserve", "Keep the rotation position"),
+            ("advance", "Advance rotation to the manually selected editor"),
+        ],
+    )
+    matching = models.CharField(
+        max_length=20, blank=True, choices=[("exact", "Same proficiency only; no cross-level fallback")]
+    )
+    capacity_scope = models.CharField(
+        max_length=30,
+        blank=True,
+        choices=[("open_assignments", "All open assigned projects, including client review and revisions")],
+    )
+    roster_order = models.CharField(
+        max_length=20, blank=True, choices=[("joined", "Registration order; new editors join at the end")]
+    )
+    queue_order = models.CharField(
+        max_length=20, blank=True, choices=[("paid_at", "Oldest confirmed payment first")]
+    )
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = "assignment_policy"
+        constraints = [models.CheckConstraint(condition=models.Q(id=1), name="one_assignment_policy")]
 
 
 class RoundRobinState(models.Model):

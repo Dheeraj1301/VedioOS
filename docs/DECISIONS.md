@@ -25,6 +25,10 @@ Do not substitute invented production values for these decisions. Development fi
 
 ## Recorded baseline
 
+### Phase 4 allocation milestone — 2026-09-16
+
+The owner authorized continuing development. Implemented admin assessment, capacity controls and configurable transactional allocation; no provider, capacity or business policy was approved by inference. The skip/wait clarification has no recorded answer, so the shared policy remains unset and disabled. Technical choice: serialize allocation and eligibility changes on one policy row, keep independent persistent proficiency cursors, and verify concurrency on PostgreSQL. Supported operational choices and remaining D07–D09 decisions are documented in [Phase 4](PHASE_4.md). No paid service or AI integration was added.
+
 ### Ongoing Supabase synchronization — 2026-09-16
 
 The owner explicitly requested updating the connected Supabase database/tables alongside development changes. Reviewed, tested, non-destructive Django migrations are authorized without repeated confirmation. Preserve backups, verify applied migrations and private-schema protections, and publish matching migration files to GitHub. Destructive/data-rewriting migrations require specific review and approval. This does not authorize purchases or automatic deployment of arbitrary branches. See [team workflow](TEAM_WORKFLOW.md).

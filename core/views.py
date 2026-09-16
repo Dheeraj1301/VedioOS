@@ -195,6 +195,9 @@ def project_detail(request, project_id, area):
             "upload_categories": allowed,
             "upload_policy": policy,
             "max_upload_mb": policy.max_bytes // 1048576 if policy else 0,
+            "current_assignment": project.assignments.filter(ended_at__isnull=True)
+            .select_related("editor__user")
+            .first(),
         },
     )
 

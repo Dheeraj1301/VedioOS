@@ -2,13 +2,13 @@
 
 ## How to use this pathway
 
-The [Day 1 local foundation](DAY_1_VERIFICATION.md) is implemented and verified. Phases 0–2 have progressed through that milestone; their broader production/large-file gates are not all complete. [Phase 3](PHASE_3.md) now has a verified catalog/quote/payment-sandbox milestone; real checkout and deadlines still require owner decisions. Phases 4–9 remain unimplemented except for identified schema/UI foundations. Work in dependency order, delivering small complete flows.
+The [Day 1 local foundation](DAY_1_VERIFICATION.md) is implemented and verified. Phases 0–2 have progressed through that milestone; their broader production/large-file gates are not all complete. [Phase 3](PHASE_3.md) has a verified catalog/quote/payment-sandbox milestone. [Phase 4](PHASE_4.md) has a verified allocation milestone with manual review, capacity and persistent round robin. Real checkout, delivery rules, allocation activation and AI still require decisions. Phases 5–9 remain unimplemented except for identified schema/UI foundations. Work in dependency order, delivering small complete flows.
 
 ### Immediate milestone: Day 1
 
 Follow [the Day 1 ownership and task plan](DAY_1.md). Hamsa is Person 1 (Client + Core Platform); Dheeraj is Person 2 (Admin + Editor Operations). This milestone combines foundation/auth, private storage, core and operational migrations, and basic role-specific UI. Its mandatory verification gate must pass before complex assignment implementation. Schema scaffolding for later phases does not mark those phases complete.
 
-**Local Day 1 gate: passed on 2026-09-15.** See [test results and limitations](DAY_1_VERIFICATION.md). No complex assignment logic has been started. Next: decide catalog/payment terms and production-relevant upload policy before implementing real checkout; retain the existing roadmap dependencies.
+**Local Day 1 gate: passed on 2026-09-15.** See [test results and limitations](DAY_1_VERIFICATION.md). Catalog/quote and allocation milestones subsequently progressed as recorded below. Production policy decisions remain open; retain the existing roadmap dependencies.
 
 The first-version scope is all 28 priorities in original brief section 34, covered by Phases 1–7. Phase 8 completes broader business features from the brief. Phase 9 is the production gate and applies before any production launch, even if later features remain disabled.
 
@@ -48,6 +48,8 @@ The first-version scope is all 28 priorities in original brief section 34, cover
 **Gate:** a payment failure cannot activate/assign a project; altered client totals are rejected. Verified payment activates exactly one project despite duplicate events. Existing order terms survive catalog edits. Real payment stays disabled until its settings/policies are ready.
 
 ## Phase 4 — Complexity, workload, and fair assignment
+
+**2026-09-16: allocation milestone implemented and verified.** [Evidence](PHASE_4.md): capacity administration, admin complexity review, manual/reassignment, paid queues, persistent round robin, skip/wait and real PostgreSQL concurrency. Shared allocation remains off until policies are configured. AI classification is not integrated, so the full Phase 4 production gate remains open.
 
 - Implement proficiency/availability/capacity administration, active counts, AI classification and admin overrides.
 - Implement durable paid-project queues and separate round-robin pointers per level.

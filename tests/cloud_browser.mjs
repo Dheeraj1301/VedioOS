@@ -23,8 +23,12 @@ try {
   await page.getByRole('heading', {name: 'Plans & pricing.'}).waitFor();
   assert.equal(await page.locator('.catalog-grid article').count(), 3);
   await page.screenshot({path: '.runtime/screenshots/phase3-live-catalog.png', fullPage: true});
+  await page.goto('http://127.0.0.1:8000/admin/assignments/');
+  await page.getByRole('heading', {name: 'Assignments.', exact: true}).waitFor();
+  assert.equal(await page.getByRole('button', {name: 'Process waiting queue'}).isDisabled(), true);
+  await page.screenshot({path: '.runtime/screenshots/phase4-live-assignments.png', fullPage: true});
   await page.getByRole('button', {name: 'Log out'}).filter({visible: true}).click();
   await page.waitForURL('http://127.0.0.1:8000/');
   assert.deepEqual(errors, []);
-  console.log('PASS: live browser login, PostgreSQL-backed dashboard, migrated projects, catalog slots, and logout. No page errors.');
+  console.log('PASS: live browser login, PostgreSQL-backed dashboard, migrated projects, catalog slots, assignment controls, and logout. No page errors.');
 } finally {await browser.close();}

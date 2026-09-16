@@ -2,6 +2,7 @@ from django.urls import path
 
 from core import commerce_views as commerce
 from core import views
+from operations import assignment_views as assignments
 from operations import views as ops
 
 urlpatterns = [
@@ -34,6 +35,13 @@ urlpatterns = [
     ),
     path("editor/<str:page>/", ops.editor_page),
     path("admin/", ops.admin_dashboard, name="admin_dashboard"),
+    path("admin/assignments/", assignments.assignments, name="assignments"),
+    path("admin/assignments/policy/", assignments.assignment_policy, name="assignment_policy"),
+    path("admin/assignments/process/", assignments.run_queue, name="run_assignment_queue"),
+    path("admin/assignments/<uuid:project_id>/", assignments.assignment_detail, name="assignment_detail"),
+    path(
+        "admin/editors/<uuid:editor_id>/operations/", assignments.editor_operations, name="editor_operations"
+    ),
     path("admin/projects/<uuid:project_id>/", views.project_detail, {"area": "admin"}, name="admin_project"),
     path("admin/editors/<uuid:editor_id>/approve/", ops.approve_editor, name="approve_editor"),
     path("admin/pricing/", commerce.pricing, name="pricing"),
