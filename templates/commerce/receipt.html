@@ -1,0 +1,4 @@
+{% extends 'workspace.html' %}{% load money %}{% block workspace_content %}
+<div class="page-heading"><div><p class="eyebrow">Payment record</p><h1>Payment receipt.</h1></div></div>
+<section class="panel detail-panel">{% if payment.provider == 'sandbox' %}<h2>TEST RECEIPT — no money received</h2>{% endif %}<p>Receipt reference: {{ payment.id }}</p><p>Order: {{ payment.order_id }}</p><p>Project: {{ project.title }}</p><p>Amount: <strong>{{ payment.amount_minor|money:payment.currency }}</strong></p><p>Confirmed: {{ payment.confirmed_at|date:"M j, Y H:i" }} UTC</p><p>Provider: {{ payment.provider }}</p><p>This is a payment record, not a tax invoice. Tax invoices require the configured business and tax details.</p></section>
+{% include 'commerce/breakdown.html' %}{% endblock %}

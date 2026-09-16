@@ -1,0 +1,1 @@
+{% extends 'workspace.html' %}{% block workspace_content %}<div class="page-heading"><h1>Clients</h1></div><section class="panel"><ul class="data-list">{% for client in clients %}<li><h3>{{ client.user.name }}</h3><p>{{ client.user.email }}</p></li>{% empty %}<li class="empty-state"><h3>No clients registered yet.</h3></li>{% endfor %}</ul></section>{% endblock %}

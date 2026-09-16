@@ -1,0 +1,1 @@
+{% extends 'workspace.html' %}{% block workspace_content %}<div class="page-heading"><div><p class="eyebrow">Your workspace</p><h1>{{ title }}</h1></div>{% if user.role == 'client' %}<a class="button" href="/client/new-order/">New order +</a>{% endif %}</div><section class="panel">{% include 'partials/project_list.html' %}</section>{% endblock %}

@@ -1,0 +1,1 @@
+{% extends 'base.html' %}{% block content %}<section class="section error-page"><p class="eyebrow">Let's get you back on track</p><h1>{{ message }}</h1><a class="button" href="{% if user.is_authenticated %}/dashboard/{% else %}/{% endif %}">Return {% if user.is_authenticated %}to workspace{% else %}home{% endif %} ↗</a></section>{% endblock %}
