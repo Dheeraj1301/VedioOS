@@ -24,6 +24,18 @@ The shared Supabase project is already migrated through `core.0002`. Routine tes
 
 The owner explicitly requested immediate GitHub publication of verified major milestones. Push source, migrations, dependency locks and documentation together. Exclude `.env*` (except `.env.example`), `.runtime`, media, database dumps, tokens, local credentials, virtual environments and `node_modules`.
 
+## Keep Supabase synchronized
+
+The owner explicitly requests that the connected Supabase database and tables stay current with development changes. For each completed database-affecting milestone:
+
+1. Review model changes and pending Django migrations; coordinate migration dependencies with the team.
+2. Test migrations and behavior in an isolated database, and preserve a pre-change backup/export of affected shared data.
+3. Apply reviewed non-destructive migrations to project `lmwvoniiykmfzuxigzqf`, private schema `vedioos`, using `manage.py migrate` with the existing server-only configuration.
+4. Verify `manage.py migrate --check`, `manage.py makemigrations --check --dry-run`, `manage.py check_database`, and the affected behavior. Review Supabase security advisors for schema/security changes.
+5. Push the matching code and migration files, and report both GitHub and database status. If either update fails, identify the mismatch and resolve it before calling the milestone synchronized.
+
+Routine non-destructive migrations are already authorized; do not ask for permission again. Destructive/data-rewriting migrations require an explicit review and approval with a backup. Do not flush shared data, automatically deploy every teammate's branch, or mutate schemas on application requests. Normal application data changes already save directly to Supabase. Changes that do not affect models/data require no new migration.
+
 ## Current boundary
 
 Catalog/quote screens and sandbox verification are available. Real payments, automatic assignment, production storage and deployment remain disabled or pending. No subscription was purchased for this milestone. Tell the owner before a paid subscription or upgrade is needed.

@@ -25,6 +25,10 @@ Do not substitute invented production values for these decisions. Development fi
 
 ## Recorded baseline
 
+### Ongoing Supabase synchronization — 2026-09-16
+
+The owner explicitly requested updating the connected Supabase database/tables alongside development changes. Reviewed, tested, non-destructive Django migrations are authorized without repeated confirmation. Preserve backups, verify applied migrations and private-schema protections, and publish matching migration files to GitHub. Destructive/data-rewriting migrations require specific review and approval. This does not authorize purchases or automatic deployment of arbitrary branches. See [team workflow](TEAM_WORKFLOW.md).
+
 ### Phase 3 technical milestone and team workflow — 2026-09-16
 
 Implemented configurable catalog, server quotes, saved agreements and an opt-in development payment sandbox. No real provider or commercial defaults were selected. D03–D06 remain unresolved; see [Phase 3](PHASE_3.md). The owner requested notification before any subscription/upgrade is needed and explicitly authorized pushing each completed major development change to GitHub for team access. This does not authorize purchases or production deployment.
