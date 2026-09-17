@@ -59,6 +59,8 @@ The first-version scope is all 28 priorities in original brief section 34, cover
 
 ## Phase 5 — Editor work, versions, review, and delivery
 
+**Implementation gate passed 2026-09-17 with explicit synthetic review policy; production activation awaits owner-approved terms.** See [Phase 5 evidence](PHASE_5.md). Earnings remain pending Phase 6 policy.
+
 - Build assigned-project detail with all source/reference/song/effect/notes/deadline information and original downloads.
 - Implement external-edit workflow: upload draft, add client-visible note, submit review, receive revisions, upload new versions, designate final candidate.
 - Implement client review, version-targeted revisions and acceptance, final download, project history, and guarded state transitions.

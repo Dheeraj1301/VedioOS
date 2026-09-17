@@ -215,6 +215,9 @@ class ProjectVersion(Record):
     note = models.TextField(blank=True)
     is_final = models.BooleanField(default=False)
     accepted_at = models.DateTimeField(null=True, blank=True)
+    assignment = models.ForeignKey(
+        "operations.EditorAssignment", null=True, blank=True, on_delete=models.PROTECT
+    )
 
     class Meta:
         db_table = "project_versions"
@@ -295,6 +298,12 @@ class CommercePolicy(models.Model):
     refund_terms = models.TextField(blank=True, max_length=4000)
     tax_terms = models.TextField(blank=True, max_length=4000)
     quotes_enabled = models.BooleanField(default=False)
+    review_rule = models.CharField(
+        max_length=40,
+        blank=True,
+        choices=[("latest_request_v1", "One revision per request; review and accept latest submission")],
+        help_text="Owner-approved rule for new quotes only. Blank disables review actions. Excess revisions require a separate agreement; acceptance is final.",
+    )
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
@@ -324,3 +333,15 @@ class PaymentEvent(Record):
     class Meta:
         db_table = "payment_events"
         constraints = [models.UniqueConstraint(fields=["provider", "event_id"], name="unique_payment_event")]
+
+
+class DeliveryAcceptance(Record):
+    project = models.OneToOneField(Project, on_delete=models.PROTECT, related_name="acceptance")
+    version = models.OneToOneField(ProjectVersion, on_delete=models.PROTECT)
+    accepted_by = models.ForeignKey(User, on_delete=models.PROTECT)
+    assignment = models.ForeignKey("operations.EditorAssignment", on_delete=models.PROTECT)
+    terms_snapshot = models.JSONField(default=dict)
+    earning_status = models.CharField(max_length=30, default="pending_policy")
+
+    class Meta:
+        db_table = "delivery_acceptances"

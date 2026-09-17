@@ -86,6 +86,17 @@ def editor_dashboard(request):
 @role_required("editor")
 def editor_page(request, page):
     editor = request.user.editor_profile
+    if page == "revisions":
+        return render(
+            request,
+            "projects.html",
+            {
+                "title": "Requested revisions",
+                "projects": visible_projects(request.user).filter(
+                    status__in=["revision_requested", "revision_in_progress"]
+                ),
+            },
+        )
     if page == "projects":
         return render(
             request, "projects.html", {"title": "Project details", "projects": visible_projects(request.user)}

@@ -12,6 +12,8 @@ Phase 3 now includes admin plans/custom pricing, commercial terms, client quotes
 
 Phase 4 adds editor capacity controls, manual complexity review, paid queues, audited assignment/reassignment and persistent round robin with configurable skip/wait behavior. See [Phase 4 evidence and activation settings](docs/PHASE_4.md). Allocation is implemented but remains disabled in the connected environment until operating policies are configured; AI classification is not integrated.
 
+Phase 5 adds private editor submissions, version history, revision requests, explicit client acceptance and in-app notifications. [Phase 5 verification and activation](docs/PHASE_5.md) includes real storage/browser checks and PostgreSQL concurrency checks. Review requires an agreed rule in the order snapshot; it remains unconfigured for existing orders. Acceptance records pending earnings without inventing coin values. Phase 6 is next.
+
 ## Read before developing
 
 | Document | Purpose |

@@ -20,7 +20,7 @@ from django.views.decorators.http import require_GET, require_POST
 
 from .forms import LoginForm, ProjectForm, RegistrationForm
 from .models import AuthAttempt, Client, File, Order, Payment, Plan, UploadPolicy
-from .permissions import can_upload, project_for, role_required, visible_projects
+from .permissions import can_upload, project_for, role_required, visible_files, visible_projects
 from .storage import download_permission, inspect_object, upload_permission
 
 
@@ -191,7 +191,18 @@ def project_detail(request, project_id, area):
         {
             "project": project,
             "title": project.title,
-            "files": project.files.filter(state="ready", original__isnull=True),
+            "files": visible_files(request.user, project).filter(original__isnull=True),
+            "versions": project.versions.select_related("file").order_by("-number"),
+            "latest_version": project.versions.order_by("-number").first(),
+            "revisions": project.revisions.select_related("version").order_by("-created_at"),
+            "submission_files": project.files.filter(
+                state="ready",
+                uploader=request.user,
+                category__in=["draft", "final"],
+                projectversion__isnull=True,
+            ),
+            "review_enabled": project.order.terms_snapshot.get("review_rule") == "latest_request_v1",
+            "revision_limit": project.order.terms_snapshot.get("revision_limit"),
             "upload_categories": allowed,
             "upload_policy": policy,
             "max_upload_mb": policy.max_bytes // 1048576 if policy else 0,
@@ -227,7 +238,7 @@ def project_api(request, project_id):
             "status": project.status,
             "files": [
                 {"id": str(f.id), "filename": f.filename, "size_bytes": f.size_bytes}
-                for f in project.files.filter(state="ready")
+                for f in visible_files(request.user, project)
             ],
         }
     )
@@ -348,7 +359,8 @@ def complete_upload(request, file_id):
 @role_required("client", "editor", "admin")
 def request_download(request, file_id):
     file = get_object_or_404(File, pk=file_id, state="ready")
-    project_for(request.user, file.project_id)
+    project = project_for(request.user, file.project_id)
+    get_object_or_404(visible_files(request.user, project), pk=file.pk)
     try:
         url = download_permission(file)
     except (ClientError, BotoCoreError):

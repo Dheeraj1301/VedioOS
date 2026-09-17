@@ -1,0 +1,4 @@
+{% extends 'workspace.html' %}{% block workspace_content %}
+<div class="page-heading"><div><p class="eyebrow">Project updates</p><h1>Notifications</h1><p>Your latest 100 updates for accessible projects.</p></div></div>
+<section class="panel detail-panel">{% for notice in notices %}<div class="file-row"><div><h2>{{ notice.project.title }}</h2><p>{{ notice.message }}</p><p>{{ notice.created_at|date:"M j, Y H:i" }} UTC</p><a href="/{{ request.user.role }}/projects/{{ notice.project_id }}/" class="text-link">Open project →</a></div></div>{% empty %}<p>No project updates yet.</p>{% endfor %}</section>
+{% endblock %}

@@ -92,6 +92,7 @@ def create_quote(user, project_id, kind, plan_id=None, service_ids=()):
         "total_minor": total,
         "deadline_rule": "pending_owner_decision",
         "earning_rule_version": None,
+        "review_rule": policy.review_rule,
         "scope": "Selected plan/services only; unpriced extras require team review.",
     }
     quote = OrderQuote.objects.create(

@@ -2,10 +2,13 @@ from django.urls import path
 
 from core import commerce_views as commerce
 from core import views
+from core.delivery_views import delivery_action, notifications
 from operations import assignment_views as assignments
 from operations import views as ops
 
 urlpatterns = [
+    path("orders/notifications/", notifications, name="notifications"),
+    path("orders/<uuid:project_id>/delivery/", delivery_action, name="delivery_action"),
     path("", views.landing, name="landing"),
     path("register/", views.register, name="register"),
     path("register/editor/", ops.editor_register, name="editor_register"),

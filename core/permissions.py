@@ -2,6 +2,7 @@ from functools import wraps
 
 from django.contrib.auth.views import redirect_to_login
 from django.core.exceptions import PermissionDenied
+from django.db.models import Q
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
 
@@ -41,6 +42,13 @@ def visible_projects(user):
 
 def project_for(user, project_id):
     return get_object_or_404(visible_projects(user), pk=project_id)
+
+
+def visible_files(user, project):
+    files = project.files.filter(state="ready")
+    if user.role == "client":
+        files = files.filter(~Q(category__in=["draft", "final"]) | Q(projectversion__isnull=False))
+    return files
 
 
 def can_upload(user, project, category):

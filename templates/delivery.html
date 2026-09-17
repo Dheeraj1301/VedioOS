@@ -1,0 +1,36 @@
+<section class="panel detail-panel">
+  <p class="eyebrow">Review & delivery</p><h2>Version history</h2>
+  {% if not review_enabled %}<p>Review actions await agreed review terms. The team must configure the rule for new quotes; existing agreements are preserved.</p>{% endif %}
+  {% for version in versions %}
+    <article class="file-row"><div><h3>Version {{ version.number }}{% if version.accepted_at %} · Accepted delivery{% elif version.is_final %} · Final candidate{% endif %}</h3>
+      <p>{{ version.created_at|date:"M j, Y H:i" }} UTC · {{ version.file.filename }}</p>
+      <p class="preserve-lines">{{ version.note }}</p>
+      <button class="text-button download-button" data-file-id="{{ version.file_id }}">Download version {{ version.number }} ↓</button>
+    </div></article>
+  {% empty %}<p>No submitted versions yet. Editor uploads stay private until submitted.</p>{% endfor %}
+  {% if review_enabled and request.user.role == 'editor' %}
+    {% if project.status == 'editor_assigned' or project.status == 'revision_requested' %}
+      <form method="post" action="{% url 'delivery_action' project.id %}">{% csrf_token %}<input type="hidden" name="action" value="start"><button class="button">Start editing / revision</button></form>
+    {% endif %}
+    {% if project.status == 'editing' or project.status == 'revision_in_progress' %}
+      <h3>Submit a version</h3><p>Upload your edited file, then submit it here for client review.</p>
+      <form method="post" action="{% url 'delivery_action' project.id %}">{% csrf_token %}
+        <input type="hidden" name="action" value="submit"><input type="hidden" name="version_id" value="{{ latest_version.id }}">
+        <label for="submission-file">Verified upload</label><select id="submission-file" name="file_id" required><option value="">Choose a file</option>{% for file in submission_files %}<option value="{{ file.id }}">{{ file.filename }}</option>{% endfor %}</select>
+        <label for="submission-note">Note to client</label><textarea id="submission-note" name="note" maxlength="5000" rows="3"></textarea>
+        <label><input type="checkbox" name="final" value="yes"> Mark as final candidate (client acceptance still required)</label>
+        <button class="button">Submit for review</button>
+      </form>
+    {% endif %}
+  {% endif %}
+  {% if review_enabled and request.user.role == 'client' and project.status == 'awaiting_review' %}
+    <h3>Review version {{ latest_version.number }}</h3><p>{{ revisions|length }} of {{ revision_limit }} included revision requests used. Acceptance completes this project.</p>
+    <form method="post" action="{% url 'delivery_action' project.id %}">{% csrf_token %}<input type="hidden" name="action" value="revise"><input type="hidden" name="version_id" value="{{ latest_version.id }}">
+      <label for="revision-note">Requested changes (include timestamps where useful)</label><textarea id="revision-note" name="note" required maxlength="5000" rows="4"></textarea><button class="button">Request revision</button>
+    </form>
+    <form method="post" action="{% url 'delivery_action' project.id %}">{% csrf_token %}<input type="hidden" name="action" value="accept"><input type="hidden" name="version_id" value="{{ latest_version.id }}">
+      <label><input type="checkbox" name="confirm" value="yes" required> I accept version {{ latest_version.number }} as the completed delivery.</label><button class="button">Accept version {{ latest_version.number }}</button>
+    </form>
+  {% endif %}
+  <h3>Revision history</h3>{% for revision in revisions %}<div class="file-row"><div><strong>Version {{ revision.version.number }} · {{ revision.status }}</strong><p class="preserve-lines">{{ revision.instructions }}</p></div></div>{% empty %}<p>No revision requests.</p>{% endfor %}
+</section>

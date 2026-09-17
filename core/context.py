@@ -33,6 +33,6 @@ def navigation(request):
     return {
         "navigation": [
             {"label": label, "url": url, "active": request.path == url}
-            for label, url in NAV.get(request.user.role, [])
+            for label, url in NAV.get(request.user.role, []) + [("Notifications", "/orders/notifications/")]
         ]
     }

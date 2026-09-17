@@ -101,6 +101,7 @@ class PolicyForm(forms.ModelForm):
             "refund_terms",
             "tax_terms",
             "quotes_enabled",
+            "review_rule",
         ]
         widgets = {
             field: forms.Textarea(attrs={"rows": 3})

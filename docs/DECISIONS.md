@@ -81,3 +81,9 @@ Supersedes:
 ```
 
 Only mark a business choice approved when supported by an explicit owner decision. Contributors can document routine technical choices within authorized scope, identifying them as implementation decisions. A proposal is not a production default.
+
+## 2026-09-17 — Review implementation (D11 remains open)
+
+Technical choice within the authorized Phase 5 scope: serialize review with allocation, attribute each submitted version to its assignment, and persist one explicit acceptance per project. Keep historical file objects and release workload through terminal project status. Acceptance creates a pending-policy earning record; D10 coin amounts/splits remain unresolved.
+
+Supported proposed D11 option `latest_request_v1` requires explicit admin selection for new quote snapshots: one request consumes one revision, only latest submissions can be accepted, acceptance completes the project, and additional revisions require another agreement. No production default or existing-order backfill was enabled. See [Phase 5](PHASE_5.md).
