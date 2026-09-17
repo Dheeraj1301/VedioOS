@@ -5,14 +5,13 @@ Hamsa owns Client + Core Platform; Dheeraj owns Admin + Editor Operations. See [
 ## Get the current milestone
 
 ```powershell
-git clone https://github.com/Dheeraj1301/VedioOS.git
+git clone --branch codex/foundation-and-commerce https://github.com/Dheeraj1301/VedioOS.git
 cd VedioOS
-git switch codex/foundation-and-commerce
 ```
 
 Follow [README setup](../README.md). Each developer generates their own local `.env`, database and S3 credentials using `scripts/setup_local.py`. The app works with local SQLite when no cloud database URL is configured. Supabase credentials must be shared separately through an approved private channel, never committed or pasted into issues.
 
-The shared Supabase project is already migrated through `core.0002` and `operations.0003`. Routine tests use an isolated test database. Prefer your own local database for development fixtures, pricing experiments and migrations; never flush the shared cloud database. Media in another developer's local SeaweedFS instance is not available on your machine. Cloud media deployment remains pending.
+The shared Supabase project is already migrated through `core.0003` and `operations.0005`. Routine tests use an isolated test database. Prefer your own local database for development fixtures, pricing experiments and migrations; never flush the shared cloud database. Media in another developer's local SeaweedFS instance is not available on your machine. Cloud media deployment remains pending. The full clone-to-preview and test commands are in the [README](../README.md).
 
 ## Work without overwriting each other
 
