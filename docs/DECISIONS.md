@@ -82,6 +82,10 @@ Supersedes:
 
 Only mark a business choice approved when supported by an explicit owner decision. Contributors can document routine technical choices within authorized scope, identifying them as implementation decisions. A proposal is not a production default.
 
+## 2026-09-17 — Earnings implementation (D10 remains open)
+
+Technical choice: use prospective fixed whole-coin awards as an optional admin-configured development rule. Snapshot them on new quotes, append a pending entry at client acceptance, and allow an administrator to release it once. Redemption reserves coins under a wallet lock and can be exercised only with an explicitly enabled DEBUG payout sandbox. The selected Supabase project retains a disabled policy with no configured amounts. No monetary conversion or real payout provider has been chosen; see [Phase 6](PHASE_6.md).
+
 ## 2026-09-17 — Review implementation (D11 remains open)
 
 Technical choice within the authorized Phase 5 scope: serialize review with allocation, attribute each submitted version to its assignment, and persist one explicit acceptance per project. Keep historical file objects and release workload through terminal project status. Acceptance creates a pending-policy earning record; D10 coin amounts/splits remain unresolved.

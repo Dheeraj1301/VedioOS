@@ -8,11 +8,13 @@ A managed video-editing service connecting clients with our internal team of hum
 
 Day 1 includes core and operational database migrations, client/editor registration, shared login/logout, protected dashboards, admin editor approval, project drafts, and private direct uploads/downloads. The Django backend is configured for [the selected Supabase PostgreSQL project](docs/SUPABASE.md), with SQLite retained as an explicit offline/test option. Media storage remains the separate private S3-compatible local service.
 
-Phase 3 now includes admin plans/custom pricing, commercial terms, client quotes, saved order agreements, paid/unpaid order filters, payment history and an isolated signed-payment sandbox. See [Phase 3 behavior, tests and remaining decisions](docs/PHASE_3.md). Real checkout, automated assignment, revisions/acceptance, earnings/redemption, and production deployment are not active. See also [Day 1 evidence](docs/DAY_1_VERIFICATION.md) and [architecture](docs/ARCHITECTURE.md).
+Phase 3 includes admin plans/custom pricing, commercial terms, client quotes, saved order agreements, paid/unpaid order filters, payment history and an isolated signed-payment sandbox. See [Phase 3 behavior, tests and remaining decisions](docs/PHASE_3.md). Real checkout and production deployment remain inactive. See also [Day 1 evidence](docs/DAY_1_VERIFICATION.md) and [architecture](docs/ARCHITECTURE.md).
 
 Phase 4 adds editor capacity controls, manual complexity review, paid queues, audited assignment/reassignment and persistent round robin with configurable skip/wait behavior. See [Phase 4 evidence and activation settings](docs/PHASE_4.md). Allocation is implemented but remains disabled in the connected environment until operating policies are configured; AI classification is not integrated.
 
-Phase 5 adds private editor submissions, version history, revision requests, explicit client acceptance and in-app notifications. [Phase 5 verification and activation](docs/PHASE_5.md) includes real storage/browser checks and PostgreSQL concurrency checks. Review requires an agreed rule in the order snapshot; it remains unconfigured for existing orders. Acceptance records pending earnings without inventing coin values. Phase 6 is next.
+Phase 5 adds private editor submissions, version history, revision requests, explicit client acceptance and in-app notifications. [Phase 5 verification and activation](docs/PHASE_5.md) includes real storage/browser checks and PostgreSQL concurrency checks. Review requires an agreed rule in the order snapshot; it remains unconfigured for existing orders.
+
+Phase 6 adds prospective coin rules, acceptance-linked pending credits, admin release, an editor wallet and a sandbox redemption flow with reserved balances. See [Phase 6 evidence and activation limits](docs/PHASE_6.md). The connected project's earning and redemption policy remains disabled; real coin value and payout method await owner decisions.
 
 ## Read before developing
 
@@ -25,6 +27,8 @@ Phase 5 adds private editor submissions, version history, revision requests, exp
 | [Day 1 verification](docs/DAY_1_VERIFICATION.md) | Implemented behavior, actual checks, and remaining limits |
 | [Phase 3 milestone](docs/PHASE_3.md) | Catalog/quote workflow, payment sandbox, verification and live-checkout blockers |
 | [Phase 4 milestone](docs/PHASE_4.md) | Editor workload, paid queues, allocation policy, concurrency and reassignment |
+| [Phase 5 milestone](docs/PHASE_5.md) | Version review, revisions, acceptance and private delivery |
+| [Phase 6 milestone](docs/PHASE_6.md) | Coin ledger, wallet, release and sandbox redemption |
 | [Architecture](docs/ARCHITECTURE.md) | Stack, models, session/permission flow, and private storage contract |
 | [Supabase connection](docs/SUPABASE.md) | Selected cloud project, private schema, configuration, and verification |
 | [Open decisions](docs/DECISIONS.md) | Unresolved business and architecture choices; decision record |

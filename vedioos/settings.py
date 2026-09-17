@@ -115,6 +115,9 @@ S3_BUCKET = os.getenv("S3_BUCKET", "vedioos-private")
 UPLOAD_TTL_SECONDS = int(os.getenv("UPLOAD_TTL_SECONDS", "900"))
 DOWNLOAD_TTL_SECONDS = int(os.getenv("DOWNLOAD_TTL_SECONDS", "60"))
 PAYMENT_MODE = os.getenv("PAYMENT_MODE", "disabled")
+PAYOUT_MODE = os.getenv("PAYOUT_MODE", "disabled")
+if PAYOUT_MODE not in {"disabled", "sandbox"} or (PAYOUT_MODE == "sandbox" and not DEBUG):
+    raise ImproperlyConfigured("Only disabled payouts or an explicitly enabled DEBUG sandbox are supported.")
 SANDBOX_PAYMENT_SECRET = os.getenv("SANDBOX_PAYMENT_SECRET", "")
 if PAYMENT_MODE not in {"disabled", "sandbox"} or (PAYMENT_MODE == "sandbox" and not DEBUG):
     raise ImproperlyConfigured("Only disabled payments or an explicitly enabled DEBUG sandbox are supported.")

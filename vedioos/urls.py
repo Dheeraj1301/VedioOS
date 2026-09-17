@@ -4,9 +4,15 @@ from core import commerce_views as commerce
 from core import views
 from core.delivery_views import delivery_action, notifications
 from operations import assignment_views as assignments
+from operations import earning_views
 from operations import views as ops
 
 urlpatterns = [
+    path("editor/wallet/", earning_views.wallet, name="wallet"),
+    path("editor/wallet/redeem/", earning_views.redeem, name="redeem"),
+    path("admin/earnings/", earning_views.earning_settings, name="earning_settings"),
+    path("admin/payouts/", earning_views.payouts, name="payouts"),
+    path("admin/payouts/action/", earning_views.earning_action, name="earning_action"),
     path("orders/notifications/", notifications, name="notifications"),
     path("orders/<uuid:project_id>/delivery/", delivery_action, name="delivery_action"),
     path("", views.landing, name="landing"),

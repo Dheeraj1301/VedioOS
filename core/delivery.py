@@ -9,6 +9,7 @@ from django.db import transaction
 from django.utils import timezone
 
 from operations.assignments import locked_policy, paid_project
+from operations.earnings import credit_acceptance
 from operations.models import Notification
 
 from .models import DeliveryAcceptance, File, Order, Project, ProjectVersion, RevisionRequest
@@ -150,6 +151,7 @@ def transition(user, project_id, action, *, file_id=None, version_id=None, note=
                 assignment=latest.assignment,
                 terms_snapshot=project.order.terms_snapshot,
             )
+            credit_acceptance(accepted)
             latest.accepted_at = timezone.now()
             latest.save(update_fields=["accepted_at", "updated_at"])
             project.status = "completed"

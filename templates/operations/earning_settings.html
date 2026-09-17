@@ -1,0 +1,4 @@
+{% extends 'workspace.html' %}{% block workspace_content %}
+<div class="page-heading"><div><p class="eyebrow">Admin / Earnings</p><h1>Earning settings</h1><p>Configure prospective whole-coin awards. No exchange rate or payout method is set here.</p></div><a class="text-link" href="{% url 'payouts' %}">Payout queue →</a></div>
+<section class="panel detail-panel"><p>Disabled by default. Enabling applies to new quotes only. Accepted orders retain the coin rule displayed when quoted.</p><form method="post">{% csrf_token %}{{ form.as_p }}<button class="button">Save earning settings</button></form></section>
+{% endblock %}

@@ -4,6 +4,9 @@ from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.utils import timezone
 
+from operations.earnings import quote_rule
+from operations.models import EarningPolicy
+
 from .commerce_forms import MAX_PRICE, PlanForm, PolicyForm, ServiceForm
 from .models import CommercePolicy, CustomService, Order, OrderQuote, Plan
 from .views import audit
@@ -92,6 +95,9 @@ def create_quote(user, project_id, kind, plan_id=None, service_ids=()):
         "total_minor": total,
         "deadline_rule": "pending_owner_decision",
         "earning_rule_version": None,
+        "earning_rule": quote_rule(
+            kind, plan if kind == "plan" else None, EarningPolicy.objects.filter(pk=1).first()
+        ),
         "review_rule": policy.review_rule,
         "scope": "Selected plan/services only; unpriced extras require team review.",
     }

@@ -118,10 +118,6 @@ def editor_page(request, page):
             "Revisions",
             "Revision requests will appear here when an assigned project is reviewed.",
         ),
-        "wallet": (
-            "Wallet",
-            "Earning and redemption rules are being configured. No coin conversion or payouts are active yet.",
-        ),
     }
     if page not in titles:
         from django.http import Http404
@@ -185,7 +181,6 @@ def admin_page(request, page):
     descriptions = {
         "assignments": "Assignment tools will be enabled after the Day 1 foundation checks pass.",
         "calls": "Consultation preferences are saved with project briefs. Scheduling is coming in the consultation workflow.",
-        "payouts": "Payouts are not enabled. Coin values and earning rules have not been finalized.",
         "analytics": "Business analytics will follow the confirmed-payment and delivery workflows.",
     }
     if page not in descriptions:

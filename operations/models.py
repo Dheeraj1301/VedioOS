@@ -209,14 +209,51 @@ class EditorCoins(Record):
         db_table = "editor_coins"
 
 
+class EarningPolicy(models.Model):
+    """Explicit prospective whole-coin option; no monetary conversion is implied."""
+
+    id = models.PositiveSmallIntegerField(primary_key=True, default=1, editable=False)
+    enabled = models.BooleanField(default=False)
+    rule = models.CharField(
+        max_length=30,
+        blank=True,
+        choices=[("fixed_whole_v1", "Fixed whole coins per accepted order")],
+    )
+    plan_1_coins = models.PositiveBigIntegerField(null=True, blank=True)
+    plan_2_coins = models.PositiveBigIntegerField(null=True, blank=True)
+    plan_3_coins = models.PositiveBigIntegerField(null=True, blank=True)
+    custom_coins = models.PositiveBigIntegerField(null=True, blank=True)
+    release_mode = models.CharField(
+        max_length=20, blank=True, choices=[("manual", "Admin verifies and releases")]
+    )
+    redemptions_enabled = models.BooleanField(default=False)
+    redemption_minimum = models.PositiveBigIntegerField(null=True, blank=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = "earning_policy"
+        constraints = [models.CheckConstraint(condition=models.Q(id=1), name="one_earning_policy")]
+
+
 class RedemptionRequest(Record):
     wallet = models.ForeignKey(EditorCoins, on_delete=models.PROTECT, related_name="redemptions")
     amount = models.PositiveBigIntegerField()
     status = models.CharField(max_length=20, default="requested")
     payout_reference = models.CharField(max_length=200, blank=True)
+    decided_by = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.PROTECT)
+    decided_at = models.DateTimeField(null=True, blank=True)
+    reason = models.CharField(max_length=500, blank=True)
+    request_key = models.UUIDField(null=True, blank=True, unique=True)
 
     class Meta:
         db_table = "redemption_requests"
+        constraints = [
+            models.UniqueConstraint(
+                fields=["payout_reference"],
+                condition=models.Q(status="paid"),
+                name="unique_paid_payout_reference",
+            )
+        ]
 
 
 class CoinTransaction(Record):
@@ -240,6 +277,15 @@ class CoinTransaction(Record):
 
     class Meta:
         db_table = "coin_transactions"
+        constraints = [models.CheckConstraint(condition=~models.Q(amount=0), name="nonzero_coin_entry")]
+
+    def save(self, *args, **kwargs):
+        if not self._state.adding:
+            raise ValueError("Coin ledger entries are append-only.")
+        return super().save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        raise ValueError("Coin ledger entries are append-only.")
 
 
 class AuditLog(models.Model):

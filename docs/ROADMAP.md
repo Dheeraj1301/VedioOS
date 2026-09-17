@@ -2,7 +2,7 @@
 
 ## How to use this pathway
 
-The [Day 1 local foundation](DAY_1_VERIFICATION.md) is implemented and verified. Phases 0–2 have progressed through that milestone; their broader production/large-file gates are not all complete. [Phase 3](PHASE_3.md) has a verified catalog/quote/payment-sandbox milestone. [Phase 4](PHASE_4.md) has a verified allocation milestone with manual review, capacity and persistent round robin. Real checkout, delivery rules, allocation activation and AI still require decisions. Phases 5–9 remain unimplemented except for identified schema/UI foundations. Work in dependency order, delivering small complete flows.
+The [Day 1 local foundation](DAY_1_VERIFICATION.md) is implemented and verified. Phases 0–2 have progressed through that milestone; their broader production/large-file gates are not all complete. [Phase 3](PHASE_3.md) has a verified catalog/quote/payment-sandbox milestone. [Phase 4](PHASE_4.md) has a verified allocation milestone. [Phase 5](PHASE_5.md) has a verified review milestone. [Phase 6](PHASE_6.md) has a verified opt-in coin/sandbox payout milestone. Real checkout, payout provider, deadline rules, allocation activation and AI still require decisions. Work in dependency order, delivering small complete flows.
 
 ### Immediate milestone: Day 1
 
@@ -68,6 +68,8 @@ The first-version scope is all 28 priorities in original brief section 34, cover
 **Gate:** one real test project passes from paid assignment through draft → revision → revised version → client acceptance → final download. Another accepts the first draft. Prior versions survive and retain integrity. Editor submission alone cannot complete a project. Revision policy and access controls are enforced.
 
 ## Phase 6 — Earnings and payout administration
+
+**Development flow verified 2026-09-17; production activation and database-level ledger immutability remain open.** See [Phase 6 evidence](PHASE_6.md). The connected project's coin settings remain disabled.
 
 - Implement earning-rule snapshots, pending/earned/redeemable states, immutable coin ledger, and exactly-once acceptance credit.
 - Add editor wallet totals/history and redemption request workflow with admin processing and payout outcome records.
