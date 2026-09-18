@@ -84,6 +84,8 @@ The first-version scope is all 28 priorities in original brief section 34, cover
 
 **2026-09-18: mobile browser flow and 28-priority audit recorded.** Synthetic direct upload and original-byte download pass at 390px/320px. [Traceability](FIRST_VERSION_TRACEABILITY.md) shows why the full gate remains open.
 
+**2026-09-18: protected message history pagination verified.** Project conversation pages now expose older history without leaking internal notes or former-editor access. The full gate remains open; see [Phase 7 evidence](PHASE_7.md).
+
 - Finish client/editor/admin status dashboards, unassigned/active/review/revision/completed queues, and deadline alerts.
 - Add durable role-scoped event notifications and retry handling.
 - Complete audit coverage and first-version project communication; support consultation request tracking without requiring built-in video calling.

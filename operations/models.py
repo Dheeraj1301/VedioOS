@@ -217,6 +217,9 @@ class ProjectMessage(Record):
     class Meta:
         db_table = "project_messages"
         ordering = ["created_at", "id"]
+        indexes = [
+            models.Index(fields=["project", "-created_at", "-id"], name="message_project_cursor_idx")
+        ]
         constraints = [
             models.CheckConstraint(
                 condition=models.Q(audience__in=["shared", "internal"]),

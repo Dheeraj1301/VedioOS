@@ -94,3 +94,54 @@ class ProjectMessageTests(TestCase):
         )
         self.assertEqual(response.status_code, 302)
         self.assertEqual(ProjectMessage.objects.get().body, "A quick update")
+
+    def test_cursor_pages_keep_older_history_and_internal_notes_private(self):
+        for number in range(55):
+            ProjectMessage.objects.create(
+                project=self.project,
+                author=self.client_user,
+                audience="shared",
+                body=f"shared-{number:02d}",
+                request_key=uuid.uuid4(),
+            )
+            if number % 5 == 0:
+                ProjectMessage.objects.create(
+                    project=self.project,
+                    author=self.admin,
+                    audience="internal",
+                    body=f"private-{number:02d}",
+                    request_key=uuid.uuid4(),
+                )
+        self.client.force_login(self.client_user)
+        path = f"/client/projects/{self.project.id}/"
+        newest = self.client.get(path)
+        self.assertEqual(len(newest.context["project_messages"]), 50)
+        self.assertContains(newest, "shared-54")
+        self.assertNotContains(newest, "shared-00")
+        self.assertNotContains(newest, "private-")
+        cursor = newest.context["older_message_cursor"]
+        self.assertTrue(cursor)
+        ProjectMessage.objects.create(
+            project=self.project,
+            author=self.client_user,
+            audience="shared",
+            body="shared-new",
+            request_key=uuid.uuid4(),
+        )
+        older = self.client.get(path, {"messages_before": cursor})
+        self.assertEqual(len(older.context["project_messages"]), 5)
+        self.assertContains(older, "shared-00")
+        self.assertNotContains(older, "shared-new")
+        self.assertNotContains(older, "private-")
+        self.assertContains(older, "Back to latest messages")
+        self.assertEqual(self.client.get(path, {"messages_before": "invalid"}).status_code, 404)
+        self.client.force_login(self.admin)
+        self.assertContains(self.client.get(f"/admin/projects/{self.project.id}/"), "private-50")
+        self.assignment.ended_at = timezone.now()
+        self.assignment.save()
+        EditorAssignment.objects.create(project=self.project, editor=self.editors[1], assigned_by=self.admin)
+        self.client.force_login(self.editors[0].user)
+        self.assertEqual(
+            self.client.get(f"/editor/projects/{self.project.id}/", {"messages_before": cursor}).status_code,
+            404,
+        )

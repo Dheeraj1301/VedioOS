@@ -18,7 +18,7 @@ Phase 6 adds prospective coin rules, acceptance-linked pending credits, admin re
 
 Phase 7 now includes admin status queues, paid consultation tracking, recipient-scoped in-app notifications and alerts for already-recorded overdue deadlines. See [Phase 7 scope and remaining work](docs/PHASE_7.md). The full Phase 7 gate remains open.
 
-Project details also support client/team messages and separate internal notes. Current project access is checked on the backend; the [Phase 7 evidence](docs/PHASE_7.md) records the remaining launch work.
+Project details also support client/team messages and separate internal notes with protected older-message pages. Current project access is checked on the backend; the [Phase 7 evidence](docs/PHASE_7.md) records the remaining launch work.
 
 ## Read before developing
 

@@ -1,13 +1,15 @@
 <section class="panel detail-panel" aria-labelledby="conversation-title">
   <p class="eyebrow">Project communication</p><h2 id="conversation-title">Conversation</h2>
-  <p class="muted">Latest 100 messages. “Client and team” messages are visible to the client and current project team. Internal notes stay with the team.</p>
+  <p class="muted">Messages marked “Client and team” are visible to the client and current project team. Internal notes stay with the team.</p>
+  {% if is_older_message_page %}<p><a class="text-link" href="{{ request.path }}#conversation-title">Back to latest messages</a></p>{% endif %}
+  {% if older_message_cursor %}<p><a class="text-link" href="?messages_before={{ older_message_cursor|urlencode }}#conversation-title">Older messages →</a></p>{% endif %}
   {% for item in project_messages %}
   <article class="file-row"><div>
     <strong>{{ item.author.name }}</strong> <span class="badge">{{ item.get_audience_display }}</span>
     <p>{{ item.created_at|date:"M j, Y H:i" }} UTC</p>
     <p class="preserve-lines">{{ item.body }}</p>
   </div></article>
-  {% empty %}<p>No messages yet. Use the form below to start a conversation.</p>{% endfor %}
+  {% empty %}<p>{% if is_older_message_page %}No older messages on this page.{% else %}No messages yet. Use the form below to start a conversation.{% endif %}</p>{% endfor %}
   <h3>Send a message</h3>
   <form class="form-stack" method="post" action="{% url 'message_post' project.id %}">
     {% csrf_token %}<input type="hidden" name="request_key" value="{{ message_request_key }}">

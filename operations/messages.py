@@ -1,9 +1,13 @@
 """Project conversation boundary; internal notes never enter client views or notices."""
 
 import uuid
+from datetime import datetime
 
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import IntegrityError, transaction
+from django.db.models import Q
+from django.http import Http404
+from django.utils import timezone
 
 from core.models import Project, User
 from core.permissions import project_for, visible_projects
@@ -20,6 +24,29 @@ def visible_messages(user, project):
     if user.role == "client":
         messages = messages.filter(audience=ProjectMessage.Audience.SHARED)
     return messages
+
+
+def message_page(user, project, before=None, size=50):
+    """Return a stable, newest-first cursor page, displayed oldest-first."""
+    messages = visible_messages(user, project).order_by("-created_at", "-id")
+    if before:
+        if not isinstance(before, str) or len(before) > 100:
+            raise Http404("Invalid message page.")
+        try:
+            stamp, key = before.split("|", 1)
+            created_at, message_id = datetime.fromisoformat(stamp), uuid.UUID(key)
+        except (ValueError, TypeError):
+            raise Http404("Invalid message page.") from None
+        if timezone.is_naive(created_at):
+            raise Http404("Invalid message page.")
+        messages = messages.filter(Q(created_at__lt=created_at) | Q(created_at=created_at, id__lt=message_id))
+    rows = list(messages[: size + 1])
+    current = rows[:size]
+    older = None
+    if len(rows) > size:
+        last = current[-1]
+        older = f"{last.created_at.isoformat()}|{last.id}"
+    return list(reversed(current)), older
 
 
 @transaction.atomic

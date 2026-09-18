@@ -185,7 +185,9 @@ def project_detail(request, project_id, area):
         else [("draft", "Edited draft"), ("final", "Final video")]
     )
     allowed = [(key, label) for key, label in categories if can_upload(request.user, project, key)]
-    from operations.messages import visible_messages
+    from operations.messages import message_page
+
+    project_messages, older_cursor = message_page(request.user, project, request.GET.get("messages_before"))
 
     return render(
         request,
@@ -193,9 +195,9 @@ def project_detail(request, project_id, area):
         {
             "project": project,
             "calls": project.callrequest_set.select_related("editor__user").order_by("stage"),
-            "project_messages": list(
-                reversed(list(visible_messages(request.user, project).order_by("-created_at", "-id")[:100]))
-            ),
+            "project_messages": project_messages,
+            "older_message_cursor": older_cursor,
+            "is_older_message_page": bool(request.GET.get("messages_before")),
             "message_request_key": uuid.uuid4(),
             "title": project.title,
             "files": visible_files(request.user, project).filter(original__isnull=True),
