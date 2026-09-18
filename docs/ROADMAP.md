@@ -82,6 +82,8 @@ The first-version scope is all 28 priorities in original brief section 34, cover
 
 **2026-09-18: project communication slice verified.** Shared messages and internal notes now have backend project/role checks, recipient-scoped notices and audit metadata. The full Phase 7 gate remains open; see [Phase 7 evidence](PHASE_7.md).
 
+**2026-09-18: mobile browser flow and 28-priority audit recorded.** Synthetic direct upload and original-byte download pass at 390px/320px. [Traceability](FIRST_VERSION_TRACEABILITY.md) shows why the full gate remains open.
+
 - Finish client/editor/admin status dashboards, unassigned/active/review/revision/completed queues, and deadline alerts.
 - Add durable role-scoped event notifications and retry handling.
 - Complete audit coverage and first-version project communication; support consultation request tracking without requiring built-in video calling.

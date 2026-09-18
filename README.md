@@ -34,6 +34,7 @@ Project details also support client/team messages and separate internal notes. C
 | [Phase 5 milestone](docs/PHASE_5.md) | Version review, revisions, acceptance and private delivery |
 | [Phase 6 milestone](docs/PHASE_6.md) | Coin ledger, wallet, release and sandbox redemption |
 | [Phase 7 milestone](docs/PHASE_7.md) | Operations queues, consultations, notices and deadline alerts |
+| [First-version traceability](docs/FIRST_VERSION_TRACEABILITY.md) | Evidence and remaining work for all 28 brief priorities |
 | [Architecture](docs/ARCHITECTURE.md) | Stack, models, session/permission flow, and private storage contract |
 | [Supabase connection](docs/SUPABASE.md) | Selected cloud project, private schema, configuration, and verification |
 | [Open decisions](docs/DECISIONS.md) | Unresolved business and architecture choices; decision record |
@@ -183,9 +184,13 @@ Remove-Item Env:RUN_DELIVERY_BROWSER
 $env:RUN_EARNING_BROWSER='1'
 .venv/Scripts/python.exe manage.py test tests.test_earning_browser
 Remove-Item Env:RUN_EARNING_BROWSER
+
+$env:RUN_PHASE7_BROWSER='1'
+.venv/Scripts/python.exe manage.py test tests.test_phase7_browser
+Remove-Item Env:RUN_PHASE7_BROWSER
 ```
 
-These cover admin catalog → client quote → signed sandbox payment; complexity/round-robin assignment and reassignment; draft → revision → version acceptance with byte-identical private downloads; and coin release → reservation → failed/paid **sandbox** outcomes. The synthetic browser tests do not charge cards or transfer money. Inspect `.runtime/screenshots/` for desktop/mobile captures.
+These cover admin catalog → client quote → signed sandbox payment; complexity/round-robin assignment and reassignment; draft → revision → version acceptance with byte-identical private downloads; coin release → reservation → failed/paid **sandbox** outcomes; and mobile direct upload plus project-message isolation. The synthetic browser tests do not charge cards or transfer money. Inspect `.runtime/screenshots/` for desktop/mobile captures.
 
 ### Optional checks against the shared Supabase database
 
