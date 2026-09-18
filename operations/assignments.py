@@ -15,6 +15,7 @@ from core.models import Order, Project
 from core.views import audit
 
 from .assignment_forms import AssignmentPolicyForm
+from .calls import notify
 from .models import (
     AssignmentPolicy,
     AssignmentQueue,
@@ -261,6 +262,13 @@ def write_assignment(user, project, editor, policy, reason, current=None, automa
             "reason": reason,
             "mode": snapshot["mode"],
         },
+    )
+    notify(editor.user, project, f"assignment:{assignment.pk}:editor", "A project has been assigned to you.")
+    notify(
+        project.client.user,
+        project,
+        f"assignment:{assignment.pk}:client",
+        "An editor has been assigned to your project.",
     )
     return assignment
 

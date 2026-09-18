@@ -9,6 +9,7 @@ from django.db import transaction
 from django.utils import timezone
 
 from operations.assignments import locked_policy, paid_project
+from operations.calls import notify_admins
 from operations.earnings import credit_acceptance
 from operations.models import Notification
 
@@ -68,6 +69,10 @@ def transition(user, project_id, action, *, file_id=None, version_id=None, note=
         if project.status not in states:
             raise ValidationError("This project cannot start editing in its current state.")
         project.status = states[project.status]
+        if project.status == "editing":
+            notify(
+                project, project.client.user, f"editing:{project.pk}", "Editing has started on your project."
+            )
     elif action == "submit":
         file = File.objects.filter(
             pk=file_id,
@@ -140,6 +145,9 @@ def transition(user, project_id, action, *, file_id=None, version_id=None, note=
                 f"revision:{revision.pk}",
                 f"Changes requested on version {latest.number}.",
             )
+            notify_admins(
+                project, f"revision:{revision.pk}", "A client requested changes to a submitted version."
+            )
             audit(user, "revision.requested", revision.pk, {"version": str(latest.pk)})
         else:
             if not latest.assignment_id:
@@ -161,6 +169,7 @@ def transition(user, project_id, action, *, file_id=None, version_id=None, note=
                 f"acceptance:{accepted.pk}",
                 f"Version {latest.number} was accepted. Earnings await configured coin policy.",
             )
+            notify_admins(project, f"acceptance:{accepted.pk}", "A client accepted the final delivery.")
             audit(
                 user,
                 "delivery.accepted",

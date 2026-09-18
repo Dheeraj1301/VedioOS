@@ -2,7 +2,7 @@ from django.urls import path
 
 from core import commerce_views as commerce
 from core import views
-from core.delivery_views import delivery_action, notifications
+from core.delivery_views import delivery_action, mark_notification_read, notifications
 from operations import assignment_views as assignments
 from operations import earning_views
 from operations import views as ops
@@ -14,6 +14,7 @@ urlpatterns = [
     path("admin/payouts/", earning_views.payouts, name="payouts"),
     path("admin/payouts/action/", earning_views.earning_action, name="earning_action"),
     path("orders/notifications/", notifications, name="notifications"),
+    path("orders/notifications/<uuid:notice_id>/read/", mark_notification_read, name="mark_notification_read"),
     path("orders/<uuid:project_id>/delivery/", delivery_action, name="delivery_action"),
     path("", views.landing, name="landing"),
     path("register/", views.register, name="register"),
@@ -44,6 +45,7 @@ urlpatterns = [
     ),
     path("editor/<str:page>/", ops.editor_page),
     path("admin/", ops.admin_dashboard, name="admin_dashboard"),
+    path("admin/calls/<uuid:call_id>/action/", ops.call_action, name="call_action"),
     path("admin/assignments/", assignments.assignments, name="assignments"),
     path("admin/assignments/policy/", assignments.assignment_policy, name="assignment_policy"),
     path("admin/assignments/process/", assignments.run_queue, name="run_assignment_queue"),

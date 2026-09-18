@@ -9,6 +9,7 @@ NAV = {
         ("Assigned projects", "/editor/"),
         ("Project details", "/editor/projects/"),
         ("Revisions", "/editor/revisions/"),
+        ("Calls", "/editor/calls/"),
         ("Wallet", "/editor/wallet/"),
         ("Availability", "/editor/availability/"),
     ],

@@ -1,6 +1,8 @@
 from django.contrib import messages
 from django.core.exceptions import ValidationError
-from django.shortcuts import redirect, render
+from django.db.models import Q
+from django.shortcuts import get_object_or_404, redirect, render
+from django.utils import timezone
 from django.views.decorators.http import require_POST
 
 from .delivery import transition
@@ -34,8 +36,26 @@ def notifications(request):
     from operations.models import Notification
 
     notices = (
-        Notification.objects.filter(recipient=request.user, project__in=visible_projects(request.user))
+        Notification.objects.filter(recipient=request.user)
+        .filter(Q(project__isnull=True) | Q(project__in=visible_projects(request.user)))
         .select_related("project")
         .order_by("-created_at")[:100]
     )
     return render(request, "notifications.html", {"title": "Notifications", "notices": notices})
+
+
+@require_POST
+@role_required("client", "editor", "admin")
+def mark_notification_read(request, notice_id):
+    from operations.models import Notification
+
+    notice = get_object_or_404(
+        Notification.objects.filter(recipient=request.user).filter(
+            Q(project__isnull=True) | Q(project__in=visible_projects(request.user))
+        ),
+        pk=notice_id,
+    )
+    if notice.read_at is None:
+        notice.read_at = timezone.now()
+        notice.save(update_fields=["read_at", "updated_at"])
+    return redirect("notifications")

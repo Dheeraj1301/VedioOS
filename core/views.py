@@ -190,6 +190,7 @@ def project_detail(request, project_id, area):
         "project_detail.html",
         {
             "project": project,
+            "calls": project.callrequest_set.select_related("editor__user").order_by("stage"),
             "title": project.title,
             "files": visible_files(request.user, project).filter(original__isnull=True),
             "versions": project.versions.select_related("file").order_by("-number"),

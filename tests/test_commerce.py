@@ -3,9 +3,11 @@ import hmac
 import json
 import time
 import uuid
+from datetime import timedelta
 
 from django.core.exceptions import ValidationError
 from django.test import TestCase, override_settings
+from django.utils import timezone
 
 from core.commerce import accept_quote, create_quote
 from core.commerce_forms import PlanForm, PolicyForm
@@ -22,7 +24,7 @@ from core.models import (
     User,
 )
 from core.payments import apply_sandbox_event, start_checkout
-from operations.models import AuditLog
+from operations.models import AuditLog, CallRequest, Editor, EditorProficiency, Notification
 
 SECRET = "synthetic-sandbox-key-for-tests-only-12345"
 
@@ -209,6 +211,67 @@ class CommerceTests(TestCase):
         self.assertIsNone(self.project.expected_delivery_at)
         self.assertEqual(Project.objects.count(), 1)
         self.assertEqual(AuditLog.objects.filter(action="payment.confirmed").count(), 1)
+
+    def test_paid_consultations_are_idempotent_and_admin_operated(self):
+        self.project.call_before = True
+        self.project.call_after = True
+        self.project.save()
+        payment = self.payment()
+        self.assertFalse(CallRequest.objects.exists())
+        signed = self.event(payment)
+        apply_sandbox_event(*signed)
+        apply_sandbox_event(*signed)
+        apply_sandbox_event(*self.event(payment))
+        self.assertEqual(CallRequest.objects.count(), 2)
+        self.assertEqual(Notification.objects.filter(recipient=self.user, project=self.project).count(), 3)
+        call = CallRequest.objects.get(stage="before")
+        level = EditorProficiency.objects.get(level="beginner")
+        consultant = User.objects.create_user(
+            "consultant@example.test", "synthetic-password", role="editor", name="Consultant"
+        )
+        editor = Editor.objects.create(
+            user=consultant, approved=True, proficiency=level, approved_by=self.admin
+        )
+        when = timezone.now() + timedelta(days=1)
+        self.client.force_login(self.other)
+        self.assertEqual(
+            self.client.post(f"/admin/calls/{call.id}/action/", {"action": "complete"}).status_code, 403
+        )
+        self.assertEqual(self.client.get("/admin/calls/").status_code, 403)
+        self.client.force_login(self.admin)
+        self.assertContains(self.client.get("/admin/calls/"), "Commerce test")
+        response = self.client.post(
+            f"/admin/calls/{call.id}/action/",
+            {"action": "schedule", "editor": str(editor.id), "scheduled_at": when.strftime("%Y-%m-%dT%H:%M")},
+        )
+        self.assertEqual(response.status_code, 302)
+        call.refresh_from_db()
+        self.assertEqual(call.status, "scheduled")
+        self.assertEqual(call.editor_id, editor.id)
+        self.client.force_login(consultant)
+        self.assertContains(self.client.get("/orders/notifications/"), "consultation scheduled")
+        self.assertContains(self.client.get("/editor/calls/"), "Commerce test")
+        self.assertEqual(self.client.get(f"/editor/projects/{self.project.id}/").status_code, 404)
+        self.client.force_login(self.admin)
+        self.client.post(f"/admin/calls/{call.id}/action/", {"action": "complete"})
+        call.refresh_from_db()
+        self.assertEqual(call.status, "completed")
+        self.assertEqual(AuditLog.objects.filter(action="call.completed", target_id=str(call.id)).count(), 1)
+
+    def test_notification_inbox_scopes_null_and_project_events(self):
+        private = Notification.objects.create(
+            recipient=self.user, event_key="private-account", message="Account update"
+        )
+        alien = Notification.objects.create(
+            recipient=self.other, event_key="alien-account", message="Other account"
+        )
+        self.client.force_login(self.user)
+        self.assertContains(self.client.get("/orders/notifications/"), "Account update")
+        self.assertNotContains(self.client.get("/orders/notifications/"), "Other account")
+        self.assertEqual(self.client.post(f"/orders/notifications/{alien.id}/read/").status_code, 404)
+        self.assertEqual(self.client.post(f"/orders/notifications/{private.id}/read/").status_code, 302)
+        private.refresh_from_db()
+        self.assertIsNotNone(private.read_at)
 
     def test_conflicting_event_id_rejected(self):
         payment = self.payment()

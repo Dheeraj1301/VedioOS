@@ -76,7 +76,7 @@ class DeliveryTests(TestCase):
         self.assertEqual(DeliveryAcceptance.objects.count(), 1)
         self.assertEqual(CoinTransaction.objects.count(), 0)
         self.assertEqual(open_workload(self.editors[0]), 0)
-        self.assertEqual(Notification.objects.count(), 4)
+        self.assertEqual(Notification.objects.count(), 7)
         self.assertEqual(ProjectVersion.objects.get(pk=first.pk).file_id, original)
 
     def test_accept_first_draft_without_duplicate_upload(self):

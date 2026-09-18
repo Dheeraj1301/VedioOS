@@ -1,6 +1,9 @@
 import uuid
+from datetime import timedelta
+from io import StringIO
 
 from django.core.exceptions import PermissionDenied, ValidationError
+from django.core.management import call_command
 from django.test import TestCase, override_settings
 from django.utils import timezone
 
@@ -20,6 +23,7 @@ from operations.models import (
     AssignmentQueue,
     AuditLog,
     EditorAssignment,
+    Notification,
     ProjectComplexity,
     RoundRobinState,
 )
@@ -36,6 +40,24 @@ class AssignmentTests(TestCase):
         project = paid_project(self.client_profile)
         classify(self.admin, project.id, level, "Synthetic admin assessment", 0)
         return project
+
+    def test_overdue_alerts_only_for_recorded_paid_open_deadlines(self):
+        overdue = paid_project(self.client_profile)
+        overdue.expected_delivery_at = timezone.now() - timedelta(hours=1)
+        overdue.save()
+        future = paid_project(self.client_profile)
+        future.expected_delivery_at = timezone.now() + timedelta(hours=1)
+        future.save()
+        unpaid = paid_project(self.client_profile, paid=False)
+        unpaid.expected_delivery_at = timezone.now() - timedelta(hours=1)
+        unpaid.save()
+        for _ in range(2):
+            call_command("notify_overdue", stdout=StringIO())
+        self.assertEqual(Notification.objects.filter(recipient=self.admin, project=overdue).count(), 1)
+        self.assertFalse(Notification.objects.filter(project__in=[future, unpaid]).exists())
+        self.client.force_login(self.admin)
+        self.assertContains(self.client.get("/admin/"), "Past recorded deadline")
+        self.assertContains(self.client.get("/admin/projects/?queue=unassigned"), overdue.title)
 
     def test_unpaid_and_forged_payment_state_rejected(self):
         project = paid_project(self.client_profile, paid=False)

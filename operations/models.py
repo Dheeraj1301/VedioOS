@@ -187,6 +187,9 @@ class CallRequest(Record):
 
     class Meta:
         db_table = "call_requests"
+        constraints = [
+            models.UniqueConstraint(fields=["project", "stage"], name="one_call_per_project_stage")
+        ]
 
 
 class Notification(Record):

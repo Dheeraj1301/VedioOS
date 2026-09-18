@@ -1,8 +1,13 @@
+from datetime import datetime
+from datetime import timezone as datetime_timezone
+
 from django.contrib import messages
 from django.contrib.auth import login
-from django.core.exceptions import PermissionDenied
+from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import IntegrityError, transaction
+from django.db.models import Exists, OuterRef
 from django.shortcuts import get_object_or_404, redirect, render
+from django.utils import timezone
 from django.views.decorators.http import require_POST
 
 from core.models import Client, Order
@@ -10,8 +15,9 @@ from core.permissions import role_required, visible_projects
 from core.views import audit, auth_rate_limited
 
 from .assignments import approve_proficiency, change_availability, editor_roster, open_workload
+from .calls import complete_call, schedule_call
 from .forms import AvailabilityForm, EditorRegistrationForm
-from .models import Editor, EditorAvailability, EditorCoins, EditorProficiency
+from .models import CallRequest, Editor, EditorAssignment, EditorAvailability, EditorCoins, EditorProficiency
 
 
 def editor_register(request):
@@ -86,6 +92,17 @@ def editor_dashboard(request):
 @role_required("editor")
 def editor_page(request, page):
     editor = request.user.editor_profile
+    if page == "calls":
+        return render(
+            request,
+            "operations/editor_calls.html",
+            {
+                "title": "Consultations",
+                "calls": CallRequest.objects.filter(editor=editor)
+                .select_related("project")
+                .order_by("-scheduled_at"),
+            },
+        )
     if page == "revisions":
         return render(
             request,
@@ -129,12 +146,28 @@ def editor_page(request, page):
 
 @role_required("admin")
 def admin_dashboard(request):
+    projects = visible_projects(request.user)
+    paid = projects.filter(order__payment_status="confirmed")
+    unassigned = (
+        paid.annotate(
+            has_editor=Exists(EditorAssignment.objects.filter(project=OuterRef("pk"), ended_at__isnull=True))
+        )
+        .filter(has_editor=False)
+        .exclude(status__in=["completed", "cancelled"])
+    )
     return render(
         request,
         "operations/admin_dashboard.html",
         {
             "title": "Overview",
-            "project_count": visible_projects(request.user).count(),
+            "project_count": projects.count(),
+            "unassigned_count": unassigned.count(),
+            "review_count": paid.filter(status="awaiting_review").count(),
+            "revision_count": paid.filter(status__in=["revision_requested", "revision_in_progress"]).count(),
+            "overdue_count": paid.filter(expected_delivery_at__lt=timezone.now())
+            .exclude(status__in=["completed", "cancelled"])
+            .count(),
+            "call_count": CallRequest.objects.filter(status="requested").count(),
             "editor_count": Editor.objects.count(),
             "pending_count": Editor.objects.filter(approved=False).count(),
             "projects": visible_projects(request.user)[:5],
@@ -145,8 +178,45 @@ def admin_dashboard(request):
 @role_required("admin")
 def admin_page(request, page):
     if page == "projects":
+        queue = request.GET.get("queue", "all")
+        projects = visible_projects(request.user)
+        if queue == "unassigned":
+            projects = (
+                projects.filter(order__payment_status="confirmed")
+                .annotate(
+                    has_editor=Exists(
+                        EditorAssignment.objects.filter(project=OuterRef("pk"), ended_at__isnull=True)
+                    )
+                )
+                .filter(has_editor=False)
+                .exclude(status__in=["completed", "cancelled"])
+            )
+        elif queue == "active":
+            projects = projects.filter(status__in=["editor_assigned", "editing"])
+        elif queue == "review":
+            projects = projects.filter(status="awaiting_review")
+        elif queue == "revision":
+            projects = projects.filter(status__in=["revision_requested", "revision_in_progress"])
+        elif queue == "completed":
+            projects = projects.filter(status="completed")
+        else:
+            queue = "all"
         return render(
-            request, "projects.html", {"title": "Projects", "projects": visible_projects(request.user)}
+            request, "projects.html", {"title": "Projects", "projects": projects, "admin_queue": queue}
+        )
+    if page == "calls":
+        return render(
+            request,
+            "operations/calls.html",
+            {
+                "title": "Consultations",
+                "calls": CallRequest.objects.select_related(
+                    "project", "editor__user", "requested_by"
+                ).order_by("status", "scheduled_at", "created_at"),
+                "editors": Editor.objects.filter(approved=True, user__is_active=True)
+                .select_related("user")
+                .order_by("user__name"),
+            },
         )
     if page == "editors":
         return render(
@@ -180,7 +250,6 @@ def admin_page(request, page):
         return redirect("pricing")
     descriptions = {
         "assignments": "Assignment tools will be enabled after the Day 1 foundation checks pass.",
-        "calls": "Consultation preferences are saved with project briefs. Scheduling is coming in the consultation workflow.",
         "analytics": "Business analytics will follow the confirmed-payment and delivery workflows.",
     }
     if page not in descriptions:
@@ -190,6 +259,33 @@ def admin_page(request, page):
     return render(
         request, "operations/skeleton.html", {"title": page.title(), "description": descriptions[page]}
     )
+
+
+@require_POST
+@role_required("admin")
+def call_action(request, call_id):
+    try:
+        action = request.POST.get("action")
+        if action == "schedule":
+            raw = request.POST.get("scheduled_at", "")
+            try:
+                when = datetime.fromisoformat(raw)
+                if when.tzinfo is None:
+                    when = when.replace(tzinfo=datetime_timezone.utc)
+            except ValueError:
+                raise ValidationError("Enter a valid UTC date and time.") from None
+            schedule_call(request.user, call_id, request.POST.get("editor"), when)
+            messages.success(request, "Consultation scheduled. The client and editor were notified.")
+        elif action == "complete":
+            complete_call(request.user, call_id)
+            messages.success(request, "Consultation marked complete.")
+        else:
+            raise ValidationError("Unknown consultation action.")
+    except (ValidationError, CallRequest.DoesNotExist) as exc:
+        messages.error(
+            request, " ".join(exc.messages) if isinstance(exc, ValidationError) else "Consultation not found."
+        )
+    return redirect("/admin/calls/")
 
 
 @require_POST

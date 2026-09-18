@@ -1,0 +1,9 @@
+{% extends 'workspace.html' %}{% block workspace_content %}
+<div class="page-heading"><div><p class="eyebrow">Operations</p><h1>Consultations</h1><p>Track the calls clients selected at checkout. Arrange the meeting outside this app.</p></div></div>
+<section class="panel detail-panel">
+{% for call in calls %}
+<div class="file-row"><div><h2><a href="{% url 'admin_project' call.project_id %}">{{ call.project.title }}</a></h2><p>{{ call.get_stage_display }} · {{ call.get_status_display|default:call.status }} · requested {{ call.created_at|date:"M j, Y H:i" }} UTC</p><p>Client: {{ call.requested_by.name }}{% if call.editor %} · Editor: {{ call.editor.user.name }}{% endif %}</p>{% if call.scheduled_at %}<p>Scheduled: {{ call.scheduled_at|date:"M j, Y H:i" }} UTC</p>{% endif %}
+{% if call.status != 'completed' %}<form method="post" action="{% url 'call_action' call.id %}">{% csrf_token %}<input type="hidden" name="action" value="schedule"><label for="editor-{{ call.id }}">Consulting editor</label><select id="editor-{{ call.id }}" name="editor" required><option value="">Choose editor</option>{% for editor in editors %}<option value="{{ editor.id }}" {% if call.editor_id == editor.id %}selected{% endif %}>{{ editor.user.name }}</option>{% endfor %}</select><label for="time-{{ call.id }}">Meeting time (UTC)</label><input id="time-{{ call.id }}" type="datetime-local" name="scheduled_at" required><button class="button" type="submit">Schedule / reschedule</button></form>{% endif %}
+{% if call.status == 'scheduled' %}<form method="post" action="{% url 'call_action' call.id %}">{% csrf_token %}<input type="hidden" name="action" value="complete"><button class="text-button" type="submit">Mark complete</button></form>{% endif %}</div></div>
+{% empty %}<p>No paid consultation requests yet. Client choices appear here after confirmed payment.</p>{% endfor %}
+</section>{% endblock %}

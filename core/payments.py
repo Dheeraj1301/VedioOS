@@ -15,6 +15,8 @@ from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.utils import timezone
 
+from operations.calls import create_paid_calls, notify, notify_admins
+
 from .commerce import check_policy
 from .models import CommercePolicy, Order, Payment, PaymentEvent
 from .views import audit
@@ -125,6 +127,16 @@ def apply_sandbox_event(body, signature):
         project.status, project.payment_completed_at = "payment_completed", now
         # Do not manufacture a deadline until D06 has an approved executable rule.
         project.save(update_fields=["status", "payment_completed_at", "updated_at"])
+        create_paid_calls(project)
+        notify(
+            project.client.user,
+            project,
+            f"payment:{payment.pk}:client",
+            "Payment confirmed. Your project is ready for assignment.",
+        )
+        notify_admins(
+            project, f"payment:{payment.pk}", "A project payment was confirmed and is ready for assignment."
+        )
         audit(None, "payment.confirmed", payment.id, {"provider": "sandbox", "project": str(project.id)})
     elif event["status"] == "failed" and payment.status != "confirmed":
         payment.status, order.payment_status = "failed", "failed"

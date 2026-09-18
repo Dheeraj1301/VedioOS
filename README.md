@@ -16,6 +16,8 @@ Phase 5 adds private editor submissions, version history, revision requests, exp
 
 Phase 6 adds prospective coin rules, acceptance-linked pending credits, admin release, an editor wallet and a sandbox redemption flow with reserved balances. See [Phase 6 evidence and activation limits](docs/PHASE_6.md). The connected project's earning and redemption policy remains disabled; real coin value and payout method await owner decisions.
 
+Phase 7 now includes admin status queues, paid consultation tracking, recipient-scoped in-app notifications and alerts for already-recorded overdue deadlines. See [Phase 7 scope and remaining work](docs/PHASE_7.md). The full Phase 7 gate remains open.
+
 ## Read before developing
 
 | Document | Purpose |
@@ -29,6 +31,7 @@ Phase 6 adds prospective coin rules, acceptance-linked pending credits, admin re
 | [Phase 4 milestone](docs/PHASE_4.md) | Editor workload, paid queues, allocation policy, concurrency and reassignment |
 | [Phase 5 milestone](docs/PHASE_5.md) | Version review, revisions, acceptance and private delivery |
 | [Phase 6 milestone](docs/PHASE_6.md) | Coin ledger, wallet, release and sandbox redemption |
+| [Phase 7 milestone](docs/PHASE_7.md) | Operations queues, consultations, notices and deadline alerts |
 | [Architecture](docs/ARCHITECTURE.md) | Stack, models, session/permission flow, and private storage contract |
 | [Supabase connection](docs/SUPABASE.md) | Selected cloud project, private schema, configuration, and verification |
 | [Open decisions](docs/DECISIONS.md) | Unresolved business and architecture choices; decision record |
@@ -197,6 +200,8 @@ These are read-only or rollback/synthetic verification commands against the **co
 .venv/Scripts/python.exe manage.py verify_delivery_concurrency
 .venv/Scripts/python.exe manage.py verify_wallet_concurrency
 ```
+
+For an operator-run Phase 7 deadline alert pass, use `.venv/Scripts/python.exe manage.py notify_overdue` against the intended database. It writes in-app notices only for paid, open projects with a recorded past deadline; rerunning it does not duplicate the same alert. No automatic schedule is configured yet.
 
 `check_database` should identify PostgreSQL, the private `vedioos` schema, RLS on all application tables and no browser-role schema access. The shared database is already migrated. **Do not run `migrate`, `flush`, `browser_fixture` or `init_local` against it just to preview the app.** Schema changes follow the backup, review and migration procedure in [team workflow](docs/TEAM_WORKFLOW.md). The optional `node tests/cloud_browser.mjs` script expects an existing synthetic admin fixture and existing projects in that specific shared project; a fresh clone will not have those credentials, so it is not part of the standard checks.
 
