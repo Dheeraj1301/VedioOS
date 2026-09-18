@@ -5,7 +5,7 @@ from core import views
 from core.delivery_views import delivery_action, mark_notification_read, notifications
 from core.message_views import message_post
 from operations import assignment_views as assignments
-from operations import earning_views
+from operations import audit_views, earning_views
 from operations import views as ops
 
 urlpatterns = [
@@ -47,6 +47,7 @@ urlpatterns = [
     ),
     path("editor/<str:page>/", ops.editor_page),
     path("admin/", ops.admin_dashboard, name="admin_dashboard"),
+    path("admin/audit/", audit_views.audit_timeline, name="audit_timeline"),
     path("admin/calls/<uuid:call_id>/action/", ops.call_action, name="call_action"),
     path("admin/assignments/", assignments.assignments, name="assignments"),
     path("admin/assignments/policy/", assignments.assignment_policy, name="assignment_policy"),

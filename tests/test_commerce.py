@@ -270,8 +270,12 @@ class CommerceTests(TestCase):
         self.assertNotContains(self.client.get("/orders/notifications/"), "Other account")
         self.assertEqual(self.client.post(f"/orders/notifications/{alien.id}/read/").status_code, 404)
         self.assertEqual(self.client.post(f"/orders/notifications/{private.id}/read/").status_code, 302)
+        self.assertEqual(self.client.post(f"/orders/notifications/{private.id}/read/").status_code, 302)
         private.refresh_from_db()
         self.assertIsNotNone(private.read_at)
+        self.assertEqual(
+            AuditLog.objects.filter(action="notification.read", target_id=str(private.id)).count(), 1
+        )
 
     def test_conflicting_event_id_rejected(self):
         payment = self.payment()

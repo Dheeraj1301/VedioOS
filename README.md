@@ -20,6 +20,8 @@ Phase 7 now includes admin status queues, paid consultation tracking, recipient-
 
 Project details also support client/team messages and separate internal notes with protected older-message pages. Current project access is checked on the backend; the [Phase 7 evidence](docs/PHASE_7.md) records the remaining launch work.
 
+Admins can inspect a protected audit timeline at `/admin/audit/`. It shows action, actor, target and time; raw private event details stay out of the page.
+
 ## Read before developing
 
 | Document | Purpose |

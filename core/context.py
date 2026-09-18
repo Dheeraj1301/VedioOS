@@ -23,6 +23,7 @@ NAV = {
         ("Plans / Pricing", "/admin/pricing/"),
         ("Calls", "/admin/calls/"),
         ("Payouts", "/admin/payouts/"),
+        ("Audit", "/admin/audit/"),
         ("Analytics", "/admin/analytics/"),
     ],
 }

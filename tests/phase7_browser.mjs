@@ -54,6 +54,10 @@ try {
   await page.getByRole('button', {name: 'Save internal note'}).click();
   await page.getByText('Staff-only scheduling detail', {exact: true}).waitFor();
   await noOverflow();
+  await page.goto(`${f.base}/admin/audit/`);
+  await page.getByText('project.message_posted', {exact: true}).first().waitFor();
+  await noOverflow();
+  await page.screenshot({path: '.runtime/screenshots/phase7-audit-mobile.png', fullPage: true});
   await logout();
 
   await login(f.client);
@@ -69,7 +73,7 @@ try {
   await noOverflow();
   await page.screenshot({path: '.runtime/screenshots/phase7-editor-mobile.png', fullPage: true});
   assert.deepEqual(errors, []);
-  console.log('PASS: 390px and 320px project views, mobile original upload/download integrity, labeled message forms, shared/internal message isolation, no page errors.');
+  console.log('PASS: 390px and 320px project views, mobile original upload/download integrity, labeled message forms, shared/internal message isolation, admin audit timeline, no page errors.');
 } catch (error) {
   await page.screenshot({path: '.runtime/screenshots/phase7-failure.png', fullPage: true});
   console.error('Phase 7 browser flow failed:', error.message);

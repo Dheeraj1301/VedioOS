@@ -86,6 +86,8 @@ The first-version scope is all 28 priorities in original brief section 34, cover
 
 **2026-09-18: protected message history pagination verified.** Project conversation pages now expose older history without leaking internal notes or former-editor access. The full gate remains open; see [Phase 7 evidence](PHASE_7.md).
 
+**2026-09-18: admin audit timeline and read/overdue audit events verified.** Sensitive event details stay out of the UI; the full gate remains open. See [Phase 7 evidence](PHASE_7.md).
+
 - Finish client/editor/admin status dashboards, unassigned/active/review/revision/completed queues, and deadline alerts.
 - Add durable role-scoped event notifications and retry handling.
 - Complete audit coverage and first-version project communication; support consultation request tracking without requiring built-in video calling.

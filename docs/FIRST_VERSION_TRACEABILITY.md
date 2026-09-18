@@ -13,7 +13,7 @@ This is a development evidence map, not a production launch claim. **Verified** 
 | 7 | Custom pricing | Partial | Admin-configured base/services and server-calculated quotes work; commercial values/terms remain D04. [Phase 3](PHASE_3.md). |
 | 8 | Payment flow | Partial | Signed, replay-safe development sandbox and protected history/receipt; no real gateway or tax/refund policy (D05). [Phase 3](PHASE_3.md). |
 | 9 | Project creation | Verified | Client drafts and one paid activation on verified sandbox success; [Phase 3](PHASE_3.md). |
-| 10 | Presenter/admin dashboard | Verified in development | Admin overview, paid/unpaid orders, assignment queues and status filters; [Phases 3](PHASE_3.md), [4](PHASE_4.md), [7](PHASE_7.md). |
+| 10 | Presenter/admin dashboard | Verified in development | Admin overview, paid/unpaid orders, assignment queues, status filters and protected audit timeline; [Phases 3](PHASE_3.md), [4](PHASE_4.md), [7](PHASE_7.md). |
 | 11 | Editor registration | Verified | Application, login and pending approval; [Day 1](DAY_1_VERIFICATION.md). |
 | 12 | Editor proficiency management | Verified in development | Admin-only assessment/approval and audit; production criteria remain D07. [Phase 4](PHASE_4.md). |
 | 13 | Editor dashboard | Verified in development | Current assignments, revisions, wallet, availability and calls; [Phases 4](PHASE_4.md), [5](PHASE_5.md), [7](PHASE_7.md). |

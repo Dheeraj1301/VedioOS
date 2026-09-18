@@ -13,15 +13,19 @@ from .models import CallRequest, Editor, Notification
 
 
 def notify(recipient, project, key, message):
-    Notification.objects.get_or_create(
+    _, created = Notification.objects.get_or_create(
         event_key=key,
         defaults={"recipient": recipient, "project": project, "message": message},
     )
+    return created
 
 
 def notify_admins(project, key, message):
+    created_any = False
     for admin in User.objects.filter(role="admin", is_active=True):
-        notify(admin, project, f"{key}:admin:{admin.pk}", message)
+        created = notify(admin, project, f"{key}:admin:{admin.pk}", message)
+        created_any = created_any or created
+    return created_any
 
 
 def create_paid_calls(project):

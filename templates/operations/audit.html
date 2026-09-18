@@ -1,0 +1,10 @@
+{% extends 'workspace.html' %}{% block workspace_content %}
+<div class="page-heading"><div><p class="eyebrow">Operations</p><h1>Audit history</h1><p>Recent actions and the account or system that performed them. Private event details are kept out of this view.</p></div></div>
+<section class="panel detail-panel" aria-label="Audit events">
+{% if is_older_audit_page %}<p><a class="text-link" href="{% url 'audit_timeline' %}">Back to latest events</a></p>{% endif %}
+{% if older_audit_id %}<p><a class="text-link" href="?before={{ older_audit_id }}">Older events →</a></p>{% endif %}
+{% for event in events %}<article class="file-row"><div>
+  <strong>{{ event.action }}</strong><p>{{ event.created_at|date:"M j, Y H:i" }} UTC · {% if event.actor %}{{ event.actor.name }} ({{ event.actor.email }}){% else %}System{% endif %}</p>
+  <p>Record: {{ event.target_id }}</p>
+</div></article>{% empty %}<p>{% if is_older_audit_page %}No older events on this page.{% else %}No audit events yet.{% endif %}</p>{% endfor %}
+</section>{% endblock %}

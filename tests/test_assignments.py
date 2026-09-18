@@ -54,6 +54,9 @@ class AssignmentTests(TestCase):
         for _ in range(2):
             call_command("notify_overdue", stdout=StringIO())
         self.assertEqual(Notification.objects.filter(recipient=self.admin, project=overdue).count(), 1)
+        self.assertEqual(
+            AuditLog.objects.filter(action="deadline.overdue_alerted", target_id=str(overdue.id)).count(), 1
+        )
         self.assertFalse(Notification.objects.filter(project__in=[future, unpaid]).exists())
         self.client.force_login(self.admin)
         self.assertContains(self.client.get("/admin/"), "Past recorded deadline")
