@@ -80,6 +80,8 @@ The first-version scope is all 28 priorities in original brief section 34, cover
 
 **2026-09-18: first operations slice verified; full gate remains open.** Admin queues, paid consultation tracking, in-app notices and recorded-deadline alerts are documented in [Phase 7 evidence](PHASE_7.md).
 
+**2026-09-18: project communication slice verified.** Shared messages and internal notes now have backend project/role checks, recipient-scoped notices and audit metadata. The full Phase 7 gate remains open; see [Phase 7 evidence](PHASE_7.md).
+
 - Finish client/editor/admin status dashboards, unassigned/active/review/revision/completed queues, and deadline alerts.
 - Add durable role-scoped event notifications and retry handling.
 - Complete audit coverage and first-version project communication; support consultation request tracking without requiring built-in video calling.

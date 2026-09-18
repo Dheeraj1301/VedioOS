@@ -1,0 +1,29 @@
+<section class="panel detail-panel" aria-labelledby="conversation-title">
+  <p class="eyebrow">Project communication</p><h2 id="conversation-title">Conversation</h2>
+  <p class="muted">Latest 100 messages. “Client and team” messages are visible to the client and current project team. Internal notes stay with the team.</p>
+  {% for item in project_messages %}
+  <article class="file-row"><div>
+    <strong>{{ item.author.name }}</strong> <span class="badge">{{ item.get_audience_display }}</span>
+    <p>{{ item.created_at|date:"M j, Y H:i" }} UTC</p>
+    <p class="preserve-lines">{{ item.body }}</p>
+  </div></article>
+  {% empty %}<p>No messages yet. Use the form below to start a conversation.</p>{% endfor %}
+  <h3>Send a message</h3>
+  <form class="form-stack" method="post" action="{% url 'message_post' project.id %}">
+    {% csrf_token %}<input type="hidden" name="request_key" value="{{ message_request_key }}">
+    <input type="hidden" name="audience" value="shared">
+    <label for="shared-message">Message to client and team</label>
+    <textarea id="shared-message" name="body" rows="4" maxlength="5000" required></textarea>
+    <button type="submit" class="button">Send message</button>
+  </form>
+  {% if request.user.role != 'client' %}
+  <h3>Internal note</h3>
+  <form class="form-stack" method="post" action="{% url 'message_post' project.id %}">
+    {% csrf_token %}<input type="hidden" name="request_key" value="{{ message_request_key }}">
+    <input type="hidden" name="audience" value="internal">
+    <label for="internal-message">Note for the project team only</label>
+    <textarea id="internal-message" name="body" rows="4" maxlength="5000" required></textarea>
+    <button type="submit" class="button">Save internal note</button>
+  </form>
+  {% endif %}
+</section>

@@ -185,12 +185,18 @@ def project_detail(request, project_id, area):
         else [("draft", "Edited draft"), ("final", "Final video")]
     )
     allowed = [(key, label) for key, label in categories if can_upload(request.user, project, key)]
+    from operations.messages import visible_messages
+
     return render(
         request,
         "project_detail.html",
         {
             "project": project,
             "calls": project.callrequest_set.select_related("editor__user").order_by("stage"),
+            "project_messages": list(
+                reversed(list(visible_messages(request.user, project).order_by("-created_at", "-id")[:100]))
+            ),
+            "message_request_key": uuid.uuid4(),
             "title": project.title,
             "files": visible_files(request.user, project).filter(original__isnull=True),
             "versions": project.versions.select_related("file").order_by("-number"),

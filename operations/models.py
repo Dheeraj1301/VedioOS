@@ -203,6 +203,28 @@ class Notification(Record):
         db_table = "notifications"
 
 
+class ProjectMessage(Record):
+    class Audience(models.TextChoices):
+        SHARED = "shared", "Client and team"
+        INTERNAL = "internal", "Team only"
+
+    project = models.ForeignKey(Project, on_delete=models.PROTECT, related_name="messages")
+    author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT)
+    audience = models.CharField(max_length=10, choices=Audience.choices)
+    body = models.TextField(max_length=5000)
+    request_key = models.UUIDField(unique=True)
+
+    class Meta:
+        db_table = "project_messages"
+        ordering = ["created_at", "id"]
+        constraints = [
+            models.CheckConstraint(
+                condition=models.Q(audience__in=["shared", "internal"]),
+                name="valid_message_audience",
+            )
+        ]
+
+
 class EditorCoins(Record):
     editor = models.OneToOneField(Editor, on_delete=models.PROTECT, related_name="wallet")
     # Balance is derived from the ledger. No editable cached balance or invented conversion.
