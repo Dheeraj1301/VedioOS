@@ -201,6 +201,9 @@ class Notification(Record):
 
     class Meta:
         db_table = "notifications"
+        indexes = [
+            models.Index(fields=["recipient", "-created_at", "-id"], name="notice_recipient_cursor_idx")
+        ]
 
 
 class ProjectMessage(Record):
@@ -217,9 +220,7 @@ class ProjectMessage(Record):
     class Meta:
         db_table = "project_messages"
         ordering = ["created_at", "id"]
-        indexes = [
-            models.Index(fields=["project", "-created_at", "-id"], name="message_project_cursor_idx")
-        ]
+        indexes = [models.Index(fields=["project", "-created_at", "-id"], name="message_project_cursor_idx")]
         constraints = [
             models.CheckConstraint(
                 condition=models.Q(audience__in=["shared", "internal"]),

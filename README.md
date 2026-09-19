@@ -16,7 +16,7 @@ Phase 5 adds private editor submissions, version history, revision requests, exp
 
 Phase 6 adds prospective coin rules, acceptance-linked pending credits, admin release, an editor wallet and a sandbox redemption flow with reserved balances. See [Phase 6 evidence and activation limits](docs/PHASE_6.md). The connected project's earning and redemption policy remains disabled; real coin value and payout method await owner decisions.
 
-Phase 7 now includes admin status queues, paid consultation tracking, recipient-scoped in-app notifications and alerts for already-recorded overdue deadlines. See [Phase 7 scope and remaining work](docs/PHASE_7.md). The full Phase 7 gate remains open.
+Phase 7 now includes admin status queues, paid consultation tracking, recipient-scoped in-app notifications with older-history pages, and alerts for already-recorded overdue deadlines. See [Phase 7 scope and remaining work](docs/PHASE_7.md). The full Phase 7 gate remains open.
 
 Project details also support client/team messages and separate internal notes with protected older-message pages. Current project access is checked on the backend; the [Phase 7 evidence](docs/PHASE_7.md) records the remaining launch work.
 

@@ -27,7 +27,7 @@ This is a development evidence map, not a production launch claim. **Verified** 
 | 21 | Final approval | Verified in development | Client accepts an explicit version; repeat acceptance does not duplicate completion. [Phase 5](PHASE_5.md). |
 | 22 | Editor coin system | Partial | Pending/released ledger, wallet and sandbox redemption pass tests; coin value and real payout remain D10. [Phase 6](PHASE_6.md). |
 | 23 | Project status tracking | Verified in development | Protected dashboards and active/review/revision/completed queues; [Phase 7](PHASE_7.md). |
-| 24 | Notifications | Partial | Durable in-app notices, recipient/project checks and deduplication; external channels/preferences and worker retries remain D12. [Phase 7](PHASE_7.md). |
+| 24 | Notifications | Partial | Durable in-app notices, recipient/project checks, protected older-history pages and deduplication; external channels/preferences and worker retries remain D12. [Phase 7](PHASE_7.md). |
 | 25 | 24-hour deadline tracking | Partial | Persisted due dates are shown and overdue notices can be rerun; the 24-hour clock and warning threshold are deliberately unset pending D06. [Phase 7](PHASE_7.md). |
 | 26 | Secure project-level file access | Verified locally | Backend ownership/assignment checks and short-lived signed URLs; cross-client/former-editor denial tests. [Day 1](DAY_1_VERIFICATION.md), [Phase 5](PHASE_5.md). |
 | 27 | Original video quality preservation | Verified locally | Direct object uploads and byte-identical downloads; distinct output versions preserve originals. [Day 1](DAY_1_VERIFICATION.md), [Phase 5](PHASE_5.md), [Phase 7](PHASE_7.md). |

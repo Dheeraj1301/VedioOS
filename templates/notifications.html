@@ -1,4 +1,12 @@
 {% extends 'workspace.html' %}{% block workspace_content %}
-<div class="page-heading"><div><p class="eyebrow">Workspace updates</p><h1>Notifications</h1><p>Your latest 100 authorized updates.</p></div></div>
-<section class="panel detail-panel">{% for notice in notices %}<div class="file-row"><div><h2>{% if notice.project %}{{ notice.project.title }}{% else %}Account update{% endif %}{% if not notice.read_at %} <span class="badge">New</span>{% endif %}</h2><p>{{ notice.message }}</p><p>{{ notice.created_at|date:"M j, Y H:i" }} UTC</p>{% if notice.project %}<a href="/{{ request.user.role }}/projects/{{ notice.project_id }}/" class="text-link">Open project →</a>{% endif %}{% if not notice.read_at %}<form method="post" action="{% url 'mark_notification_read' notice.id %}">{% csrf_token %}<button class="text-button" type="submit">Mark read</button></form>{% endif %}</div></div>{% empty %}<p>No updates yet.</p>{% endfor %}</section>
-{% endblock %}
+<div class="page-heading"><div><p class="eyebrow">Workspace updates</p><h1>Notifications</h1><p>Updates for projects you can currently access, plus account notices.</p></div></div>
+<section class="panel detail-panel" aria-label="Notification history">
+{% if current_notice_cursor %}<p><a class="text-link" href="{% url 'notifications' %}">Back to latest updates</a></p>{% endif %}
+{% if older_notice_cursor %}<p><a class="text-link" href="?before={{ older_notice_cursor|urlencode }}">Older updates →</a></p>{% endif %}
+{% for notice in notices %}<article class="file-row"><div>
+  <h2>{% if notice.project %}{{ notice.project.title }}{% else %}Account update{% endif %}{% if not notice.read_at %} <span class="badge">New</span>{% endif %}</h2>
+  <p>{{ notice.message }}</p><p>{{ notice.created_at|date:"M j, Y H:i" }} UTC</p>
+  {% if notice.project %}<a href="/{{ request.user.role }}/projects/{{ notice.project_id }}/" class="text-link">Open project →</a>{% endif %}
+  {% if not notice.read_at %}<form method="post" action="{% url 'mark_notification_read' notice.id %}">{% csrf_token %}{% if current_notice_cursor %}<input type="hidden" name="before" value="{{ current_notice_cursor }}">{% endif %}<button class="text-button" type="submit">Mark read</button></form>{% endif %}
+</div></article>{% empty %}<p>{% if current_notice_cursor %}No older updates on this page.{% else %}No updates yet.{% endif %}</p>{% endfor %}
+</section>{% endblock %}

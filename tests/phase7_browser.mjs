@@ -44,6 +44,12 @@ try {
   await page.getByText('Mobile client update', {exact: true}).waitFor();
   await noOverflow();
   await page.screenshot({path: '.runtime/screenshots/phase7-client-mobile.png', fullPage: true});
+  await page.goto(`${f.base}/orders/notifications/`);
+  await page.getByRole('link', {name: 'Older updates'}).click();
+  await page.getByRole('button', {name: 'Mark read'}).first().click();
+  await page.waitForURL(/\/orders\/notifications\/\?before=/);
+  await noOverflow();
+  await page.screenshot({path: '.runtime/screenshots/phase7-notifications-mobile.png', fullPage: true});
   await page.setViewportSize({width: 320, height: 700});
   await noOverflow();
   await logout();
@@ -73,7 +79,7 @@ try {
   await noOverflow();
   await page.screenshot({path: '.runtime/screenshots/phase7-editor-mobile.png', fullPage: true});
   assert.deepEqual(errors, []);
-  console.log('PASS: 390px and 320px project views, mobile original upload/download integrity, labeled message forms, shared/internal message isolation, admin audit timeline, no page errors.');
+  console.log('PASS: 390px and 320px project views, mobile original upload/download integrity, labeled message forms, shared/internal message isolation, paged notification inbox, admin audit timeline, no page errors.');
 } catch (error) {
   await page.screenshot({path: '.runtime/screenshots/phase7-failure.png', fullPage: true});
   console.error('Phase 7 browser flow failed:', error.message);

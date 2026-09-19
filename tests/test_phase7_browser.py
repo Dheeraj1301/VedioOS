@@ -13,7 +13,7 @@ from django.test import override_settings
 
 from core.models import File, UploadPolicy
 from core.storage import storage_client
-from operations.models import EditorAssignment, EditorProficiency, ProjectMessage
+from operations.models import EditorAssignment, EditorProficiency, Notification, ProjectMessage
 from tests.assignment_fixtures import create_people, paid_project
 
 
@@ -30,6 +30,13 @@ class Phase7BrowserTests(StaticLiveServerTestCase):
         admin, client, editors = create_people(password=password)
         project = paid_project(client, title="Synthetic mobile project")
         EditorAssignment.objects.create(project=project, editor=editors[0], assigned_by=admin)
+        for number in range(55):
+            Notification.objects.create(
+                recipient=client.user,
+                project=project if number % 2 else None,
+                event_key=f"phase7-browser-{number}",
+                message=f"Synthetic update {number}",
+            )
         fixture = {
             "base": self.live_server_url,
             "password": password,
