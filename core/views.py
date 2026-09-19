@@ -382,11 +382,46 @@ def forbidden(request, exception=None):
     if request.path.startswith("/api/"):
         return JsonResponse({"error": "Permission denied."}, status=403)
     return render(
-        request, "error.html", {"message": "This page is not available for your account."}, status=403
+        request,
+        "error.html",
+        {
+            "title": "Permission denied",
+            "error_code": 403,
+            "message": "This page is not available for your account.",
+            "detail": "Return to your workspace and choose a project or action available to your role.",
+        },
+        status=403,
     )
 
 
 def not_found(request, exception=None):
     if request.path.startswith("/api/"):
         return JsonResponse({"error": "Not found."}, status=404)
-    return render(request, "error.html", {"message": "This page could not be found."}, status=404)
+    return render(
+        request,
+        "error.html",
+        {
+            "title": "Page not found",
+            "error_code": 404,
+            "message": "This page could not be found.",
+            "detail": "The link may be outdated, or the project may no longer be available to your account.",
+        },
+        status=404,
+    )
+
+
+def server_error(request):
+    if request.path.startswith("/api/"):
+        return JsonResponse({"error": "Service temporarily unavailable."}, status=500)
+    return render(
+        request,
+        "error.html",
+        {
+            "title": "Temporary service problem",
+            "error_code": 500,
+            "message": "We could not complete that request.",
+            "detail": "Your saved work is unchanged. Try this page again, or return to your workspace.",
+            "retry": True,
+        },
+        status=500,
+    )

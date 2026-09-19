@@ -18,7 +18,7 @@ from tests.assignment_fixtures import create_people, paid_project
 
 
 @skipUnless(os.getenv("RUN_PHASE7_BROWSER") == "1", "Requires Edge and private local S3")
-@override_settings(DEBUG=True)
+@override_settings(DEBUG=False)
 class Phase7BrowserTests(StaticLiveServerTestCase):
     def test_mobile_original_upload_and_message_visibility(self):
         EditorProficiency.objects.get_or_create(level="beginner")

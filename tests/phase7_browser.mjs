@@ -27,6 +27,11 @@ async function noOverflow() {
 try {
   await mkdir('.runtime/screenshots', {recursive: true});
   await login(f.client);
+  await page.goto(`${f.base}/client/projects/00000000-0000-0000-0000-000000000000/`);
+  await page.getByRole('heading', {name: 'This page could not be found.'}).waitFor();
+  await page.getByRole('link', {name: 'Return to workspace'}).waitFor();
+  await noOverflow();
+  await page.screenshot({path: '.runtime/screenshots/phase7-error-recovery-mobile.png', fullPage: true});
   await page.goto(`${f.base}/client/projects/${f.project}/`);
   await noOverflow();
   const bytes = Buffer.concat([Buffer.from('00000018ftypmp42'), Buffer.alloc(1024 * 1024, 81)]);
@@ -79,7 +84,7 @@ try {
   await noOverflow();
   await page.screenshot({path: '.runtime/screenshots/phase7-editor-mobile.png', fullPage: true});
   assert.deepEqual(errors, []);
-  console.log('PASS: 390px and 320px project views, mobile original upload/download integrity, labeled message forms, shared/internal message isolation, paged notification inbox, admin audit timeline, no page errors.');
+  console.log('PASS: 390px and 320px project views, safe mobile error recovery, original upload/download integrity, labeled message forms, shared/internal message isolation, paged notification inbox, admin audit timeline, no page errors.');
 } catch (error) {
   await page.screenshot({path: '.runtime/screenshots/phase7-failure.png', fullPage: true});
   console.error('Phase 7 browser flow failed:', error.message);

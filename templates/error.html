@@ -1,1 +1,11 @@
-{% extends 'base.html' %}{% block content %}<section class="section error-page"><p class="eyebrow">Let's get you back on track</p><h1>{{ message }}</h1><a class="button" href="{% if user.is_authenticated %}/dashboard/{% else %}/{% endif %}">Return {% if user.is_authenticated %}to workspace{% else %}home{% endif %} ↗</a></section>{% endblock %}
+{% extends 'base.html' %}{% block content %}
+<section class="section error-page" aria-labelledby="error-heading">
+  <p class="eyebrow">{% if error_code %}Error {{ error_code }} · {% endif %}Let's get you back on track</p>
+  <h1 id="error-heading">{{ message }}</h1>
+  {% if detail %}<p class="error-detail">{{ detail }}</p>{% endif %}
+  <div class="error-actions">
+    {% if retry %}<a class="button" href="{{ request.path }}">Try again <span>↻</span></a>{% endif %}
+    <a class="{% if retry %}text-link{% else %}button{% endif %}" href="{% if user.is_authenticated %}/dashboard/{% else %}/{% endif %}">Return {% if user.is_authenticated %}to workspace{% else %}home{% endif %} {% if not retry %}↗{% endif %}</a>
+  </div>
+</section>
+{% endblock %}
