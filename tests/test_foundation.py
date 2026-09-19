@@ -1,12 +1,14 @@
 import hashlib
 import json
+import re
 from io import StringIO
 from unittest.mock import patch
 
+from django.core import mail
 from django.core.management import call_command
 from django.db import IntegrityError, connection, transaction
 from django.test import Client as Browser
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.utils import timezone
 
 from core.models import Client, File, Order, Project, UploadPolicy, User
@@ -68,17 +70,37 @@ class FoundationTests(TestCase):
             "category": "source",
         }
 
-    def test_client_registration_login_logout(self):
+    @override_settings(EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend")
+    def test_client_registration_verification_login_logout(self):
         browser = Browser()
         response = browser.post(
             "/register/",
             {"name": "New Client", "email": "NEW@example.test", "password1": PASSWORD, "password2": PASSWORD},
         )
-        self.assertRedirects(response, "/client/")
+        self.assertRedirects(response, "/verify-email/")
         user = User.objects.get(email="new@example.test")
         self.assertEqual(user.role, "client")
         self.assertTrue(user.check_password(PASSWORD))
+        self.assertFalse(user.is_active)
+        self.assertIsNone(user.email_verified_at)
         self.assertTrue(Client.objects.filter(user=user).exists())
+        self.assertEqual(len(mail.outbox), 1)
+        blocked_login = browser.post(
+            "/login/", {"username": "NEW@example.test", "password": PASSWORD}
+        )
+        self.assertEqual(blocked_login.status_code, 200)
+        self.assertFalse(browser.session.get("_auth_user_id"))
+        mail.outbox.clear()
+        self.assertRedirects(
+            browser.post("/verify-email/resend/", {"email": "NEW@example.test"}),
+            "/verify-email/",
+        )
+        self.assertEqual(len(mail.outbox), 1)
+        verification_url = re.search(r"https?://[^\s]+/verify-email/[^\s]+/", mail.outbox[0].body).group()
+        self.assertRedirects(browser.get(verification_url), "/client/")
+        user.refresh_from_db()
+        self.assertTrue(user.is_active)
+        self.assertIsNotNone(user.email_verified_at)
         session_key = browser.session.session_key
         self.assertEqual(browser.post("/logout/").status_code, 302)
         from django.contrib.sessions.models import Session
@@ -91,6 +113,18 @@ class FoundationTests(TestCase):
             fetch_redirect_response=False,
         )
         self.assertEqual(browser.get("/client/").status_code, 200)
+
+    @override_settings(EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend")
+    def test_verification_resend_is_generic_and_invalid_tokens_are_rejected(self):
+        browser = Browser()
+        self.assertRedirects(
+            browser.post("/verify-email/resend/", {"email": "missing@example.test"}),
+            "/verify-email/",
+        )
+        self.assertEqual(len(mail.outbox), 0)
+        response = browser.get("/verify-email/not-a-valid-token/")
+        self.assertEqual(response.status_code, 400)
+        self.assertNotContains(response, "not-a-valid-token", status_code=400)
 
     def editor_data(self):
         return {

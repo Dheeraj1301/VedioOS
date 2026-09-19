@@ -131,6 +131,8 @@ Issue an editor ID and initial password from the same trusted terminal. The edit
 
 An editor can log in before approval, but an admin must approve proficiency at `/admin/editors/` before assignment. Client and administrator-issued passwords require at least 8 characters with an uppercase letter, lowercase letter, number and special character.
 
+New client accounts remain inactive until the client opens the expiring verification link. In local development, the console email backend prints that link in the `runserver` terminal. Configure an approved production email provider and verified sending domain before launch; no paid email service is required for local development or automated tests. Existing active client accounts are not deactivated by this migration.
+
 | Area | Local URL | What to check |
 | --- | --- | --- |
 | Public landing | `/` | Service sections and responsive layout |

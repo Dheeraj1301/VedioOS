@@ -5,7 +5,17 @@ class PrivateResponseMiddleware:
     def __call__(self, request):
         response = self.get_response(request)
         if request.path.startswith(
-            ("/client/", "/editor/", "/admin/", "/api/", "/orders/", "/payments/", "/login/", "/register/")
+            (
+                "/client/",
+                "/editor/",
+                "/admin/",
+                "/api/",
+                "/orders/",
+                "/payments/",
+                "/login/",
+                "/register/",
+                "/verify-email/",
+            )
         ):
             response["Cache-Control"] = "no-store, private"
             response["X-Robots-Tag"] = "noindex, nofollow"

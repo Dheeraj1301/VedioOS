@@ -32,6 +32,7 @@ class User(AbstractUser):
     email = models.EmailField(unique=True)
     name = models.CharField(max_length=120)
     role = models.CharField(max_length=10, choices=Role.choices, default=Role.CLIENT)
+    email_verified_at = models.DateTimeField(null=True, blank=True)
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = ["name"]
     objects = UserManager()

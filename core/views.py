@@ -10,6 +10,7 @@ from botocore.exceptions import BotoCoreError, ClientError
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import login, logout
+from django.core import signing
 from django.core.exceptions import PermissionDenied
 from django.db import IntegrityError, transaction
 from django.db.models import F
@@ -18,8 +19,9 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.views.decorators.http import require_GET, require_POST
 
+from .email_verification import send_verification_email, verification_payload
 from .forms import LoginForm, ProjectForm, RegistrationForm
-from .models import AuthAttempt, Client, File, Order, Payment, Plan, UploadPolicy
+from .models import AuthAttempt, Client, File, Order, Payment, Plan, UploadPolicy, User
 from .permissions import can_upload, project_for, role_required, visible_files, visible_projects
 from .storage import download_permission, inspect_object, upload_permission
 
@@ -68,11 +70,19 @@ def register(request):
                 with transaction.atomic():
                     user = form.save(commit=False)
                     user.role = "client"
+                    user.is_active = False
                     user.save()
                     Client.objects.create(user=user)
                     audit(user, "client.registered", user.pk)
-                login(request, user)
-                return redirect("client_dashboard")
+                request.session["verification_email"] = user.email
+                try:
+                    send_verification_email(request, user)
+                except Exception:
+                    messages.error(
+                        request,
+                        "Your account was saved, but the verification email could not be sent. Try resending it.",
+                    )
+                return redirect("verification_pending")
             except IntegrityError:
                 form.add_error("email", "This account could not be created. Try logging in.")
     return render(
@@ -86,6 +96,83 @@ def register(request):
             "mode": "register",
         },
     )
+
+
+@require_GET
+def verification_pending(request):
+    if request.user.is_authenticated:
+        return redirect("dashboard")
+    return render(
+        request,
+        "verification_pending.html",
+        {
+            "title": "Verify your email",
+            "verification_email": request.session.get("verification_email", ""),
+        },
+    )
+
+
+@require_POST
+def resend_verification(request):
+    if request.user.is_authenticated:
+        return redirect("dashboard")
+    if auth_rate_limited(request):
+        return render(
+            request,
+            "error.html",
+            {"message": "Too many attempts. Please try again in 15 minutes."},
+            status=429,
+        )
+    email = request.POST.get("email", "").strip().lower()[:254]
+    user = User.objects.filter(
+        email__iexact=email,
+        role="client",
+        is_active=False,
+        email_verified_at__isnull=True,
+    ).first()
+    if user:
+        try:
+            send_verification_email(request, user)
+        except Exception:
+            pass
+    request.session["verification_email"] = email
+    messages.success(
+        request,
+        "If an unverified client account matches that email, a new verification link has been sent.",
+    )
+    return redirect("verification_pending")
+
+
+@require_GET
+def verify_email(request, token):
+    try:
+        payload = verification_payload(token)
+        user_id, email = payload["user_id"], payload["email"]
+    except (signing.BadSignature, signing.SignatureExpired, KeyError, TypeError):
+        return render(
+            request,
+            "error.html",
+            {
+                "title": "Verification link unavailable",
+                "error_code": 400,
+                "message": "This verification link is invalid or has expired.",
+                "detail": "Request a new link using the email address from your client registration.",
+            },
+            status=400,
+        )
+    with transaction.atomic():
+        user = get_object_or_404(User.objects.select_for_update(), pk=user_id, role="client")
+        if user.email.lower() != str(email).lower():
+            raise PermissionDenied
+        if user.email_verified_at is None:
+            user.email_verified_at = timezone.now()
+            user.is_active = True
+            user.save(update_fields=["email_verified_at", "is_active"])
+            audit(user, "client.email_verified", user.pk)
+    login(request, user)
+    request.session.pop("verification_email", None)
+    messages.success(request, "Email verified. Your client workspace is ready.")
+    return redirect("client_dashboard")
 
 
 def login_view(request):
