@@ -94,6 +94,8 @@ The first-version scope is all 28 priorities in original brief section 34, cover
 
 **2026-09-19: safe error recovery verified.** Browser and API permission, missing-resource and server-error responses provide actionable recovery without rendering private exception details. The full gate remains open; see [Phase 7 evidence](PHASE_7.md).
 
+**2026-09-19: automated accessibility baseline verified.** Project workflows now provide keyboard skip navigation, live progress/error announcements, distinct download names and retryable rejected uploads. A manual assistive-technology audit remains before launch; see [Phase 7 evidence](PHASE_7.md).
+
 - Finish client/editor/admin status dashboards, unassigned/active/review/revision/completed queues, and deadline alerts.
 - Add durable role-scoped event notifications and retry handling.
 - Complete audit coverage and first-version project communication; support consultation request tracking without requiring built-in video calling.

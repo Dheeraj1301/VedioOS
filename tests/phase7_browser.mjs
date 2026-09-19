@@ -34,6 +34,16 @@ try {
   await page.screenshot({path: '.runtime/screenshots/phase7-error-recovery-mobile.png', fullPage: true});
   await page.goto(`${f.base}/client/projects/${f.project}/`);
   await noOverflow();
+  await page.keyboard.press('Tab');
+  assert.equal(await page.evaluate(() => document.activeElement?.classList.contains('skip-link')), true);
+  await page.keyboard.press('Enter');
+  assert.equal(await page.evaluate(() => document.activeElement?.id), 'main');
+  assert.equal(await page.locator('#upload-status').getAttribute('aria-live'), 'polite');
+  assert.equal(await page.locator('#download-status').getAttribute('aria-live'), 'polite');
+  await page.locator('#upload-files').setInputFiles({name: 'unsupported.txt', mimeType: 'text/plain', buffer: Buffer.from('synthetic')});
+  await page.getByRole('button', {name: 'Upload originals'}).click();
+  await page.locator('#upload-status[role="alert"]').waitFor();
+  assert.equal(await page.getByRole('button', {name: 'Upload originals'}).isEnabled(), true);
   const bytes = Buffer.concat([Buffer.from('00000018ftypmp42'), Buffer.alloc(1024 * 1024, 81)]);
   await page.locator('#upload-files').setInputFiles({name: 'phase7-mobile-original.mp4', mimeType: 'video/mp4', buffer: bytes});
   await page.getByRole('button', {name: 'Upload originals'}).click();
@@ -84,7 +94,7 @@ try {
   await noOverflow();
   await page.screenshot({path: '.runtime/screenshots/phase7-editor-mobile.png', fullPage: true});
   assert.deepEqual(errors, []);
-  console.log('PASS: 390px and 320px project views, safe mobile error recovery, original upload/download integrity, labeled message forms, shared/internal message isolation, paged notification inbox, admin audit timeline, no page errors.');
+  console.log('PASS: 390px and 320px project views, keyboard skip navigation, live upload/download feedback, accessible retry, safe error recovery, original upload/download integrity, message isolation, notification inbox, admin audit timeline, no page errors.');
 } catch (error) {
   await page.screenshot({path: '.runtime/screenshots/phase7-failure.png', fullPage: true});
   console.error('Phase 7 browser flow failed:', error.message);
