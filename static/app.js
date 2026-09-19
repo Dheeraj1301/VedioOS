@@ -23,20 +23,20 @@ function uploadOriginal(permission, file, progress) {
     xhr.send(file);
   });
 }
-const uploadForm = document.getElementById('upload-form');
-uploadForm?.addEventListener('submit', async event => {
+document.querySelectorAll('.upload-form').forEach(uploadForm => uploadForm.addEventListener('submit', async event => {
   event.preventDefault();
   const button = uploadForm.querySelector('button');
-  const status = document.getElementById('upload-status');
-  const progress = document.getElementById('upload-progress');
-  const files = [...document.getElementById('upload-files').files];
+  const status = uploadForm.querySelector('.upload-status');
+  const progress = uploadForm.querySelector('.upload-progress');
+  const files = [...uploadForm.querySelector('.upload-files').files];
+  const category = uploadForm.dataset.fixedCategory || uploadForm.querySelector('[name="category"]').value;
   button.disabled = true;
   try {
     for (const file of files) {
       announce(status, `Checking original: ${file.name}`);
       // Incremental hashing keeps memory bounded for large video files.
       const sha256 = await window.hashOriginal(file);
-      const result = await postJSON(`/api/projects/${uploadForm.dataset.projectId}/uploads/`, {filename: file.name, size_bytes: file.size, content_type: file.type || 'application/octet-stream', category: document.getElementById('category').value, sha256});
+      const result = await postJSON(`/api/projects/${uploadForm.dataset.projectId}/uploads/`, {filename: file.name, size_bytes: file.size, content_type: file.type || 'application/octet-stream', category, sha256});
       progress.hidden = false; progress.value = 0;
       announce(status, `Uploading ${file.name}…`);
       await uploadOriginal(result.upload, file, progress);
@@ -47,7 +47,7 @@ uploadForm?.addEventListener('submit', async event => {
     window.location.reload();
   } catch (error) { announce(status, error.message, true); }
   finally { button.disabled = false; }
-});
+}));
 document.querySelectorAll('.download-button').forEach(button => button.addEventListener('click', async () => {
   const status = document.getElementById('download-status');
   button.disabled = true;

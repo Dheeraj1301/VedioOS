@@ -29,9 +29,15 @@ class AccessibilitySemanticsTests(TestCase):
         self.client.force_login(client_profile.user)
         response = self.client.get(f"/client/projects/{project.pk}/")
         self.assertContains(response, 'main id="main" class="workspace-main" tabindex="-1"')
-        self.assertContains(response, 'id="upload-status" role="status" aria-live="polite"')
+        self.assertContains(
+            response,
+            'id="upload-status" class="upload-status" role="status" aria-live="polite"',
+        )
         self.assertContains(response, 'id="download-status" role="status" aria-live="polite"')
         self.assertContains(
             response,
             'aria-label="Download private source.mp4 in original quality"',
         )
+        self.assertContains(response, "Upload source files")
+        self.assertContains(response, "Upload inspiration")
+        self.assertContains(response, 'data-fixed-category="reference"')

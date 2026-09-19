@@ -2,9 +2,7 @@ from datetime import datetime
 from datetime import timezone as datetime_timezone
 
 from django.contrib import messages
-from django.contrib.auth import login
 from django.core.exceptions import PermissionDenied, ValidationError
-from django.db import IntegrityError, transaction
 from django.db.models import Exists, OuterRef
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
@@ -12,67 +10,18 @@ from django.views.decorators.http import require_POST
 
 from core.models import Client, Order
 from core.permissions import role_required, visible_projects
-from core.views import audit, auth_rate_limited
 
 from .assignments import approve_proficiency, change_availability, editor_roster, open_workload
 from .calls import complete_call, schedule_call
-from .forms import AvailabilityForm, EditorRegistrationForm
-from .models import CallRequest, Editor, EditorAssignment, EditorAvailability, EditorCoins, EditorProficiency
+from .forms import AvailabilityForm
+from .models import CallRequest, Editor, EditorAssignment, EditorProficiency
 
 
 def editor_register(request):
     if request.user.is_authenticated:
         return redirect("dashboard")
-    if request.method == "POST" and auth_rate_limited(request):
-        return render(
-            request,
-            "error.html",
-            {"message": "Too many attempts. Please try again in 15 minutes."},
-            status=429,
-        )
-    form = EditorRegistrationForm(request.POST or None)
-    if request.method == "POST":
-        if any(
-            key in request.POST
-            for key in ["role", "approved", "proficiency", "is_staff", "is_superuser", "approved_by"]
-        ):
-            raise PermissionDenied
-        if form.is_valid():
-            try:
-                with transaction.atomic():
-                    user = form.save(commit=False)
-                    user.role = "editor"
-                    user.save()
-                    fields = [
-                        "phone",
-                        "experience",
-                        "tools",
-                        "portfolio",
-                        "previous_work",
-                        "expertise",
-                        "other_information",
-                    ]
-                    editor = Editor.objects.create(
-                        user=user, **{key: form.cleaned_data[key] for key in fields}
-                    )
-                    EditorAvailability.objects.create(editor=editor, status=form.cleaned_data["availability"])
-                    EditorCoins.objects.create(editor=editor)
-                    audit(user, "editor.application_submitted", editor.id)
-                login(request, user)
-                return redirect("editor_dashboard")
-            except IntegrityError:
-                form.add_error("email", "This account could not be created. Try logging in.")
-    return render(
-        request,
-        "auth.html",
-        {
-            "form": form,
-            "title": "Bring your craft. Make an impact.",
-            "subtitle": "Apply to join our human editing team. Our admins review your experience and proficiency.",
-            "mode": "editor",
-            "button": "Submit application",
-        },
-    )
+    messages.info(request, "Editor accounts are issued by an administrator. Sign in with your editor ID.")
+    return redirect("login")
 
 
 @role_required("editor")

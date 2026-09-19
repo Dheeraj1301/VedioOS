@@ -1,9 +1,9 @@
 {% load static %}<!doctype html>
 <html lang="en">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="Your footage, professionally edited by real people. A private workspace for every edit."><title>{% block title %}{{ title|default:"Human craft. Better video." }} · VedioOS{% endblock %}</title><link rel="stylesheet" href="{% static 'app.css' %}"><script defer src="{% static 'vendor/sha256.umd.min.js' %}"></script><script defer src="{% static 'hash-original.js' %}"></script><script defer src="{% static 'app.js' %}"></script></head>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="Your footage, professionally edited by real people. A private workspace for every edit."><title>{% block title %}{{ title|default:"Human craft. Better video." }} · VedioOS{% endblock %}</title><link rel="stylesheet" href="{% static 'app.css' %}"><script defer src="{% static 'vendor/sha256.umd.min.js' %}"></script><script defer src="{% static 'hash-original.js' %}"></script><script defer src="{% static 'app.js' %}"></script><script defer src="{% static 'account-controls.js' %}"></script></head>
 <body><a class="skip-link" href="#main">Skip to content</a>
 {% block layout %}
 <header class="public-header"><a class="brand" href="/" aria-label="VedioOS home"><span class="brand-mark">V</span>Vedio<span>OS</span></a><nav aria-label="Main navigation"><a href="/#how-it-works">How it works</a><a href="/#services">Services</a>{% if user.is_authenticated %}<a class="button small" href="/dashboard/">Workspace <span>↗</span></a>{% else %}<a href="/login/">Log in</a><a class="button small" href="/register/">Start creating <span>↗</span></a>{% endif %}</nav></header>
 <main id="main">{% block content %}{% endblock %}</main>
-<footer class="public-footer"><a class="brand" href="/">Vedio<span>OS</span></a><p>Human craft. Every frame.</p><a href="/register/editor/">Join as an editor ↗</a></footer>
+<footer class="public-footer"><a class="brand" href="/">Vedio<span>OS</span></a><p>Human craft. Every frame.</p><a href="/login/">Editor sign in ↗</a></footer>
 {% endblock %}</body></html>

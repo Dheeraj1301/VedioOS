@@ -108,19 +108,59 @@ class FoundationTests(TestCase):
             "other_information": "",
         }
 
-    def test_editor_application_and_login(self):
+    def test_admin_issued_editor_id_and_login(self):
         browser = Browser()
-        self.assertRedirects(browser.post("/register/editor/", self.editor_data()), "/editor/")
+        self.assertRedirects(browser.get("/register/editor/"), "/login/")
+        with patch("operations.management.commands.create_editor.getpass", return_value=PASSWORD):
+            call_command(
+                "create_editor",
+                email="neweditor@example.test",
+                name="New Editor",
+                editor_id="VED-TEST0001",
+                stdout=StringIO(),
+            )
         user = User.objects.get(email="neweditor@example.test")
         self.assertEqual(user.role, "editor")
         self.assertFalse(user.editor_profile.approved)
         self.assertIsNone(user.editor_profile.proficiency_id)
-        self.assertEqual(user.editor_profile.availability.status, "available")
-        browser.post("/logout/")
-        self.assertEqual(
-            browser.post("/login/", {"username": user.email, "password": PASSWORD}).status_code, 302
+        self.assertEqual(user.editor_profile.login_id, "VED-TEST0001")
+        self.assertEqual(user.editor_profile.availability.status, "offline")
+        self.assertRedirects(
+            browser.post("/login/", {"username": "ved-test0001", "password": PASSWORD}),
+            "/dashboard/",
+            fetch_redirect_response=False,
         )
-        self.assertContains(browser.get("/editor/"), "under review")
+        self.assertContains(browser.get("/editor/"), "awaiting approval")
+
+    def test_client_password_requires_owner_approved_composition(self):
+        invalid = [
+            "lowercase8!",
+            "UPPERCASE8!",
+            "NoNumber!",
+            "NoSpecial8",
+            "Aa1!aaa",
+        ]
+        for index, password in enumerate(invalid):
+            response = Browser().post(
+                "/register/",
+                {
+                    "name": "Password Test",
+                    "email": f"password-{index}@example.test",
+                    "password1": password,
+                    "password2": password,
+                },
+            )
+            with self.subTest(password=password):
+                self.assertEqual(response.status_code, 200)
+                self.assertFalse(User.objects.filter(email=f"password-{index}@example.test").exists())
+
+    def test_music_preferences_remove_duplicate_and_offer_both(self):
+        choices = dict(Project._meta.get_field("song_choice").choices)
+        self.assertNotIn("known", choices)
+        self.assertEqual(
+            choices["both"],
+            "I will provide a song and would also like editor suggestions",
+        )
 
     def test_admin_provisioning_and_login(self):
         with patch("core.management.commands.create_admin.getpass", return_value=PASSWORD):
@@ -179,7 +219,7 @@ class FoundationTests(TestCase):
         browser = Browser()
         data = self.editor_data()
         for field in ["role", "approved", "proficiency", "is_staff", "is_superuser"]:
-            self.assertEqual(browser.post("/register/editor/", {**data, field: "admin"}).status_code, 403)
+            self.assertEqual(browser.post("/register/editor/", {**data, field: "admin"}).status_code, 302)
             self.assertEqual(browser.post("/register/", {**data, field: "admin"}).status_code, 403)
         self.assertFalse(User.objects.filter(email=data["email"]).exists())
         self.assertEqual(

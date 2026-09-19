@@ -157,7 +157,7 @@ def new_order(request):
             audit(request.user, "project.draft_created", project.pk)
         messages.success(request, "Project saved. Add your original files below.")
         return redirect("client_project", project_id=project.pk)
-    return render(request, "client/new_order.html", {"form": form, "title": "Start a new edit"})
+    return render(request, "client/new_order.html", {"form": form, "title": "Plan a new edit"})
 
 
 @role_required("client")
@@ -213,6 +213,8 @@ def project_detail(request, project_id, area):
             "review_enabled": project.order.terms_snapshot.get("review_rule") == "latest_request_v1",
             "revision_limit": project.order.terms_snapshot.get("revision_limit"),
             "upload_categories": allowed,
+            "source_upload_categories": [item for item in allowed if item[0] != "reference"],
+            "can_upload_inspiration": any(item[0] == "reference" for item in allowed),
             "upload_policy": policy,
             "max_upload_mb": policy.max_bytes // 1048576 if policy else 0,
             "current_assignment": project.assignments.filter(ended_at__isnull=True)

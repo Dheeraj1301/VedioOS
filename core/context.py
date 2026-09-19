@@ -1,7 +1,7 @@
 NAV = {
     "client": [
         ("Overview", "/client/"),
-        ("New order", "/client/new-order/"),
+        ("Plan a new edit", "/client/new-order/"),
         ("My projects", "/client/projects/"),
         ("Payment history", "/client/payments/"),
     ],

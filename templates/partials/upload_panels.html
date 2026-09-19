@@ -1,0 +1,27 @@
+{% if source_upload_categories %}
+<section class="panel upload-panel">
+  <p class="eyebrow">{% if user.role == 'editor' %}Private delivery uploads{% else %}Private source uploads{% endif %}</p><h2>{% if user.role == 'editor' %}Add edited versions.{% else %}Add raw footage and assets.{% endif %}</h2>
+  <p>{% if user.role == 'editor' %}Upload a draft or final candidate without replacing earlier versions.{% else %}Upload the files the editor should use in your video. Originals remain unchanged.{% endif %}</p>
+  <form class="upload-form" data-project-id="{{ project.id }}">{% csrf_token %}
+    <label for="category">File category</label><select id="category" name="category">{% for value,label in source_upload_categories %}<option value="{{ value }}">{{ label }}</option>{% endfor %}</select>
+    <label class="file-drop" for="upload-files"><span aria-hidden="true">↑</span><strong>{% if user.role == 'editor' %}Choose edited files{% else %}Choose raw files{% endif %}</strong><small>Up to {{ max_upload_mb }} MB per file in this local setup</small></label>
+    <input id="upload-files" class="upload-files" type="file" multiple required>
+    <button class="button" type="submit">{% if user.role == 'editor' %}Upload edited files{% else %}Upload source files{% endif %} ↗</button>
+    <progress id="upload-progress" class="upload-progress" max="100" value="0" hidden aria-label="Source upload progress"></progress>
+    <p id="upload-status" class="upload-status" role="status" aria-live="polite"></p>
+  </form>
+</section>
+{% endif %}
+{% if can_upload_inspiration %}
+<section class="panel upload-panel inspiration-upload-panel">
+  <p class="eyebrow">Inspiration video</p><h2>Add a separate reference.</h2>
+  <p>This guides the style and is stored separately from footage used in the edit.</p>
+  <form class="upload-form" data-project-id="{{ project.id }}" data-fixed-category="reference">{% csrf_token %}
+    <label class="file-drop" for="inspiration-files"><span aria-hidden="true">◎</span><strong>Choose inspiration videos</strong><small>Reference files stay private with this project</small></label>
+    <input id="inspiration-files" class="upload-files" type="file" multiple required>
+    <button class="button" type="submit">Upload inspiration ↗</button>
+    <progress id="inspiration-progress" class="upload-progress" max="100" value="0" hidden aria-label="Inspiration upload progress"></progress>
+    <p id="inspiration-status" class="upload-status" role="status" aria-live="polite"></p>
+  </form>
+</section>
+{% endif %}

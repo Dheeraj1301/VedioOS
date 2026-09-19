@@ -25,10 +25,17 @@ class LoginForm(AuthenticationForm):
         kwargs.setdefault("label_suffix", "")
         super().__init__(*args, **kwargs)
 
-    username = forms.EmailField(label="Email", widget=forms.EmailInput(attrs={"autocomplete": "email"}))
+    username = forms.CharField(
+        label="Email or editor ID",
+        widget=forms.TextInput(attrs={"autocomplete": "username"}),
+    )
 
     def clean_username(self):
-        return self.cleaned_data["username"].strip().lower()
+        identity = self.cleaned_data["username"].strip()
+        from operations.models import Editor
+
+        editor = Editor.objects.filter(login_id__iexact=identity).select_related("user").first()
+        return editor.user.email if editor else identity.lower()
 
 
 class ProjectForm(forms.ModelForm):

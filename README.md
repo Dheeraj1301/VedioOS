@@ -6,7 +6,7 @@ A managed video-editing service connecting clients with our internal team of hum
 
 ## Project status
 
-Day 1 includes core and operational database migrations, client/editor registration, shared login/logout, protected dashboards, admin editor approval, project drafts, and private direct uploads/downloads. The Django backend is configured for [the selected Supabase PostgreSQL project](docs/SUPABASE.md), with SQLite retained as an explicit offline/test option. Media storage remains the separate private S3-compatible local service.
+Day 1 includes core and operational database migrations, client registration, administrator-issued editor access, shared login/logout, protected dashboards, admin editor approval, project drafts, and private direct uploads/downloads. The Django backend is configured for [the selected Supabase PostgreSQL project](docs/SUPABASE.md), with SQLite retained as an explicit offline/test option. Media storage remains the separate private S3-compatible local service.
 
 Phase 3 includes admin plans/custom pricing, commercial terms, client quotes, saved order agreements, paid/unpaid order filters, payment history and an isolated signed-payment sandbox. See [Phase 3 behavior, tests and remaining decisions](docs/PHASE_3.md). Real checkout and production deployment remain inactive. See also [Day 1 evidence](docs/DAY_1_VERIFICATION.md) and [architecture](docs/ARCHITECTURE.md).
 
@@ -17,6 +17,8 @@ Phase 5 adds private editor submissions, version history, revision requests, exp
 Phase 6 adds prospective coin rules, acceptance-linked pending credits, admin release, an editor wallet and a sandbox redemption flow with reserved balances. See [Phase 6 evidence and activation limits](docs/PHASE_6.md). The connected project's earning and redemption policy remains disabled; real coin value and payout method await owner decisions.
 
 Phase 7 now includes admin status queues, paid consultation tracking, recipient-scoped in-app notifications with older-history pages, and alerts for already-recorded overdue deadlines. See [Phase 7 scope and remaining work](docs/PHASE_7.md). The full Phase 7 gate remains open.
+
+The owner-requested account and order-flow revision is being completed before the next roadmap phase. Password, editor-ID, navigation, music and separate inspiration-upload changes are verified; email verification and the four-block plan/custom screen are next. See [the live change checklist](docs/OWNER_CHANGES_2026_09_19.md).
 
 Project details also support client/team messages and separate internal notes with protected older-message pages. Current project access is checked on the backend; the [Phase 7 evidence](docs/PHASE_7.md) records the remaining launch work.
 
@@ -113,13 +115,21 @@ Open **[http://127.0.0.1:8000](http://127.0.0.1:8000)**. Keep both terminals run
 
 ### 3. Create preview accounts
 
-Clients register at `/register/`; editors apply at `/register/editor/`. All roles log in at `/login/`. Create an admin in **terminal C** with a password entered at the hidden prompt:
+Clients register at `/register/`. Editor accounts are issued by an administrator and public editor application is disabled. All roles log in at `/login/`; editors may enter their generated editor ID instead of email. Create an admin in **terminal C** with a password entered at the hidden prompt:
 
 ```powershell
 .venv/Scripts/python.exe manage.py create_admin --email manager@example.com --name "Studio Manager" --settings=vedioos.local_settings
 ```
 
-Use your own email and name. The command will not silently turn an existing client/editor into an admin. An editor can log in before approval, but an admin must approve proficiency at `/admin/editors/` before assignment.
+Use your own email and name. The command will not silently turn an existing client/editor into an admin.
+
+Issue an editor ID and initial password from the same trusted terminal. The editor workspace has no password-change control:
+
+```powershell
+.venv/Scripts/python.exe manage.py create_editor --email editor@example.com --name "Editor Name" --settings=vedioos.local_settings
+```
+
+An editor can log in before approval, but an admin must approve proficiency at `/admin/editors/` before assignment. Client and administrator-issued passwords require at least 8 characters with an uppercase letter, lowercase letter, number and special character.
 
 | Area | Local URL | What to check |
 | --- | --- | --- |

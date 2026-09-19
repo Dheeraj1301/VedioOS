@@ -1,5 +1,7 @@
 # Day 1 — Foundation, database, authentication, and basic UI
 
+> Scope update (2026-09-19): the owner replaced public editor self-registration with administrator-issued editor IDs and initial passwords. The original Day 1 responsibilities below are preserved as historical milestone context; current behavior is recorded in [DECISIONS.md](DECISIONS.md) and the [README](../README.md).
+
 **Status: implemented and verified locally on 2026-09-15. See [Day 1 verification](DAY_1_VERIFICATION.md) for evidence and production limitations.**
 
 This is the immediate delivery milestone. It covers foundation work across roadmap Phases 1–2 and creates schema/UI foundations for later phases. Creating a table or navigation skeleton does not complete its future business workflow.

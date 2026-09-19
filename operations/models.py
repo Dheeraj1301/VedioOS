@@ -1,7 +1,13 @@
+import uuid
+
 from django.conf import settings
 from django.db import models
 
 from core.models import Project, Record
+
+
+def new_editor_login_id():
+    return f"VED-{uuid.uuid4().hex[:10].upper()}"
 
 
 class EditorProficiency(models.Model):
@@ -26,6 +32,7 @@ class EditorProficiency(models.Model):
 
 
 class Editor(Record):
+    login_id = models.CharField(max_length=20, unique=True, default=new_editor_login_id, editable=False)
     user = models.OneToOneField(
         settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name="editor_profile"
     )

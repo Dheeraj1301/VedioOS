@@ -25,6 +25,12 @@ Do not substitute invented production values for these decisions. Development fi
 
 ## Recorded baseline
 
+### Account and order-flow scope update — 2026-09-19
+
+Owner instruction supersedes public editor self-registration in the earlier Day 1 brief. Editor access is now administrator-issued: an editor receives an editor ID and initial password, signs in through the shared login, and has no self-service password-change route. Detailed editor profile and proficiency data remain administrator-managed operational records. Client passwords require at least eight characters containing uppercase, lowercase, numeric and special characters; password inputs provide a visibility control.
+
+The same instruction separates inspiration-video uploads from raw/source uploads, removes the duplicate “already have a song” music choice, adds an option to provide a song while requesting editor suggestions, and requests clearer “plan an edit” wording and authenticated Back navigation. Email verification and the four-block plan/custom order flow are requested next. Custom pricing must remain server-authoritative; model-based estimates cannot be enabled until approved training examples, evaluation criteria and commercial price rules are supplied. D03, D04 and D08 remain open.
+
 ### Phase 4 allocation milestone — 2026-09-16
 
 The owner authorized continuing development. Implemented admin assessment, capacity controls and configurable transactional allocation; no provider, capacity or business policy was approved by inference. The skip/wait clarification has no recorded answer, so the shared policy remains unset and disabled. Technical choice: serialize allocation and eligibility changes on one policy row, keep independent persistent proficiency cursors, and verify concurrency on PostgreSQL. Supported operational choices and remaining D07–D09 decisions are documented in [Phase 4](PHASE_4.md). No paid service or AI integration was added.

@@ -62,7 +62,15 @@ class Phase7BrowserTests(StaticLiveServerTestCase):
                 timeout=180,
             )
             self.assertEqual(result.returncode, 0, (result.stdout or "") + (result.stderr or ""))
-            self.assertEqual(File.objects.filter(project=project, state="ready").count(), 1)
+            self.assertEqual(File.objects.filter(project=project, state="ready").count(), 2)
+            self.assertTrue(
+                File.objects.filter(
+                    project=project,
+                    state="ready",
+                    category="reference",
+                    filename="phase7-inspiration.mp4",
+                ).exists()
+            )
             self.assertEqual(ProjectMessage.objects.filter(project=project).count(), 2)
             print(result.stdout)
         finally:

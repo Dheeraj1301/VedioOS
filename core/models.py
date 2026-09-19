@@ -118,8 +118,8 @@ class Project(Record):
         max_length=20,
         choices=[
             ("provide", "I will provide my own song"),
-            ("known", "I already have a song"),
             ("suggest", "Suggest a song for me"),
+            ("both", "I will provide a song and would also like editor suggestions"),
         ],
         default="suggest",
     )
