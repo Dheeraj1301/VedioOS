@@ -68,11 +68,24 @@ def transition(user, project_id, action, *, file_id=None, version_id=None, note=
             return project
         if project.status not in states:
             raise ValidationError("This project cannot start editing in its current state.")
+        previous_status = project.status
         project.status = states[project.status]
         if project.status == "editing":
             notify(
                 project, project.client.user, f"editing:{project.pk}", "Editing has started on your project."
             )
+        audit(
+            user,
+            "project.editing_started"
+            if project.status == "editing"
+            else "project.revision_started",
+            project.pk,
+            {
+                "assignment": str(assignment.pk),
+                "previous_status": previous_status,
+                "status": project.status,
+            },
+        )
     elif action == "submit":
         file = File.objects.filter(
             pk=file_id,

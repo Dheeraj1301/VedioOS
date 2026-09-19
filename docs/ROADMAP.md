@@ -90,6 +90,8 @@ The first-version scope is all 28 priorities in original brief section 34, cover
 
 **2026-09-18: protected notification history verified.** Recipients can page through older notices; current project access still controls each page and read action after editor reassignment. See [Phase 7 evidence](PHASE_7.md).
 
+**2026-09-19: lifecycle audit inventory completed.** Initial editing and requested-revision starts now join the existing attributable lifecycle audit trail and repeated starts do not duplicate events. The full gate remains open; see [Phase 7 evidence](PHASE_7.md).
+
 - Finish client/editor/admin status dashboards, unassigned/active/review/revision/completed queues, and deadline alerts.
 - Add durable role-scoped event notifications and retry handling.
 - Complete audit coverage and first-version project communication; support consultation request tracking without requiring built-in video calling.

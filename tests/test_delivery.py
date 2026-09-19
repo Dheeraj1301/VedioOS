@@ -9,7 +9,7 @@ from django.utils import timezone
 from core.delivery import transition
 from core.models import DeliveryAcceptance, File, ProjectVersion
 from operations.assignments import open_workload
-from operations.models import CoinTransaction, EditorAssignment, Notification
+from operations.models import AuditLog, CoinTransaction, EditorAssignment, Notification
 from tests.assignment_fixtures import create_people, enable_test_policy, paid_project
 
 
@@ -90,6 +90,39 @@ class DeliveryTests(TestCase):
         self.project.refresh_from_db()
         self.assertEqual(self.project.status, "awaiting_review")
         self.assertFalse(DeliveryAcceptance.objects.exists())
+
+    def test_start_actions_are_attributable_and_retry_safe(self):
+        transition(self.editor, self.project.pk, "start")
+        transition(self.editor, self.project.pk, "start")
+        started = AuditLog.objects.get(action="project.editing_started", target_id=str(self.project.pk))
+        self.assertEqual(started.actor, self.editor)
+        self.assertEqual(started.detail["assignment"], str(self.project.assignments.get().pk))
+        self.assertEqual(started.detail["previous_status"], "editor_assigned")
+        self.assertEqual(started.detail["status"], "editing")
+
+        transition(
+            self.editor,
+            self.project.pk,
+            "submit",
+            file_id=self.file.pk,
+        )
+        version = self.project.versions.get()
+        transition(self.buyer.user, self.project.pk, "revise", version_id=version.pk, note="Trim")
+        transition(self.editor, self.project.pk, "start")
+        transition(self.editor, self.project.pk, "start")
+        revision_started = AuditLog.objects.get(
+            action="project.revision_started", target_id=str(self.project.pk)
+        )
+        self.assertEqual(revision_started.actor, self.editor)
+        self.assertEqual(revision_started.detail["previous_status"], "revision_requested")
+        self.assertEqual(revision_started.detail["status"], "revision_in_progress")
+        self.assertEqual(
+            AuditLog.objects.filter(
+                action__in=["project.editing_started", "project.revision_started"],
+                target_id=str(self.project.pk),
+            ).count(),
+            2,
+        )
 
     def test_limits_stale_acceptance_and_blank_revision(self):
         first = self.submit()
