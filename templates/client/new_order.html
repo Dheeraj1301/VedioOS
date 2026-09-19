@@ -1,1 +1,32 @@
-{% extends 'workspace.html' %}{% block workspace_content %}<div class="page-heading"><div><p class="eyebrow">New order / 01</p><h1>Tell us about your edit.</h1><p class="muted">Save your brief, then add your original footage and references.</p></div></div><div class="notice" role="note"><strong>Before you upload:</strong> Share only footage, music, fonts, and references you have permission to use. Do not include passwords or unrelated personal documents.</div><div class="form-layout"><section class="panel form-panel"><form method="post" class="form-stack">{% csrf_token %}{{ form.as_div }}<button class="button" type="submit">Save & add files <span>↗</span></button></form></section><aside class="order-aside"><p class="eyebrow">A good starting point</p><h3>Give your editor<br>the full picture.</h3><p>Share the format, mood, audience, and any must-have moments.</p><hr><h3>Your project starts as a draft.</h3><p>After uploading, choose a configured plan or custom services and review your quote. Saving your project does not place a paid order or start editing.</p><p>◈ Files stay private.<br>↗ Original quality stays intact.</p></aside></div>{% endblock %}
+{% extends 'workspace.html' %}{% load money %}
+{% block workspace_content %}
+<div class="page-heading"><div><p class="eyebrow">Plan an edit / 01</p><h1>Tell us about your edit.</h1><p class="muted">Choose a configured plan or shape a custom brief, then add your private files.</p></div></div>
+<div class="notice" role="note"><strong>Before you upload:</strong> Share only footage, music, fonts, and references you have permission to use. Do not include passwords or unrelated personal documents.</div>
+<form method="post" class="form-stack new-order-form" data-new-order-form data-selected-choice="{{ form.data.order_choice|default:'' }}">{% csrf_token %}
+  {% if form.non_field_errors %}{{ form.non_field_errors }}{% endif %}
+  <fieldset class="order-choice-fieldset"><legend>Choose one of four editing options</legend>
+    {% if form.order_choice.errors %}{{ form.order_choice.errors }}{% endif %}
+    <div class="order-choice-grid">
+      {% for slot,plan in plan_slots %}
+      <label class="order-choice-card{% if not plan or not plan.active %} unavailable{% endif %}">
+        {% if plan and plan.active %}<input type="radio" name="order_choice" value="plan:{{ plan.id }}" required>{% else %}<input type="radio" disabled>{% endif %}
+        <span class="eyebrow">Plan {{ slot }}</span><strong>{% if plan %}{{ plan.name }}{% else %}Coming soon{% endif %}</strong>
+        {% if plan and plan.active %}<span>{{ plan.price_minor|money:plan.currency }}</span><small>{{ plan.features|join:", " }}</small>{% else %}<small>The team has not published this plan yet.</small>{% endif %}
+      </label>
+      {% endfor %}
+      <label class="order-choice-card custom-choice"><input type="radio" name="order_choice" value="custom" required {% if form.data.order_choice == 'custom' %}checked{% endif %}><span class="eyebrow">Custom</span><strong>Customize my edit</strong><small>Select the exact editing direction below. The server calculates a quote only from configured prices.</small></label>
+    </div>
+  </fieldset>
+  <section class="panel form-panel custom-fields" data-custom-fields hidden>
+    <h2>Customize your edit</h2><p class="muted">These choices are saved in the brief. Your amount appears after the team has configured and reviewed the matching services.</p><div class="notice" role="status"><strong>Price estimate:</strong> Available after saving when approved custom-service prices are configured. Model pricing is disabled until training examples and acceptable error limits are approved.</div>
+    <div class="choice-checks">{{ form.colour_grading.as_field_group }}{{ form.quality_enhancement.as_field_group }}</div>
+    {{ form.reel_duration.as_field_group }}{{ form.wants_wording.as_field_group }}
+    <div data-wording-direction hidden>{{ form.wording_direction.as_field_group }}</div>
+  </section>
+  <div class="form-layout"><section class="panel form-panel">
+    {{ form.title.as_field_group }}{{ form.requirements.as_field_group }}{{ form.reference_notes.as_field_group }}{{ form.song_choice.as_field_group }}{{ form.song_information.as_field_group }}{{ form.call_before.as_field_group }}{{ form.call_after.as_field_group }}
+    <button class="button" type="submit">Save & add files <span>↗</span></button>
+  </section><aside class="order-aside"><p class="eyebrow">A good starting point</p><h3>Give your editor<br>the full picture.</h3><p>Share the format, mood, audience, and any must-have moments.</p><hr><h3>Your project starts as a draft.</h3><p>Saving does not place a paid order or start editing. Review the server-calculated quote before payment.</p><p>◈ Files stay private.<br>↗ Original quality stays intact.</p></aside></div>
+</form>
+<section class="panel detail-panel monthly-plans"><p class="eyebrow">Monthly creator plans</p><h2>Recurring editing packages</h2>{% for package in monthly_packages %}<div class="file-row"><div><strong>{{ package.name }}</strong><p>{{ package.price_minor|money:package.currency }} · {{ package.video_allowance }} videos</p></div><span class="badge">Monthly</span></div>{% empty %}<p class="muted">Monthly plans are being configured. Sales stay closed until allowance, renewal, expiry and rollover terms are approved.</p>{% endfor %}</section>
+{% endblock %}

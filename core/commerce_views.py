@@ -65,7 +65,17 @@ def quote_page(request, project_id):
         check_policy(policy)
     except ValidationError as exc:
         unavailable = " ".join(exc.messages)
-    form = QuoteSelectionForm(request.POST or None, currency=policy.currency if policy else "")
+    initial = None
+    if request.method != "POST":
+        initial = {
+            "kind": project.order.kind,
+            "plan": project.order.plan_id,
+        }
+    form = QuoteSelectionForm(
+        request.POST or None,
+        currency=policy.currency if policy else "",
+        initial=initial,
+    )
     if request.method == "POST":
         if set(request.POST) - {"csrfmiddlewaretoken", "kind", "plan", "services", "scope_confirmed"}:
             return render(

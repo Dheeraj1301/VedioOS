@@ -96,6 +96,18 @@ class CustomService(Record):
 
 
 class Project(Record):
+    class ReelDuration(models.TextChoices):
+        SHORT = "20_30", "20–30 seconds"
+        MEDIUM = "30_50", "30–50 seconds"
+        LONG = "60_plus", "60+ seconds"
+        EXTENDED = "120_plus", "2 minutes+"
+
+    class WordingDirection(models.TextChoices):
+        OWN_FONT = "own_font", "I have my own font"
+        FONT_INSPO = "font_inspiration", "I will upload font inspiration"
+        MATCH_REFERENCE = "match_reference", "Same as the reference"
+        EDITOR_CHOICE = "editor_choice", "Editor’s choice"
+
     class Status(models.TextChoices):
         PENDING = "payment_pending", "Payment pending"
         PAID = "payment_completed", "Payment completed"
@@ -114,6 +126,13 @@ class Project(Record):
     title = models.CharField(max_length=160)
     requirements = models.TextField(blank=True, max_length=10000)
     selected_services = models.JSONField(default=list)
+    colour_grading = models.BooleanField(default=False)
+    quality_enhancement = models.BooleanField(default=False)
+    reel_duration = models.CharField(max_length=20, choices=ReelDuration.choices, blank=True)
+    wants_wording = models.BooleanField(default=False)
+    wording_direction = models.CharField(
+        max_length=24, choices=WordingDirection.choices, blank=True
+    )
     reference_notes = models.TextField(blank=True, max_length=5000)
     song_choice = models.CharField(
         max_length=20,
@@ -180,6 +199,7 @@ class File(Record):
         IMAGE = "image", "Image"
         AUDIO = "audio", "Audio"
         REFERENCE = "reference", "Reference"
+        FONT_REFERENCE = "font_reference", "Font inspiration"
         ASSET = "asset", "Other asset"
         DRAFT = "draft", "Edited draft"
         FINAL = "final", "Final video"

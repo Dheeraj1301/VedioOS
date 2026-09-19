@@ -136,7 +136,7 @@ New client accounts remain inactive until the client opens the expiring verifica
 | Area | Local URL | What to check |
 | --- | --- | --- |
 | Public landing | `/` | Service sections and responsive layout |
-| Client | `/client/`, `/client/new-order/`, `/client/projects/`, `/client/payments/` | Registration, brief, private source upload and order history |
+| Client | `/client/`, `/client/new-order/`, `/client/projects/`, `/client/payments/` | Verified registration, four-option brief, custom direction, separate private source/inspiration uploads and order history |
 | Editor | `/editor/`, `/editor/revisions/`, `/editor/wallet/`, `/editor/availability/` | Assigned work, version submissions, revision queue and wallet |
 | Admin | `/admin/`, `/admin/editors/`, `/admin/assignments/`, `/admin/pricing/`, `/admin/payouts/`, `/admin/earnings/` | Approval, allocation, catalog and earning settings |
 

@@ -59,3 +59,22 @@ document.querySelectorAll('.download-button').forEach(button => button.addEventL
   } catch (error) {announce(status, error.message, true);}
   finally {button.disabled = false;}
 }));
+
+const newOrderForm = document.querySelector('[data-new-order-form]');
+if (newOrderForm) {
+  const customFields = newOrderForm.querySelector('[data-custom-fields]');
+  const wordingDirection = newOrderForm.querySelector('[data-wording-direction]');
+  const wordingCheckbox = newOrderForm.querySelector('#id_wants_wording');
+  [...newOrderForm.querySelectorAll('[name="order_choice"]')]
+    .find(field => field.value === newOrderForm.dataset.selectedChoice)?.click();
+  const updateOrderFields = () => {
+    const custom = newOrderForm.querySelector('[name="order_choice"]:checked')?.value === 'custom';
+    customFields.hidden = !custom;
+    customFields.querySelectorAll('input, select').forEach(field => field.disabled = !custom);
+    const wording = custom && wordingCheckbox.checked;
+    wordingDirection.hidden = !wording;
+    wordingDirection.querySelectorAll('select').forEach(field => field.disabled = !wording);
+  };
+  newOrderForm.addEventListener('change', updateOrderFields);
+  updateOrderFields();
+}

@@ -12,6 +12,19 @@
   </form>
 </section>
 {% endif %}
+{% if can_upload_font_inspiration %}
+<section class="panel upload-panel font-inspiration-upload-panel">
+  <p class="eyebrow">Font inspiration</p><h2>Add a wording reference.</h2>
+  <p>Upload an image or video showing the typography direction. It stays private with this project.</p>
+  <form class="upload-form" data-project-id="{{ project.id }}" data-fixed-category="font_reference">{% csrf_token %}
+    <label class="file-drop" for="font-inspiration-files"><span aria-hidden="true">Aa</span><strong>Choose font inspiration</strong><small>Use a visual reference you may share</small></label>
+    <input id="font-inspiration-files" class="upload-files" type="file" multiple required>
+    <button class="button" type="submit">Upload font inspiration ↗</button>
+    <progress class="upload-progress" max="100" value="0" hidden aria-label="Font inspiration upload progress"></progress>
+    <p class="upload-status" role="status" aria-live="polite"></p>
+  </form>
+</section>
+{% endif %}
 {% if can_upload_inspiration %}
 <section class="panel upload-panel inspiration-upload-panel">
   <p class="eyebrow">Inspiration video</p><h2>Add a separate reference.</h2>

@@ -55,7 +55,11 @@ def can_upload(user, project, category):
     if user.role == "client":
         return (
             project.client.user_id == user.id
-            and category in ["source", "image", "audio", "reference", "asset"]
+            and category in ["source", "image", "audio", "reference", "font_reference", "asset"]
+            and (
+                category != "font_reference"
+                or (project.wants_wording and project.wording_direction == "font_inspiration")
+            )
             and project.status not in ["completed", "cancelled"]
         )
     if user.role == "editor":

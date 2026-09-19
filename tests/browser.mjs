@@ -51,6 +51,8 @@ try {
   assert.equal((await context.request.get(`${base}/api/areas/admin/`)).status(), 403);
   assert.equal((await context.request.get(`${base}/api/areas/editor/`)).status(), 403);
   await page.goto(`${base}/client/new-order/`);
+  await page.getByText('Customize my edit', {exact: true}).click();
+  await page.getByLabel('Reel duration').selectOption('30_50');
   await page.getByLabel('Project name').fill(`My first reel ${runId}`);
   await page.getByLabel('What would you like us to edit?').fill('Synthetic browser test: clean cuts, captions, and warm colors.');
   await page.getByLabel('Inspiration and reference notes').fill('A calm, story-led reel.');

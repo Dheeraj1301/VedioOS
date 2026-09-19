@@ -33,6 +33,8 @@ The same instruction separates inspiration-video uploads from raw/source uploads
 
 Technical email choice: new client accounts remain inactive until an expiring Django-signed verification link confirms the registered address. Resend responses do not reveal whether an account exists and use the existing database-backed rate limit. Verification is retry-safe and audit logged. Delivery uses Django's replaceable email backend with the console backend for local development; no production provider, domain, subscription or price has been approved. Existing active users remain active.
 
+Technical order-form choice: show all three fixed plan slots and a fourth custom option at draft creation, but allow selection only for active administrator-configured plans. Persist the selected plan/custom kind and custom creative direction. Monthly package records may be displayed when active, while purchase remains disabled until D13 is approved. Custom prices continue through the existing server-authoritative catalog and quote snapshot; no browser-supplied price or untrained model output is accepted.
+
 ### Phase 4 allocation milestone — 2026-09-16
 
 The owner authorized continuing development. Implemented admin assessment, capacity controls and configurable transactional allocation; no provider, capacity or business policy was approved by inference. The skip/wait clarification has no recorded answer, so the shared policy remains unset and disabled. Technical choice: serialize allocation and eligibility changes on one policy row, keep independent persistent proficiency cursors, and verify concurrency on PostgreSQL. Supported operational choices and remaining D07–D09 decisions are documented in [Phase 4](PHASE_4.md). No paid service or AI integration was added.

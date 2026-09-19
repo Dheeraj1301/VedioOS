@@ -11,7 +11,7 @@ from django.test import Client as Browser
 from django.test import TestCase, override_settings
 from django.utils import timezone
 
-from core.models import Client, File, Order, Project, UploadPolicy, User
+from core.models import Client, File, Order, Plan, Project, UploadPolicy, User
 from operations.models import (
     Admin,
     AuditLog,
@@ -289,6 +289,8 @@ class FoundationTests(TestCase):
             "/client/new-order/",
             {
                 "title": "New draft",
+                "order_choice": "custom",
+                "reel_duration": "30_50",
                 "song_choice": "suggest",
                 "status": "completed",
                 "payment_completed_at": "2026-01-01",
@@ -299,6 +301,87 @@ class FoundationTests(TestCase):
         self.assertEqual(project.status, "payment_pending")
         self.assertIsNone(project.payment_completed_at)
         self.assertEqual(project.order.payment_status, "pending")
+
+    def test_custom_order_fields_and_font_inspiration_are_server_validated(self):
+        browser = self.auth(self.owner)
+        missing_direction = browser.post(
+            "/client/new-order/",
+            {
+                "title": "Wording reel",
+                "order_choice": "custom",
+                "reel_duration": "20_30",
+                "wants_wording": "on",
+                "song_choice": "suggest",
+            },
+        )
+        self.assertEqual(missing_direction.status_code, 200)
+        self.assertContains(missing_direction, "Choose how the editor should handle wording")
+        response = browser.post(
+            "/client/new-order/",
+            {
+                "title": "Wording reel",
+                "order_choice": "custom",
+                "colour_grading": "on",
+                "quality_enhancement": "on",
+                "reel_duration": "60_plus",
+                "wants_wording": "on",
+                "wording_direction": "font_inspiration",
+                "song_choice": "both",
+            },
+        )
+        self.assertEqual(response.status_code, 302)
+        project = Project.objects.get(title="Wording reel")
+        self.assertTrue(project.colour_grading)
+        self.assertTrue(project.quality_enhancement)
+        self.assertEqual(project.reel_duration, "60_plus")
+        self.assertEqual(project.wording_direction, "font_inspiration")
+        self.assertEqual(project.order.kind, "custom")
+        detail = browser.get(f"/client/projects/{project.id}/")
+        self.assertContains(detail, "Upload font inspiration")
+
+    def test_new_order_shows_three_plan_slots_and_custom_option(self):
+        response = self.auth(self.owner).get("/client/new-order/")
+        self.assertEqual(response.status_code, 200)
+        for label in ["Plan 1", "Plan 2", "Plan 3", "Customize my edit"]:
+            self.assertContains(response, label)
+
+    def test_available_plan_selection_is_persisted_and_custom_fields_are_rejected(self):
+        plan = Plan.objects.create(
+            slot=1,
+            name="Synthetic plan",
+            price_minor=10000,
+            currency="INR",
+            features=["Cuts"],
+            revision_limit=1,
+            delivery_hours=24,
+            duration_limit_seconds=60,
+            priority=1,
+            active=True,
+        )
+        browser = self.auth(self.owner)
+        rejected = browser.post(
+            "/client/new-order/",
+            {
+                "title": "Tampered plan",
+                "order_choice": f"plan:{plan.id}",
+                "colour_grading": "on",
+                "song_choice": "suggest",
+            },
+        )
+        self.assertEqual(rejected.status_code, 200)
+        self.assertContains(rejected, "Choose Customize my edit")
+        response = browser.post(
+            "/client/new-order/",
+            {
+                "title": "Plan order",
+                "order_choice": f"plan:{plan.id}",
+                "song_choice": "suggest",
+            },
+        )
+        self.assertEqual(response.status_code, 302)
+        order = Project.objects.get(title="Plan order").order
+        self.assertEqual(order.kind, "plan")
+        self.assertEqual(order.plan, plan)
 
     def test_private_file_access_denied(self):
         file = File.objects.create(
@@ -337,6 +420,12 @@ class FoundationTests(TestCase):
             self.assertEqual(self.post_json(browser, url, {**self.upload_data(), **changes}).status_code, 400)
         self.assertEqual(
             self.post_json(browser, url, {**self.upload_data(), "category": "final"}).status_code, 403
+        )
+        self.assertEqual(
+            self.post_json(
+                browser, url, {**self.upload_data(), "category": "font_reference"}
+            ).status_code,
+            403,
         )
         self.assertEqual(self.post_json(self.auth(self.other), url, self.upload_data()).status_code, 404)
 

@@ -21,7 +21,17 @@ from django.views.decorators.http import require_GET, require_POST
 
 from .email_verification import send_verification_email, verification_payload
 from .forms import LoginForm, ProjectForm, RegistrationForm
-from .models import AuthAttempt, Client, File, Order, Payment, Plan, UploadPolicy, User
+from .models import (
+    AuthAttempt,
+    Client,
+    File,
+    InfluencerPackage,
+    Order,
+    Payment,
+    Plan,
+    UploadPolicy,
+    User,
+)
 from .permissions import can_upload, project_for, role_required, visible_files, visible_projects
 from .storage import download_permission, inspect_object, upload_permission
 
@@ -240,11 +250,26 @@ def new_order(request):
             project = form.save(commit=False)
             project.client = request.user.client_profile
             project.save()
-            Order.objects.create(project=project)
+            selected_plan = form.cleaned_data.get("selected_plan")
+            Order.objects.create(
+                project=project,
+                kind="plan" if selected_plan else "custom",
+                plan=selected_plan,
+            )
             audit(request.user, "project.draft_created", project.pk)
         messages.success(request, "Project saved. Add your original files below.")
         return redirect("client_project", project_id=project.pk)
-    return render(request, "client/new_order.html", {"form": form, "title": "Plan a new edit"})
+    slots = {plan.slot: plan for plan in Plan.objects.order_by("slot")}
+    return render(
+        request,
+        "client/new_order.html",
+        {
+            "form": form,
+            "title": "Plan a new edit",
+            "plan_slots": [(slot, slots.get(slot)) for slot in range(1, 4)],
+            "monthly_packages": InfluencerPackage.objects.filter(active=True).order_by("name"),
+        },
+    )
 
 
 @role_required("client")
@@ -266,6 +291,7 @@ def project_detail(request, project_id, area):
             ("image", "Images"),
             ("audio", "Audio"),
             ("reference", "Inspiration / reference"),
+            ("font_reference", "Font inspiration"),
             ("asset", "Other asset"),
         ]
         if area == "client"
@@ -300,8 +326,13 @@ def project_detail(request, project_id, area):
             "review_enabled": project.order.terms_snapshot.get("review_rule") == "latest_request_v1",
             "revision_limit": project.order.terms_snapshot.get("revision_limit"),
             "upload_categories": allowed,
-            "source_upload_categories": [item for item in allowed if item[0] != "reference"],
+            "source_upload_categories": [
+                item for item in allowed if item[0] not in ["reference", "font_reference"]
+            ],
             "can_upload_inspiration": any(item[0] == "reference" for item in allowed),
+            "can_upload_font_inspiration": any(
+                item[0] == "font_reference" for item in allowed
+            ) and project.wants_wording and project.wording_direction == "font_inspiration",
             "upload_policy": policy,
             "max_upload_mb": policy.max_bytes // 1048576 if policy else 0,
             "current_assignment": project.assignments.filter(ended_at__isnull=True)
