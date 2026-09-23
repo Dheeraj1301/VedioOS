@@ -11,6 +11,7 @@ from django.views.decorators.http import require_POST
 from core.models import Client, Order
 from core.permissions import role_required, visible_projects
 
+from .analytics import operational_analytics
 from .assignments import approve_proficiency, change_availability, editor_roster, open_workload
 from .calls import complete_call, schedule_call
 from .forms import AvailabilityForm
@@ -126,6 +127,12 @@ def admin_dashboard(request):
 
 @role_required("admin")
 def admin_page(request, page):
+    if page == "analytics":
+        return render(
+            request,
+            "operations/analytics.html",
+            {"title": "Analytics", **operational_analytics()},
+        )
     if page == "projects":
         queue = request.GET.get("queue", "all")
         projects = visible_projects(request.user)
@@ -199,7 +206,6 @@ def admin_page(request, page):
         return redirect("pricing")
     descriptions = {
         "assignments": "Assignment tools will be enabled after the Day 1 foundation checks pass.",
-        "analytics": "Business analytics will follow the confirmed-payment and delivery workflows.",
     }
     if page not in descriptions:
         from django.http import Http404

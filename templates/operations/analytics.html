@@ -1,0 +1,21 @@
+{% extends 'workspace.html' %}{% block workspace_content %}
+<div class="page-heading"><div><p class="eyebrow">Admin / Analytics</p><h1>Operational snapshot</h1><p class="muted">Live record counts as of {{ generated_at|date:"M j, Y H:i" }} UTC.</p></div></div>
+<div class="stats">
+  <article><p>Active clients</p><strong>{{ headline.clients }}</strong></article>
+  <article><p>Orders</p><strong>{{ headline.orders }}</strong></article>
+  <article><p>Confirmed orders</p><strong>{{ headline.paid_orders }}</strong></article>
+  <article><p>Open projects</p><strong>{{ headline.open_projects }}</strong></article>
+  <article><p>Completed projects</p><strong>{{ headline.completed_projects }}</strong></article>
+  <article><p>Open assignments</p><strong>{{ headline.open_assignments }}</strong></article>
+  <article><p>Pending payouts</p><strong>{{ headline.pending_payouts }}</strong></article>
+</div>
+<div class="analytics-grid">
+  <section class="panel"><div class="panel-heading"><h2>Orders by payment state</h2><a href="/admin/orders/">Open orders ↗</a></div><ul class="metric-list">{% for row in orders %}<li><span>{{ row.label }}</span><strong>{{ row.count }}</strong></li>{% endfor %}</ul></section>
+  <section class="panel"><div class="panel-heading"><h2>Projects by workflow state</h2><a href="/admin/projects/">Open projects ↗</a></div><ul class="metric-list">{% for row in projects %}<li><span>{{ row.label }}</span><strong>{{ row.count }}</strong></li>{% endfor %}</ul></section>
+  <section class="panel"><div class="panel-heading"><h2>Editor capacity</h2><a href="/admin/editors/">Open editors ↗</a></div><ul class="metric-list"><li><span>Editors</span><strong>{{ editors.total }}</strong></li><li><span>Approved and active</span><strong>{{ editors.approved_active }}</strong></li><li><span>Available now</span><strong>{{ editors.available }}</strong></li><li><span>Awaiting approval</span><strong>{{ editors.awaiting_approval }}</strong></li></ul></section>
+  <section class="panel"><div class="panel-heading"><h2>Consultations</h2><a href="/admin/calls/">Open calls ↗</a></div>{% if calls %}<ul class="metric-list">{% for row in calls %}<li><span>{{ row.label }}</span><strong>{{ row.count }}</strong></li>{% endfor %}</ul>{% else %}<p class="muted">No consultation requests recorded.</p>{% endif %}</section>
+  <section class="panel"><div class="panel-heading"><h2>Payout requests</h2><a href="/admin/payouts/">Open payouts ↗</a></div>{% if payouts %}<ul class="metric-list">{% for row in payouts %}<li><span>{{ row.label }}</span><strong>{{ row.count }}</strong></li>{% endfor %}</ul>{% else %}<p class="muted">No payout requests recorded.</p>{% endif %}</section>
+  <section class="panel"><div class="panel-heading"><h2>Email delivery outbox</h2></div><ul class="metric-list">{% for row in deliveries %}<li><span>{{ row.label }}</span><strong>{{ row.count }}</strong></li>{% endfor %}</ul></section>
+</div>
+<section class="panel"><h2>Metrics awaiting policy</h2><p class="muted">Revenue, refunds, daily/monthly trends, average delivery time, revision rate, package performance and retention are intentionally withheld until D15 defines their formulas, financial inclusion rules and reporting timezone.</p></section>
+{% endblock %}

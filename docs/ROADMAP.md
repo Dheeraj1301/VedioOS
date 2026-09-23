@@ -105,6 +105,8 @@ The first-version scope is all 28 priorities in original brief section 34, cover
 
 ## Phase 8 — Broader commercial features
 
+**2026-09-24: operational analytics slice verified.** The protected admin page now reconciles live operational counts without displaying undefined financial, rate or retention metrics. Production analytics remain open pending D15; see [Phase 8 evidence](PHASE_8.md).
+
 - Complete premium landing-page content and approved public claims, support workflows, call scheduling/completion, and optional calling-provider integration.
 - Build configurable monthly influencer packages, purchases, allowance accounting, dedicated-editor behavior, and renewal/expiry handling.
 - Finish advanced analytics, feature administration, payment/invoice history, and customer retention reporting.
