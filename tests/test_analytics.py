@@ -95,4 +95,3 @@ class OperationalAnalyticsTests(TestCase):
         self.assertContains(response, "Operational snapshot")
         self.assertContains(response, "Metrics awaiting policy")
         self.assertNotContains(response, "Total revenue")
-
