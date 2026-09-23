@@ -39,6 +39,8 @@ Custom estimate implementation: administrator-managed custom services may have o
 
 Monthly package preparation: administrators may save validated package drafts using the existing package records, but the form deliberately excludes publication. It also deactivates any legacy active record edited through this path. Purchase, renewal, quota use and dedicated-editor allocation remain unavailable until D13 supplies executable rules.
 
+Notification delivery foundation: every in-app notice receives one durable external-delivery record. The default state is held and the worker is disabled. When explicitly enabled, a worker claims due rows with a lease, rechecks current recipient/project access, sends through Django's replaceable email backend, and records sent, retry or cancellation state without saving exception messages. Older held messages require an explicit release command. D12 still controls provider, templates, preferences and scheduling.
+
 ### Phase 4 allocation milestone — 2026-09-16
 
 The owner authorized continuing development. Implemented admin assessment, capacity controls and configurable transactional allocation; no provider, capacity or business policy was approved by inference. The skip/wait clarification has no recorded answer, so the shared policy remains unset and disabled. Technical choice: serialize allocation and eligibility changes on one policy row, keep independent persistent proficiency cursors, and verify concurrency on PostgreSQL. Supported operational choices and remaining D07–D09 decisions are documented in [Phase 4](PHASE_4.md). No paid service or AI integration was added.

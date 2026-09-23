@@ -110,6 +110,8 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 EMAIL_BACKEND = os.getenv("EMAIL_BACKEND", "django.core.mail.backends.console.EmailBackend")
 DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL", "VedioOS <no-reply@localhost>")
 EMAIL_VERIFICATION_MAX_AGE = int(os.getenv("EMAIL_VERIFICATION_MAX_AGE", "86400"))
+NOTIFICATION_EMAIL_ENABLED = os.getenv("NOTIFICATION_EMAIL_ENABLED", "false").lower() == "true"
+NOTIFICATION_DELIVERY_MAX_ATTEMPTS = int(os.getenv("NOTIFICATION_DELIVERY_MAX_ATTEMPTS", "5"))
 DATA_UPLOAD_MAX_MEMORY_SIZE = 262144
 S3_ENDPOINT_URL = os.getenv("S3_ENDPOINT_URL", "http://127.0.0.1:9000")
 S3_REGION = os.getenv("S3_REGION", "us-east-1")

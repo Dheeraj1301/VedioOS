@@ -133,6 +133,14 @@ An editor can log in before approval, but an admin must approve proficiency at `
 
 New client accounts remain inactive until the client opens the expiring verification link. In local development, the console email backend prints that link in the `runserver` terminal. Configure an approved production email provider and verified sending domain before launch; no paid email service is required for local development or automated tests. Existing active client accounts are not deactivated by this migration.
 
+External notification delivery is held by default. In-app notices work without a provider. After approving an email provider, sender domain, templates and notification policy, set `NOTIFICATION_EMAIL_ENABLED=true` and schedule this bounded command from a trusted worker:
+
+```powershell
+.venv/Scripts/python.exe manage.py dispatch_notifications --limit 100
+```
+
+New notices enter the retry-safe outbox. Older held notices require the explicit `--release-held` option; review their age and relevance before releasing them. Failed attempts use bounded exponential retry state, and current project access is checked immediately before sending.
+
 | Area | Local URL | What to check |
 | --- | --- | --- |
 | Public landing | `/` | Service sections and responsive layout |

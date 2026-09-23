@@ -212,6 +212,46 @@ class Notification(Record):
             models.Index(fields=["recipient", "-created_at", "-id"], name="notice_recipient_cursor_idx")
         ]
 
+    def save(self, *args, **kwargs):
+        creating = self._state.adding
+        super().save(*args, **kwargs)
+        if creating:
+            NotificationDelivery.objects.get_or_create(
+                notification=self,
+                defaults={
+                    "state": "pending"
+                    if getattr(settings, "NOTIFICATION_EMAIL_ENABLED", False)
+                    else "held"
+                },
+            )
+
+
+class NotificationDelivery(Record):
+    class State(models.TextChoices):
+        HELD = "held", "Held until delivery is enabled"
+        PENDING = "pending", "Pending"
+        PROCESSING = "processing", "Processing"
+        SENT = "sent", "Sent"
+        FAILED = "failed", "Retry scheduled"
+        CANCELLED = "cancelled", "Cancelled"
+
+    notification = models.OneToOneField(
+        Notification, on_delete=models.PROTECT, related_name="delivery"
+    )
+    channel = models.CharField(max_length=20, choices=[("email", "Email")], default="email")
+    state = models.CharField(max_length=20, choices=State.choices, default=State.HELD)
+    attempts = models.PositiveIntegerField(default=0)
+    next_attempt_at = models.DateTimeField(null=True, blank=True)
+    last_attempt_at = models.DateTimeField(null=True, blank=True)
+    lease_expires_at = models.DateTimeField(null=True, blank=True)
+    sent_at = models.DateTimeField(null=True, blank=True)
+    provider_reference = models.CharField(max_length=200, blank=True)
+    last_error_code = models.CharField(max_length=100, blank=True)
+
+    class Meta:
+        db_table = "notification_deliveries"
+        indexes = [models.Index(fields=["state", "next_attempt_at"], name="notice_delivery_due_idx")]
+
 
 class ProjectMessage(Record):
     class Audience(models.TextChoices):
