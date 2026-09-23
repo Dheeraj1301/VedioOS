@@ -35,6 +35,7 @@ urlpatterns = [
     ),
     path("client/payments/", views.payment_history, name="payment_history"),
     path("client/projects/<uuid:project_id>/quote/", commerce.quote_page, name="quote_select"),
+    path("api/custom-estimate/", commerce.estimate_custom, name="estimate_custom"),
     path(
         "client/projects/<uuid:project_id>/quotes/<uuid:quote_id>/",
         commerce.quote_review,

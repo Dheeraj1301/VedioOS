@@ -18,7 +18,7 @@
     </div>
   </fieldset>
   <section class="panel form-panel custom-fields" data-custom-fields hidden>
-    <h2>Customize your edit</h2><p class="muted">These choices are saved in the brief. Your amount appears after the team has configured and reviewed the matching services.</p><div class="notice" role="status"><strong>Price estimate:</strong> Available after saving when approved custom-service prices are configured. Model pricing is disabled until training examples and acceptable error limits are approved.</div>
+    <h2>Customize your edit</h2><p class="muted">These choices are saved in the brief. Your amount is calculated only from administrator-approved prices.</p><div id="custom-estimate" class="notice" role="status" aria-live="polite"><strong>Price estimate:</strong> Choose a duration to calculate the configured amount.</div>
     <div class="choice-checks">{{ form.colour_grading.as_field_group }}{{ form.quality_enhancement.as_field_group }}</div>
     {{ form.reel_duration.as_field_group }}{{ form.wants_wording.as_field_group }}
     <div data-wording-direction hidden>{{ form.wording_direction.as_field_group }}</div>

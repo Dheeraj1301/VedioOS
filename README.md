@@ -142,6 +142,8 @@ New client accounts remain inactive until the client opens the expiring verifica
 
 Fresh local settings intentionally contain **no plan prices, payment gateway, assignment policy, review agreement or coin values**. Registration, drafts, uploads and role checks work immediately. Payment, assignment, review and wallet flows are exercised end to end by the isolated synthetic tests below. To explore them manually, configure the corresponding admin settings and development sandboxes first; never treat synthetic payments or payouts as real transactions. See [Phase 3](docs/PHASE_3.md), [Phase 4](docs/PHASE_4.md), [Phase 5](docs/PHASE_5.md) and [Phase 6](docs/PHASE_6.md).
 
+The custom-order estimate uses the custom base plus administrator-priced service mappings. Configure the base and quote terms under `/admin/pricing/policy/`, then create active services under `/admin/pricing/services/new/` and assign the relevant mapping code. Missing mappings keep the estimate unavailable; the application never invents a price.
+
 ## Verify the whole application
 
 Run these commands in **terminal C** from the repository root. `manage.py test` automatically uses `vedioos.test_settings` and a separate, temporary SQLite database; it does **not** drop or flush the preview database or Supabase. The optional browser tests below create synthetic accounts and fixtures in their own temporary database.

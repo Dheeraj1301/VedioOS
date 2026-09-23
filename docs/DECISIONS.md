@@ -35,6 +35,8 @@ Technical email choice: new client accounts remain inactive until an expiring Dj
 
 Technical order-form choice: show all three fixed plan slots and a fourth custom option at draft creation, but allow selection only for active administrator-configured plans. Persist the selected plan/custom kind and custom creative direction. Monthly package records may be displayed when active, while purchase remains disabled until D13 is approved. Custom prices continue through the existing server-authoritative catalog and quote snapshot; no browser-supplied price or untrained model output is accepted.
 
+Custom estimate implementation: administrator-managed custom services may have one unique stable mapping code for colour grading, quality enhancement, each duration band, or wording. The live estimate and final quote both resolve those mappings on the backend and fail closed when a required price is unpublished, incomplete, missing, or uses the wrong currency. Mapped items and the custom base are included in the accepted snapshot. No prices are seeded by migration and no model output affects money.
+
 ### Phase 4 allocation milestone — 2026-09-16
 
 The owner authorized continuing development. Implemented admin assessment, capacity controls and configurable transactional allocation; no provider, capacity or business policy was approved by inference. The skip/wait clarification has no recorded answer, so the shared policy remains unset and disabled. Technical choice: serialize allocation and eligibility changes on one policy row, keep independent persistent proficiency cursors, and verify concurrency on PostgreSQL. Supported operational choices and remaining D07–D09 decisions are documented in [Phase 4](PHASE_4.md). No paid service or AI integration was added.

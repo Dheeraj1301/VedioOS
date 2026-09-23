@@ -86,7 +86,17 @@ class Plan(Record):
 
 
 class CustomService(Record):
+    class Code(models.TextChoices):
+        COLOUR_GRADING = "colour_grading", "Colour grading"
+        QUALITY_ENHANCEMENT = "quality_enhancement", "Quality enhancement"
+        DURATION_20_30 = "duration_20_30", "Duration: 20–30 seconds"
+        DURATION_30_50 = "duration_30_50", "Duration: 30–50 seconds"
+        DURATION_60_PLUS = "duration_60_plus", "Duration: 60+ seconds"
+        DURATION_120_PLUS = "duration_120_plus", "Duration: 2 minutes+"
+        WORDING = "wording", "Wording / on-screen text"
+
     name = models.CharField(max_length=100, unique=True)
+    code = models.CharField(max_length=32, choices=Code.choices, unique=True, null=True, blank=True)
     price_minor = models.PositiveBigIntegerField(null=True, blank=True)
     currency = models.CharField(max_length=3, blank=True)
     active = models.BooleanField(default=False)

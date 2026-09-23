@@ -6,11 +6,18 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 
-from .commerce import accept_quote, check_policy, create_quote
-from .commerce_forms import PlanForm, PolicyForm, QuoteSelectionForm, ServiceForm
+from .commerce import accept_quote, check_policy, create_quote, custom_estimate
+from .commerce_forms import (
+    CustomEstimateForm,
+    PlanForm,
+    PolicyForm,
+    QuoteSelectionForm,
+    ServiceForm,
+)
 from .models import CommercePolicy, CustomService, OrderQuote, Payment, Plan
 from .payments import apply_sandbox_event, sandbox_enabled, start_checkout
 from .permissions import project_for, role_required
+from .templatetags.money import money
 from .views import audit
 
 
@@ -109,6 +116,47 @@ def quote_page(request, project_id):
             "services": form.fields["services"].queryset,
             "locked": project.order.payments.exists() or project.status != "payment_pending",
         },
+    )
+
+
+@require_POST
+@role_required("client")
+def estimate_custom(request):
+    allowed = {
+        "colour_grading",
+        "quality_enhancement",
+        "reel_duration",
+        "wants_wording",
+        "wording_direction",
+    }
+    try:
+        import json
+
+        data = json.loads(request.body)
+        if not isinstance(data, dict) or set(data) - allowed:
+            raise ValueError
+    except (ValueError, TypeError):
+        return JsonResponse({"error": "Invalid customization selection."}, status=400)
+    form = CustomEstimateForm(data)
+    if not form.is_valid():
+        return JsonResponse(
+            {"error": "Check the customization selections.", "fields": form.errors.get_json_data()},
+            status=400,
+        )
+    try:
+        policy, _, items, total = custom_estimate(form.cleaned_data)
+    except ValidationError as exc:
+        return JsonResponse({"error": " ".join(exc.messages)}, status=409)
+    return JsonResponse(
+        {
+            "currency": policy.currency,
+            "total_minor": total,
+            "display_total": money(total, policy.currency),
+            "items": [
+                {**item, "display_amount": money(item["amount_minor"], policy.currency)}
+                for item in items
+            ],
+        }
     )
 
 

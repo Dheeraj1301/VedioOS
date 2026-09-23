@@ -2,6 +2,10 @@
 
 Implemented on 2026-09-16. Requirements: original brief sections 7–9 and product rules sections 4–7.
 
+## 2026-09-24 custom-estimate extension
+
+The new-order customization controls now request a live server-authoritative estimate. Administrators map at most one priced custom service to each supported customization code; the backend adds the configured custom base, rejects missing/inactive/wrong-currency mappings, returns an itemized display, and resolves the mappings again when creating the quote. Browser totals are never accepted. Migration `core.0007` adds the nullable unique mapping code without inserting production prices. The isolated suite passes 108 tests with 10 optional integrations skipped. Production activation remains blocked on approved D03–D06 commercial terms and provider settings.
+
 ## What works
 
 - Admin → Plans / Pricing: three plan slots, features, prices in integer minor units, currency, revision/duration/delivery allowances, priority, publishing, custom services, and commercial terms.

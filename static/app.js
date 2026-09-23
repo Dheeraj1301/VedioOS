@@ -65,6 +65,8 @@ if (newOrderForm) {
   const customFields = newOrderForm.querySelector('[data-custom-fields]');
   const wordingDirection = newOrderForm.querySelector('[data-wording-direction]');
   const wordingCheckbox = newOrderForm.querySelector('#id_wants_wording');
+  const estimate = newOrderForm.querySelector('#custom-estimate');
+  let estimateRequest = 0;
   [...newOrderForm.querySelectorAll('[name="order_choice"]')]
     .find(field => field.value === newOrderForm.dataset.selectedChoice)?.click();
   const updateOrderFields = () => {
@@ -74,6 +76,30 @@ if (newOrderForm) {
     const wording = custom && wordingCheckbox.checked;
     wordingDirection.hidden = !wording;
     wordingDirection.querySelectorAll('select').forEach(field => field.disabled = !wording);
+    if (custom) updateCustomEstimate();
+  };
+  const updateCustomEstimate = async () => {
+    const requestNumber = ++estimateRequest;
+    const duration = newOrderForm.querySelector('#id_reel_duration').value;
+    if (!duration) {
+      announce(estimate, 'Price estimate: choose a duration to calculate the configured amount.');
+      return;
+    }
+    announce(estimate, 'Calculating the configured price…');
+    try {
+      const result = await postJSON('/api/custom-estimate/', {
+        colour_grading: newOrderForm.querySelector('#id_colour_grading').checked,
+        quality_enhancement: newOrderForm.querySelector('#id_quality_enhancement').checked,
+        reel_duration: duration,
+        wants_wording: wordingCheckbox.checked,
+        wording_direction: wordingCheckbox.checked ? newOrderForm.querySelector('#id_wording_direction').value : '',
+      });
+      if (requestNumber !== estimateRequest) return;
+      const breakdown = result.items.map(item => `${item.name}: ${item.display_amount}`).join(' · ');
+      announce(estimate, `Configured estimate: ${result.display_total}. ${breakdown}`);
+    } catch (error) {
+      if (requestNumber === estimateRequest) announce(estimate, `Estimate unavailable: ${error.message}`);
+    }
   };
   newOrderForm.addEventListener('change', updateOrderFields);
   updateOrderFields();

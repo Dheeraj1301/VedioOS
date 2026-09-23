@@ -71,6 +71,20 @@ class CommerceTests(TestCase):
         cls.service = CustomService.objects.create(
             name="Synthetic captions", price_minor=1500, currency="INR", active=True
         )
+        cls.duration_service = CustomService.objects.create(
+            name="Synthetic medium duration",
+            code="duration_30_50",
+            price_minor=2000,
+            currency="INR",
+            active=True,
+        )
+        cls.grading_service = CustomService.objects.create(
+            name="Synthetic colour grading",
+            code="colour_grading",
+            price_minor=3000,
+            currency="INR",
+            active=True,
+        )
 
     def quote(self):
         return create_quote(self.user, self.project.id, "plan", self.plan.id)
@@ -102,6 +116,61 @@ class CommerceTests(TestCase):
         )
         self.assertEqual(quote.total_minor, 11500)
         self.assertEqual(len(quote.snapshot["items"]), 2)
+
+    def test_custom_estimate_and_quote_use_mapped_server_prices(self):
+        self.client.force_login(self.user)
+        response = self.client.post(
+            "/api/custom-estimate/",
+            json.dumps(
+                {
+                    "colour_grading": True,
+                    "quality_enhancement": False,
+                    "reel_duration": "30_50",
+                    "wants_wording": False,
+                    "wording_direction": "",
+                }
+            ),
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["total_minor"], 15000)
+        self.assertEqual(response.json()["display_total"], "INR 150.00")
+        self.project.colour_grading = True
+        self.project.reel_duration = "30_50"
+        self.project.save(update_fields=["colour_grading", "reel_duration", "updated_at"])
+        quote = create_quote(
+            self.user, self.project.id, "custom", service_ids=[self.service.id]
+        )
+        self.assertEqual(quote.total_minor, 16500)
+        self.assertEqual(len(quote.snapshot["items"]), 4)
+        self.assertIn("Synthetic colour grading", quote.snapshot["features"])
+
+    def test_custom_estimate_rejects_missing_prices_unknown_fields_and_anonymous_access(self):
+        payload = {
+            "colour_grading": False,
+            "quality_enhancement": True,
+            "reel_duration": "30_50",
+            "wants_wording": False,
+            "wording_direction": "",
+        }
+        self.assertEqual(
+            self.client.post(
+                "/api/custom-estimate/", json.dumps(payload), content_type="application/json"
+            ).status_code,
+            401,
+        )
+        self.client.force_login(self.user)
+        response = self.client.post(
+            "/api/custom-estimate/", json.dumps(payload), content_type="application/json"
+        )
+        self.assertEqual(response.status_code, 409)
+        self.assertIn("Quality enhancement", response.json()["error"])
+        response = self.client.post(
+            "/api/custom-estimate/",
+            json.dumps({**payload, "total_minor": 1}),
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 400)
 
     def test_quote_and_accepted_terms_survive_catalog_edits(self):
         quote = self.quote()

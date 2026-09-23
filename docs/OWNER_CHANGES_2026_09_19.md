@@ -1,6 +1,6 @@
 # Owner-requested account and order changes — 2026-09-19
 
-Status: in progress. Complete these changes before advancing the roadmap phase.
+Status: requested interface changes are implemented. Production commercial activation still depends on the owner decisions listed below.
 
 ## Verified in the first milestone
 
@@ -20,13 +20,14 @@ Status: in progress. Complete these changes before advancing the roadmap phase.
 
 ## Next implementation milestones
 
-- Server-authoritative custom estimates based on administrator-configured prices. A trained pricing model remains disabled until the owner supplies approved training examples, price outputs and evaluation tolerances; D03, D04 and D08 remain open.
+- Configure approved custom base/service prices and publish quote terms. The server-authoritative live estimate is implemented; model pricing remains disabled until the owner supplies approved training examples, target outputs and evaluation tolerances. D03, D04 and D08 remain open.
 - Monthly plan configuration and sales behavior after D13 defines allowances, renewal, expiry, rollover and dedicated-editor interactions.
 
 ## Verification evidence
 
-- The isolated suite passes 106 tests with 10 opt-in integrations skipped.
+- The isolated suite passes 108 tests with 10 opt-in integrations skipped.
 - The opt-in Edge walkthrough verifies password visibility, keyboard navigation, separate inspiration upload, retry behavior and byte-identical original download at mobile sizes.
 - Additive migrations `core.0004`, `operations.0010` and `operations.0011` were applied to the selected private Supabase schema after snapshot `database-snapshot-20260919T144401311067Z.json`. Existing editors received unique IDs; all 43 tables retain RLS and browser roles retain no schema access.
 - Additive migration `core.0005` was applied after snapshot `database-snapshot-20260919T145513651931Z.json`; the new verification timestamp is present and all private-schema access checks continue to pass.
 - Additive migration `core.0006` was applied after snapshot `database-snapshot-20260919T152202844758Z.json`; project customization columns and the font-reference category are present. All 43 tables retain RLS and browser roles retain no schema access.
+- Additive migration `core.0007` was applied after snapshot `database-snapshot-20260923T194410855257Z.json`; custom-service mapping codes are present and unique when configured. No production prices or mappings were inserted. All 43 tables retain RLS and browser roles retain no schema access.

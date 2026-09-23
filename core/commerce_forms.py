@@ -1,6 +1,6 @@
 from django import forms
 
-from .models import CommercePolicy, CustomService, Plan
+from .models import CommercePolicy, CustomService, Plan, Project
 
 CURRENCIES = [
     ("", "Choose currency"),
@@ -80,8 +80,11 @@ class PlanForm(CatalogForm):
 class ServiceForm(CatalogForm):
     class Meta:
         model = CustomService
-        fields = ["name", "price_minor", "currency", "active"]
-        help_texts = {"price_minor": "Integer minor units; never enter decimal prices here."}
+        fields = ["name", "code", "price_minor", "currency", "active"]
+        help_texts = {
+            "code": "Optional stable mapping used by the live custom estimate. Each mapping can be used once.",
+            "price_minor": "Integer minor units; never enter decimal prices here.",
+        }
 
 
 class PolicyForm(forms.ModelForm):
@@ -166,4 +169,22 @@ class QuoteSelectionForm(forms.Form):
                 self.add_error("services", "Choose custom editing to select individual services.")
         elif data.get("plan"):
             self.add_error("plan", "Clear the plan when selecting custom editing.")
+        return data
+
+
+class CustomEstimateForm(forms.Form):
+    colour_grading = forms.BooleanField(required=False)
+    quality_enhancement = forms.BooleanField(required=False)
+    reel_duration = forms.ChoiceField(choices=Project.ReelDuration.choices)
+    wants_wording = forms.BooleanField(required=False)
+    wording_direction = forms.ChoiceField(
+        choices=[("", "Choose direction"), *Project.WordingDirection.choices], required=False
+    )
+
+    def clean(self):
+        data = super().clean()
+        if data.get("wants_wording") and not data.get("wording_direction"):
+            self.add_error("wording_direction", "Choose how the editor should handle wording.")
+        if not data.get("wants_wording"):
+            data["wording_direction"] = ""
         return data

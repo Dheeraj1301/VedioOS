@@ -11,6 +11,52 @@ from .commerce_forms import MAX_PRICE, PlanForm, PolicyForm, ServiceForm
 from .models import CommercePolicy, CustomService, Order, OrderQuote, Plan
 from .views import audit
 
+CUSTOM_CODE_LABELS = dict(CustomService.Code.choices)
+
+
+def custom_service_codes(subject):
+    """Return stable catalog codes implied by a saved project or validated estimate data."""
+
+    get = subject.get if isinstance(subject, dict) else lambda key, default=None: getattr(
+        subject, key, default
+    )
+    codes = []
+    if get("colour_grading", False):
+        codes.append(CustomService.Code.COLOUR_GRADING)
+    if get("quality_enhancement", False):
+        codes.append(CustomService.Code.QUALITY_ENHANCEMENT)
+    duration = get("reel_duration", "")
+    if duration:
+        codes.append(f"duration_{duration}")
+    if get("wants_wording", False):
+        codes.append(CustomService.Code.WORDING)
+    return codes
+
+
+def custom_estimate(subject, *, lock=False):
+    policy_query = CommercePolicy.objects.select_for_update() if lock else CommercePolicy.objects
+    policy = policy_query.filter(pk=1).first()
+    check_policy(policy)
+    if policy.custom_base_minor is None:
+        raise ValidationError("Custom pricing is not available yet.")
+    codes = custom_service_codes(subject)
+    service_query = CustomService.objects.select_for_update() if lock else CustomService.objects
+    services = list(service_query.filter(code__in=codes).order_by("name"))
+    found = {service.code for service in services}
+    missing = [CUSTOM_CODE_LABELS.get(code, code) for code in codes if code not in found]
+    if missing:
+        raise ValidationError(
+            "Pricing is not configured for: " + ", ".join(missing) + ". Contact the team."
+        )
+    items = [{"id": "base", "name": "Custom editing base", "amount_minor": policy.custom_base_minor}]
+    for service in services:
+        validate_catalog(service, ServiceForm, policy.currency)
+        items.append({"id": str(service.id), "name": service.name, "amount_minor": service.price_minor})
+    total = sum(item["amount_minor"] for item in items)
+    if not 0 < total <= MAX_PRICE:
+        raise ValidationError("The estimate total is outside the supported range. Contact the team.")
+    return policy, services, items, total
+
 
 def check_policy(policy):
     if not policy or not policy.quotes_enabled:
@@ -64,21 +110,24 @@ def create_quote(user, project_id, kind, plan_id=None, service_ids=()):
             ]
         }
     elif kind == "custom":
-        if plan_id or policy.custom_base_minor is None:
+        if plan_id:
             raise ValidationError("Custom pricing is not available yet.")
         ids = set(str(value) for value in service_ids)
         services = list(CustomService.objects.select_for_update().filter(pk__in=ids).order_by("name"))
         if len(services) != len(ids):
             raise ValidationError("A selected service is no longer available.")
-        items.append({"id": "base", "name": "Custom editing base", "amount_minor": policy.custom_base_minor})
+        _, required_services, items, _ = custom_estimate(order.project, lock=True)
+        required_ids = {service.id for service in required_services}
         for service in services:
+            if service.id in required_ids:
+                continue
             validate_catalog(service, ServiceForm, policy.currency)
             items.append({"id": str(service.id), "name": service.name, "amount_minor": service.price_minor})
         details = {
             field: getattr(policy, f"custom_{field}")
             for field in ["revision_limit", "delivery_hours", "duration_limit_seconds", "priority"]
         }
-        details["features"] = [service.name for service in services]
+        details["features"] = [item["name"] for item in items if item["id"] != "base"]
     else:
         raise ValidationError("Choose a plan or custom editing.")
     total = sum(item["amount_minor"] for item in items)
