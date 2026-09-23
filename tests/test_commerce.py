@@ -10,11 +10,12 @@ from django.test import TestCase, override_settings
 from django.utils import timezone
 
 from core.commerce import accept_quote, create_quote
-from core.commerce_forms import PlanForm, PolicyForm
+from core.commerce_forms import PackageForm, PlanForm, PolicyForm
 from core.models import (
     Client,
     CommercePolicy,
     CustomService,
+    InfluencerPackage,
     Order,
     OrderQuote,
     Payment,
@@ -389,6 +390,39 @@ class CommerceTests(TestCase):
         data = {"name": "Draft second plan", "currency": "INR", "features": "Cuts\nCaptions"}
         self.assertEqual(self.client.post("/admin/pricing/plans/2/", data).status_code, 302)
         self.assertEqual(Plan.objects.get(slot=2).features, ["Cuts", "Captions"])
+
+    def test_admin_can_prepare_monthly_package_draft_without_publishing_it(self):
+        self.assertFalse(
+            PackageForm(
+                {
+                    "name": "Invalid draft",
+                    "currency": "INR",
+                    "video_allowance": 4,
+                    "services": "Cuts",
+                }
+            ).is_valid()
+        )
+        self.client.force_login(self.admin)
+        response = self.client.post(
+            "/admin/pricing/packages/new/",
+            {
+                "name": "Creator four",
+                "price_minor": 50000,
+                "currency": "INR",
+                "video_allowance": 4,
+                "revision_limit": 2,
+                "priority": "on",
+                "dedicated_editor": "on",
+                "services": "Cuts\nCaptions",
+            },
+        )
+        self.assertEqual(response.status_code, 302)
+        package = InfluencerPackage.objects.get(name="Creator four")
+        self.assertFalse(package.active)
+        self.assertEqual(package.services, ["Cuts", "Captions"])
+        self.assertContains(self.client.get("/admin/pricing/"), "Creator four")
+        self.client.force_login(self.user)
+        self.assertEqual(self.client.get(f"/admin/pricing/packages/{package.id}/").status_code, 403)
 
     def test_full_quote_ui_and_receipt(self):
         self.client.force_login(self.user)

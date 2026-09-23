@@ -144,6 +144,8 @@ Fresh local settings intentionally contain **no plan prices, payment gateway, as
 
 The custom-order estimate uses the custom base plus administrator-priced service mappings. Configure the base and quote terms under `/admin/pricing/policy/`, then create active services under `/admin/pricing/services/new/` and assign the relevant mapping code. Missing mappings keep the estimate unavailable; the application never invents a price.
 
+Administrators may also prepare inactive monthly-package drafts from `/admin/pricing/`. Draft configuration does not publish or sell a subscription. Renewal, expiry, rollover, allowance accounting and dedicated-editor rules must be approved before that feature can be activated.
+
 ## Verify the whole application
 
 Run these commands in **terminal C** from the repository root. `manage.py test` automatically uses `vedioos.test_settings` and a separate, temporary SQLite database; it does **not** drop or flush the preview database or Supabase. The optional browser tests below create synthetic accounts and fixtures in their own temporary database.

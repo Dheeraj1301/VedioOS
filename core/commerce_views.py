@@ -9,12 +9,13 @@ from django.views.decorators.http import require_POST
 from .commerce import accept_quote, check_policy, create_quote, custom_estimate
 from .commerce_forms import (
     CustomEstimateForm,
+    PackageForm,
     PlanForm,
     PolicyForm,
     QuoteSelectionForm,
     ServiceForm,
 )
-from .models import CommercePolicy, CustomService, OrderQuote, Payment, Plan
+from .models import CommercePolicy, CustomService, InfluencerPackage, OrderQuote, Payment, Plan
 from .payments import apply_sandbox_event, sandbox_enabled, start_checkout
 from .permissions import project_for, role_required
 from .templatetags.money import money
@@ -32,6 +33,7 @@ def pricing(request):
                 (slot, Plan.objects.filter(slot=slot).first() or Plan(slot=slot)) for slot in range(1, 4)
             ],
             "services": CustomService.objects.order_by("name"),
+            "packages": InfluencerPackage.objects.order_by("name"),
             "policy": CommercePolicy.objects.filter(pk=1).first() or CommercePolicy(),
         },
     )
@@ -47,6 +49,9 @@ def catalog_edit(request, kind, slot=None, item_id=None):
     elif kind == "service":
         instance = get_object_or_404(CustomService, pk=item_id) if item_id else CustomService()
         form_class, title = ServiceForm, "Custom service"
+    elif kind == "package":
+        instance = get_object_or_404(InfluencerPackage, pk=item_id) if item_id else InfluencerPackage()
+        form_class, title = PackageForm, "Monthly creator package draft"
     else:
         instance = CommercePolicy.objects.filter(pk=1).first() or CommercePolicy(pk=1)
         form_class, title = PolicyForm, "Commercial terms & custom pricing"
@@ -55,6 +60,9 @@ def catalog_edit(request, kind, slot=None, item_id=None):
         try:
             with transaction.atomic():
                 item = form.save()
+                if kind == "package" and item.active:
+                    item.active = False
+                    item.save(update_fields=["active", "updated_at"])
                 audit(request.user, f"catalog.{kind}_saved", item.pk)
             messages.success(request, "Saved. Existing accepted order terms are unchanged.")
             return redirect("pricing")

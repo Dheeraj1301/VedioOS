@@ -17,15 +17,16 @@ Status: requested interface changes are implemented. Production commercial activ
 - The new-edit screen presents three administrator-configured plan slots and a fourth custom option. Unpublished slots are clearly unavailable.
 - Custom briefs persist colour grading, quality enhancement, four reel-duration bands, wording yes/no and conditional font direction. Font-inspiration uploads use a separate private category and require that choice on the saved project.
 - Active monthly creator packages appear in a separate section; sales remain closed until D13 terms are approved.
+- Administrators can create and edit validated monthly-package drafts. The UI cannot publish them, so unfinished renewal and quota rules cannot accidentally open package sales.
 
 ## Next implementation milestones
 
 - Configure approved custom base/service prices and publish quote terms. The server-authoritative live estimate is implemented; model pricing remains disabled until the owner supplies approved training examples, target outputs and evaluation tolerances. D03, D04 and D08 remain open.
-- Monthly plan configuration and sales behavior after D13 defines allowances, renewal, expiry, rollover and dedicated-editor interactions.
+- Monthly plan publication, purchase and usage behavior after D13 defines allowances, renewal, expiry, rollover and dedicated-editor interactions.
 
 ## Verification evidence
 
-- The isolated suite passes 108 tests with 10 opt-in integrations skipped.
+- The isolated suite passes 109 tests with 10 opt-in integrations skipped.
 - The opt-in Edge walkthrough verifies password visibility, keyboard navigation, separate inspiration upload, retry behavior and byte-identical original download at mobile sizes.
 - Additive migrations `core.0004`, `operations.0010` and `operations.0011` were applied to the selected private Supabase schema after snapshot `database-snapshot-20260919T144401311067Z.json`. Existing editors received unique IDs; all 43 tables retain RLS and browser roles retain no schema access.
 - Additive migration `core.0005` was applied after snapshot `database-snapshot-20260919T145513651931Z.json`; the new verification timestamp is present and all private-schema access checks continue to pass.

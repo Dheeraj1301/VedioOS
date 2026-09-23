@@ -1,6 +1,6 @@
 from django import forms
 
-from .models import CommercePolicy, CustomService, Plan, Project
+from .models import CommercePolicy, CustomService, InfluencerPackage, Plan, Project
 
 CURRENCIES = [
     ("", "Choose currency"),
@@ -85,6 +85,51 @@ class ServiceForm(CatalogForm):
             "code": "Optional stable mapping used by the live custom estimate. Each mapping can be used once.",
             "price_minor": "Integer minor units; never enter decimal prices here.",
         }
+
+
+class PackageForm(forms.ModelForm):
+    currency = forms.ChoiceField(choices=CURRENCIES, required=False)
+    services = forms.CharField(
+        widget=forms.Textarea(attrs={"rows": 4}),
+        required=False,
+        help_text="One included service per line.",
+    )
+
+    class Meta:
+        model = InfluencerPackage
+        fields = [
+            "name",
+            "price_minor",
+            "currency",
+            "video_allowance",
+            "revision_limit",
+            "priority",
+            "dedicated_editor",
+            "services",
+        ]
+        help_texts = {
+            "price_minor": "Draft amount in integer minor units. Publishing and sales remain disabled.",
+            "dedicated_editor": "Draft intent only; allocation behavior requires an approved policy.",
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if self.instance.pk:
+            self.initial["services"] = "\n".join(self.instance.services)
+
+    def clean_services(self):
+        return [line.strip() for line in self.cleaned_data["services"].splitlines() if line.strip()]
+
+    def clean(self):
+        data = super().clean()
+        price = data.get("price_minor")
+        if price is not None and not 0 < price <= MAX_PRICE:
+            self.add_error("price_minor", "Enter a positive amount within the supported range.")
+        if price is not None and not data.get("currency"):
+            self.add_error("currency", "Choose a currency when entering a draft price.")
+        if data.get("currency") and price is None:
+            self.add_error("price_minor", "Enter a draft price or clear the currency.")
+        return data
 
 
 class PolicyForm(forms.ModelForm):

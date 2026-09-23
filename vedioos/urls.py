@@ -65,11 +65,18 @@ urlpatterns = [
     path("admin/pricing/", commerce.pricing, name="pricing"),
     path("admin/pricing/plans/<int:slot>/", commerce.catalog_edit, {"kind": "plan"}, name="plan_edit"),
     path("admin/pricing/services/new/", commerce.catalog_edit, {"kind": "service"}, name="service_new"),
+    path("admin/pricing/packages/new/", commerce.catalog_edit, {"kind": "package"}, name="package_new"),
     path(
         "admin/pricing/services/<uuid:item_id>/",
         commerce.catalog_edit,
         {"kind": "service"},
         name="service_edit",
+    ),
+    path(
+        "admin/pricing/packages/<uuid:item_id>/",
+        commerce.catalog_edit,
+        {"kind": "package"},
+        name="package_edit",
     ),
     path("admin/pricing/policy/", commerce.catalog_edit, {"kind": "policy"}, name="policy_edit"),
     path("admin/<str:page>/", ops.admin_page),
