@@ -56,6 +56,14 @@ Supabase migration history records `vedioos_private_database_foundation` and `co
 
 Future production work includes separate runtime/migration roles if needed, production hosting, backups/recovery verification, abuse controls, and the unresolved media-storage deployment. The connection alone is not a production release.
 
+For a repeatable privilege and recovery inventory, run:
+
+```powershell
+.venv/Scripts/python.exe manage.py audit_database_security
+```
+
+The command verifies the constrained runtime role, private schema/table ownership, RLS, browser/public grants and future-object default grants. It inventories extension versions and the enabled event-trigger count without printing credentials, database/role names or private rows. The 2026-09-24 audit passed for 46 tables, five extensions and seven enabled event triggers. Reproducing provider-owned objects still requires an approved Supabase recovery procedure and D16 recovery targets.
+
 ## Verified on 2026-09-16
 
 - Certificate-verified PostgreSQL connection succeeds as `vedioos_app` in schema `vedioos`.

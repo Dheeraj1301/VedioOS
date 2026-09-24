@@ -1,8 +1,8 @@
 """Secret-free release evidence assembled from read-only operational checks."""
 
 from django.conf import settings
-from django.db import connection
 
+from .database_security import database_security_report
 from .health import database_ready
 from .models import File
 from .snapshot_integrity import verify_snapshot
@@ -10,44 +10,6 @@ from .storage import storage_client
 from .storage_preflight import check_private_storage
 from .storage_reconciliation import reconcile_ready_files
 from .workflow_reconciliation import workflow_findings
-
-
-def _database_protection_evidence():
-    if connection.vendor != "postgresql":
-        return {"status": "fail", "code": "postgresql_required"}
-    with connection.cursor() as cursor:
-        cursor.execute("SELECT current_schema()")
-        schema = cursor.fetchone()[0]
-        cursor.execute(
-            "SELECT count(*), count(*) FILTER (WHERE NOT rowsecurity) "
-            "FROM pg_tables WHERE schemaname = %s",
-            [schema],
-        )
-        table_count, tables_without_rls = cursor.fetchone()
-        cursor.execute(
-            "SELECT rolname FROM pg_roles WHERE rolname IN ('anon', 'authenticated')"
-        )
-        browser_roles = {row[0] for row in cursor.fetchall()}
-        browser_schema_access = False
-        for role in browser_roles:
-            cursor.execute("SELECT has_schema_privilege(%s, %s, 'USAGE')", [role, schema])
-            browser_schema_access = browser_schema_access or cursor.fetchone()[0]
-    passed = (
-        schema == "vedioos"
-        and table_count > 0
-        and tables_without_rls == 0
-        and browser_roles == {"anon", "authenticated"}
-        and not browser_schema_access
-    )
-    return {
-        "status": "pass" if passed else "fail",
-        "code": "protected" if passed else "private_schema_check_failed",
-        "table_count": table_count,
-        "tables_without_rls": tables_without_rls,
-        "browser_roles_without_schema_access": (
-            len(browser_roles) if not browser_schema_access else 0
-        ),
-    }
 
 
 def _latest_snapshot():
@@ -74,7 +36,13 @@ def collect_release_evidence(*, active_storage=False):
         checks["database"] = {"status": "fail", "code": "database_check_failed"}
 
     try:
-        checks["database_protection"] = _database_protection_evidence()
+        security = database_security_report()
+        facts = security.pop("facts")
+        checks["database_protection"] = {
+            **security,
+            "table_count": facts.get("table_count", 0),
+            "extension_count": len(facts.get("extensions", [])),
+        }
     except Exception:
         checks["database_protection"] = {
             "status": "fail",

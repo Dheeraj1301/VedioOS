@@ -64,6 +64,20 @@ The command combines database connectivity and migration readiness, private-sche
 
 On 2026-09-24 the connected report passed: migrations were current, 46 private-schema tables had RLS, both Supabase browser roles lacked schema access, all workflows were consistent, both ready file records matched their exact private objects, and the latest 46-table / 297-row snapshot passed integrity verification.
 
+## PostgreSQL privilege and recovery inventory
+
+Run the deeper database audit against the connected PostgreSQL environment:
+
+```powershell
+.venv/Scripts/python.exe manage.py audit_database_security
+```
+
+The command fails closed unless the runtime role has no superuser, role-creation, database-creation, replication or RLS-bypass flags; has a finite positive connection limit; owns the private schema and its tables; and all application tables have RLS. It also rejects public or Supabase browser-role privileges on the schema, tables, sequences, routines and future-object default ACLs. `--json` provides structured evidence and `--report-only` records drift without stopping an audit workflow.
+
+The output inventories installed extension names, versions and schemas plus the enabled event-trigger count for recovery planning. It omits the database name, runtime-role name, credentials, connection URL and private rows. On 2026-09-24 the connected audit passed for 46 tables with zero elevated flags, connection limit eight, zero public/browser grants, five installed extensions and seven enabled event triggers.
+
+This evidence defines what a full restore must reproduce. It does not back up or restore provider-owned roles, extensions, triggers or grants; that exercise still requires the D16 recovery target and Supabase-supported backup procedure.
+
 ## Pre-migration snapshot integrity
 
 `snapshot_database` now writes a companion SHA-256 manifest for every private row snapshot. Verify the latest manifested snapshot with:
@@ -111,7 +125,7 @@ The runs reported no browser page errors or horizontal overflow. Screenshots rem
 ## Verification
 
 - Unit checks cover a secure disabled-feature release scope, insecure settings, policy/provider inconsistencies, and secret-free JSON output.
-- The full isolated suite passes 160 tests with 10 opt-in integration tests skipped.
+- The full isolated suite passes 165 tests with 10 opt-in integration tests skipped.
 - All five opt-in Edge lifecycle suites pass with real local private-storage integrity where applicable.
 - Django system and migration checks and Ruff pass.
 - This slice changes no database schema. Supabase remains synchronized through `operations.0013`.

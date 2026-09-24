@@ -269,6 +269,7 @@ These are read-only or rollback/synthetic verification commands against the **co
 
 ```powershell
 .venv/Scripts/python.exe manage.py check_database
+.venv/Scripts/python.exe manage.py audit_database_security
 .venv/Scripts/python.exe manage.py migrate --check
 .venv/Scripts/python.exe manage.py verify_cloud
 .venv/Scripts/python.exe manage.py verify_commerce_cloud
@@ -279,7 +280,7 @@ These are read-only or rollback/synthetic verification commands against the **co
 
 For an operator-run Phase 7 deadline alert pass, use `.venv/Scripts/python.exe manage.py notify_overdue` against the intended database. It writes in-app notices only for paid, open projects with a recorded past deadline; rerunning it does not duplicate the same alert. No automatic schedule is configured yet.
 
-`check_database` should identify PostgreSQL, the private `vedioos` schema, RLS on all application tables and no browser-role schema access. The shared database is already migrated. **Do not run `migrate`, `flush`, `browser_fixture` or `init_local` against it just to preview the app.** Schema changes follow the backup, review and migration procedure in [team workflow](docs/TEAM_WORKFLOW.md). The optional `node tests/cloud_browser.mjs` script expects an existing synthetic admin fixture and existing projects in that specific shared project; a fresh clone will not have those credentials, so it is not part of the standard checks.
+`check_database` should identify PostgreSQL, the private `vedioos` schema, RLS on all application tables and no browser-role schema access. `audit_database_security` additionally fails on elevated runtime-role privileges, unbounded connections, schema/table ownership drift, public or browser grants, missing RLS, and unsafe default grants. It prints the extension/version/schema inventory needed for recovery planning without printing credentials or private rows. The shared database is already migrated. **Do not run `migrate`, `flush`, `browser_fixture` or `init_local` against it just to preview the app.** Schema changes follow the backup, review and migration procedure in [team workflow](docs/TEAM_WORKFLOW.md). The optional `node tests/cloud_browser.mjs` script expects an existing synthetic admin fixture and existing projects in that specific shared project; a fresh clone will not have those credentials, so it is not part of the standard checks.
 
 ### Stay current with the team
 
