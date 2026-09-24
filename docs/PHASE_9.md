@@ -50,6 +50,20 @@ The reconciliation is database-to-storage only. It does not list or delete unref
 
 Failures are reported only as aggregate category counts; client, project, payment, file and storage identifiers are omitted. On 2026-09-24 the connected Supabase records passed every workflow check.
 
+## Consolidated release evidence
+
+Run the connected-environment checks as one fail-closed report:
+
+```powershell
+.venv/Scripts/python.exe manage.py collect_release_evidence
+```
+
+The command combines database connectivity and migration readiness, private-schema/RLS protection, workflow consistency, ready-file storage reconciliation and integrity verification of the latest manifested local snapshot. It reports only aggregate counts and stable result codes. Database names, roles, credentials, provider URLs, signed URLs, object keys and private record identifiers are omitted.
+
+`--json` returns deterministic machine-readable output. `--report-only` records failures without stopping an audit workflow. `--active-storage` additionally performs the synthetic write/download/anonymous-denial/cleanup exercise; the default remains read-only apart from database queries and storage metadata reads. A missing local snapshot is reported as skipped because ignored snapshots are intentionally absent from fresh clones. A present but invalid snapshot fails the report.
+
+On 2026-09-24 the connected report passed: migrations were current, 46 private-schema tables had RLS, both Supabase browser roles lacked schema access, all workflows were consistent, both ready file records matched their exact private objects, and the latest 46-table / 297-row snapshot passed integrity verification.
+
 ## Pre-migration snapshot integrity
 
 `snapshot_database` now writes a companion SHA-256 manifest for every private row snapshot. Verify the latest manifested snapshot with:
@@ -97,7 +111,7 @@ The runs reported no browser page errors or horizontal overflow. Screenshots rem
 ## Verification
 
 - Unit checks cover a secure disabled-feature release scope, insecure settings, policy/provider inconsistencies, and secret-free JSON output.
-- The full isolated suite passes 157 tests with 10 opt-in integration tests skipped.
+- The full isolated suite passes 160 tests with 10 opt-in integration tests skipped.
 - All five opt-in Edge lifecycle suites pass with real local private-storage integrity where applicable.
 - Django system and migration checks and Ruff pass.
 - This slice changes no database schema. Supabase remains synchronized through `operations.0013`.
