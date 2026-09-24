@@ -8,7 +8,6 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.views.decorators.http import require_POST
 
-from core.models import Order
 from core.payment_history import PAYMENT_STATUSES, payment_page
 from core.permissions import role_required, visible_projects
 
@@ -19,6 +18,7 @@ from .clients import CLIENT_STATES, client_page
 from .features import feature_controls
 from .forms import AvailabilityForm
 from .models import CallRequest, Editor, EditorAssignment, EditorProficiency, SupportRequest
+from .orders import ORDER_PAYMENT_STATES, PROJECT_WORKFLOW_STATES, order_page
 
 
 def editor_register(request):
@@ -228,16 +228,25 @@ def admin_page(request, page):
             },
         )
     if page == "orders":
-        orders = Order.objects.select_related("project")
-        payment_filter = request.GET.get("payment", "all")
-        if payment_filter == "paid":
-            orders = orders.filter(payment_status="confirmed")
-        elif payment_filter == "unpaid":
-            orders = orders.exclude(payment_status="confirmed")
+        orders, older_cursor, payment_filter, workflow_filter, order_search = order_page(
+            request.GET.get("before"),
+            request.GET.get("payment", "all"),
+            request.GET.get("workflow", "all"),
+            request.GET.get("q", ""),
+        )
         return render(
             request,
             "operations/orders.html",
-            {"title": "Orders", "orders": orders.order_by("-created_at"), "payment_filter": payment_filter},
+            {
+                "title": "Orders",
+                "orders": orders,
+                "older_order_cursor": older_cursor,
+                "payment_filter": payment_filter,
+                "workflow_filter": workflow_filter,
+                "order_search": order_search,
+                "payment_states": ORDER_PAYMENT_STATES,
+                "workflow_states": PROJECT_WORKFLOW_STATES,
+            },
         )
     if page == "pricing":
         return redirect("pricing")

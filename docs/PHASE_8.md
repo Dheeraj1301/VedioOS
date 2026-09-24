@@ -1,6 +1,6 @@
 # Phase 8 — Broader commercial features
 
-Status: in progress. Operational analytics, private client support and the admin client-operations roster were verified on 2026-09-24. Package sales and production business analytics remain disabled pending owner policy.
+Status: in progress. Operational analytics, private client support, and the admin client/order operations rosters were verified on 2026-09-24. Package sales and production business analytics remain disabled pending owner policy.
 
 ## Available now
 
@@ -17,16 +17,19 @@ Status: in progress. Operational analytics, private client support and the admin
 - Payment pages preserve the existing boundary: sandbox rows are labeled as test records, receipts require server-confirmed payments, and no row is represented as a tax invoice. D05 still controls legal invoice fields, tax, refunds and the real provider.
 - Admin → Clients now reconciles each account with its open/completed projects, confirmed orders, open support load and latest project activity. Administrators can search by name/email, filter active, awaiting-verification and inactive accounts, and traverse stable 50-record cursor pages.
 - Client status is derived from the authentication record. The roster does not add an account-state override or silently activate an unverified account.
+- Admin → Orders now reconciles each immutable commercial snapshot with client identity, package/custom kind, payment attempts, exact payment state and current project workflow. Administrators can combine payment/workflow filters with project or client search and traverse stable 50-record cursor pages.
+- Order totals and states remain server-owned. The roster does not calculate revenue, change payment state, or represent sandbox attempts as real income.
 
 ## Verification
 
 - Focused tests reconcile representative confirmed/refunded orders, open/completed projects, assignment, editor availability, pending payout and held-notification records against the rendered analytics data.
 - Access checks cover anonymous redirect, authenticated client denial and admin success.
-- The full isolated suite passes 139 tests with 10 opt-in integration tests skipped. Ruff, Django system and migration checks pass.
+- The full isolated suite passes 142 tests with 10 opt-in integration tests skipped. Ruff, Django system and migration checks pass.
 - Additive migration `operations.0013` created private `support_requests` and `support_messages` tables after ignored private row snapshot `database-snapshot-20260924T064606086761Z.json`. Both tables were empty after migration, the status index and audience constraint are present, all 46 tables retain RLS and browser roles have no schema access.
 - The feature-control inventory changes no schema; Supabase remains synchronized through `operations.0013`.
 - Payment-ledger pagination changes no schema; Supabase remains synchronized through `operations.0013`.
 - Client-roster tests reconcile annotated counts, account filters, role denial and cursor rejection. This slice changes no schema; Supabase remains synchronized through `operations.0013`.
+- Order-roster tests reconcile payment-attempt counts, combined filters, compatibility aliases, role denial and cursor rejection. This slice changes no schema; Supabase remains synchronized through `operations.0013`.
 - No paid subscription or upgrade was required.
 
 ## Remaining before the Phase 8 gate
