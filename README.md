@@ -40,6 +40,8 @@ Phase 8 is in progress. Admins have reconciled operational analytics, and client
 | [Phase 5 milestone](docs/PHASE_5.md) | Version review, revisions, acceptance and private delivery |
 | [Phase 6 milestone](docs/PHASE_6.md) | Coin ledger, wallet, release and sandbox redemption |
 | [Phase 7 milestone](docs/PHASE_7.md) | Operations queues, consultations, notices and deadline alerts |
+| [Phase 8 milestone](docs/PHASE_8.md) | Analytics, support, feature controls and protected payment history |
+| [Phase 9 readiness](docs/PHASE_9.md) | Production configuration audit, evidence and remaining release gates |
 | [First-version traceability](docs/FIRST_VERSION_TRACEABILITY.md) | Evidence and remaining work for all 28 brief priorities |
 | [Architecture](docs/ARCHITECTURE.md) | Stack, models, session/permission flow, and private storage contract |
 | [Supabase connection](docs/SUPABASE.md) | Selected cloud project, private schema, configuration, and verification |
@@ -168,6 +170,14 @@ Run these commands in **terminal C** from the repository root. `manage.py test` 
 .venv/Scripts/ruff.exe check .
 .venv/Scripts/python.exe manage.py test
 ```
+
+Audit an intended production configuration without printing secret values:
+
+```powershell
+.venv/Scripts/python.exe manage.py check_release
+```
+
+Use `--report-only` for a development baseline or `--json` for CI. A passing configuration audit does not replace the manual policy, provider, backup/restore, accessibility and end-to-end gates in [Phase 9](docs/PHASE_9.md).
 
 The last command runs the foundation, commerce, assignment, delivery and earnings backend suites. Browser and real-storage tests are intentionally opt-in, so run the commands in the next two sections for the complete check.
 

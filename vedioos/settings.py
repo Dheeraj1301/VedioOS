@@ -13,6 +13,9 @@ if not SECRET_KEY:
         "Set SECRET_KEY in .env. Run python scripts/setup_local.py for local development."
     )
 ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "127.0.0.1,localhost,testserver").split(",")
+CSRF_TRUSTED_ORIGINS = [
+    origin.strip() for origin in os.getenv("CSRF_TRUSTED_ORIGINS", "").split(",") if origin.strip()
+]
 INSTALLED_APPS = [
     "django.contrib.auth",
     "django.contrib.contenttypes",
