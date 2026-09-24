@@ -45,6 +45,7 @@ Phase 8 is in progress. Admins have reconciled operational analytics, and client
 | [First-version traceability](docs/FIRST_VERSION_TRACEABILITY.md) | Evidence and remaining work for all 28 brief priorities |
 | [Architecture](docs/ARCHITECTURE.md) | Stack, models, session/permission flow, and private storage contract |
 | [Supabase connection](docs/SUPABASE.md) | Selected cloud project, private schema, configuration, and verification |
+| [Codex live-preview prompt](docs/CODEX_LIVE_PREVIEW_PROMPT.md) | Copy-paste prompt for safely running and verifying the current Supabase-backed preview |
 | [Open decisions](docs/DECISIONS.md) | Unresolved business and architecture choices; decision record |
 | [Team workflow](docs/TEAM_WORKFLOW.md) | Current Git branch, safe collaboration, local setup and publishing cadence |
 | [Original brief](docs/ORIGINAL_BRIEF.md) | Complete, unmodified source requirements, sections 1–35 |
