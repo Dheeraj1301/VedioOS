@@ -33,7 +33,7 @@ Repository preparation:
 Supabase verification:
 1. Run `python manage.py check_database` with the repository virtual environment. Require PostgreSQL, schema `vedioos`, the dedicated application role, RLS on every application table, and no browser-role access to the private schema.
 2. Run `python manage.py migrate --check`. This must be read-only and return no pending migrations.
-3. Do not use the legacy `verify_cloud` command as the preview gate: its original synthetic flow predates administrator-issued editor access and mandatory client email verification. Use the current isolated backend tests for auth/authorization evidence.
+3. Run `python manage.py verify_cloud`. It exercises mandatory client email verification, administrator-issued editor-ID login, all three role areas, project persistence, logout, and project-level denial in one transaction, then proves its synthetic records were rolled back.
 
 Private storage startup:
 1. Check whether port 9000 is already listening. Reuse it only if it is the expected local private storage service; otherwise report the conflict without terminating an unrelated process.

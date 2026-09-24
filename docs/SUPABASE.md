@@ -40,6 +40,8 @@ Authentication still uses Django's shared `users` identity and sessions, now per
 
 `verify_cloud` creates synthetic users/project/session records inside a transaction and rolls them back. It does not drop or flush the shared database. Normal `manage.py test` commands automatically use `vedioos.test_settings` and an isolated SQLite test database.
 
+The verifier follows the current account contract: client registration remains inactive until email verification, editor self-registration redirects to login, and the synthetic editor signs in with an administrator-issued editor ID. Its email uses Django's in-memory backend and is never sent externally.
+
 For deliberate offline development:
 
 ```powershell
