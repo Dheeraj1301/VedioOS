@@ -2,6 +2,8 @@
   "name": "vedioos-day-one",
   "private": true,
   "scripts": {
+    "check:javascript": "node scripts/check-javascript.mjs",
+    "check:vendor": "node scripts/vendor.mjs && git diff --exit-code -- static/vendor",
     "vendor": "node scripts/vendor.mjs",
     "test:browser": "node tests/browser.mjs"
   },

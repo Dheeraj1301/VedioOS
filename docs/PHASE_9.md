@@ -56,7 +56,7 @@ These results are evidence that the checker fails closed. They are not a request
 
 ## Continuous verification
 
-`.github/workflows/ci.yml` runs on every push and pull request with read-only repository permission. It installs the committed Python lock file on Python 3.13, checks Django configuration and migration drift, runs Ruff, and executes the isolated backend suite. The workflow receives no provider credentials and therefore cannot mutate Supabase, private storage, payments or payouts. Provider, storage and browser checks remain explicit integration gates.
+`.github/workflows/ci.yml` runs on every push and pull request with read-only repository permission. Its backend job installs the committed Python lock file on Python 3.13, checks Django configuration and migration drift, runs Ruff, and executes the isolated backend suite. Its frontend job installs `package-lock.json` on Node.js 22 without lifecycle scripts, syntax-checks every repository JavaScript module, rebuilds the committed hash library and fails if that output differs. The workflow receives no provider credentials and therefore cannot mutate Supabase, private storage, payments or payouts. Provider, storage and browser checks remain explicit integration gates.
 
 `verify_cloud` provides a rollback-only check against the configured PostgreSQL database. It follows the current mandatory email-verification and administrator-issued editor-ID flows, checks all three role areas and project-level denial, and proves that its synthetic records were removed.
 

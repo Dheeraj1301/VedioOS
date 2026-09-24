@@ -163,7 +163,7 @@ Administrators may also prepare inactive monthly-package drafts from `/admin/pri
 
 Run these commands in **terminal C** from the repository root. `manage.py test` automatically uses `vedioos.test_settings` and a separate, temporary SQLite database; it does **not** drop or flush the preview database or Supabase. The optional browser tests below create synthetic accounts and fixtures in their own temporary database.
 
-GitHub Actions runs the Django configuration check, migration drift check, Ruff and the isolated backend suite on every push and pull request. The workflow uses no repository secrets and cannot connect to Supabase or private storage. Real-storage and browser walkthroughs remain explicit local/integration checks because they require their isolated services.
+GitHub Actions checks Django configuration, migration drift, Ruff, the isolated backend suite, JavaScript syntax and reproducible vendored assets on every push and pull request. The workflow uses no repository secrets and cannot connect to Supabase or private storage. Real-storage and browser walkthroughs remain explicit local/integration checks because they require their isolated services.
 
 ### Backend, migrations and code checks
 
@@ -172,6 +172,8 @@ GitHub Actions runs the Django configuration check, migration drift check, Ruff 
 .venv/Scripts/python.exe manage.py makemigrations --check --dry-run --settings=vedioos.local_settings
 .venv/Scripts/ruff.exe check .
 .venv/Scripts/python.exe manage.py test
+npm.cmd run check:javascript
+npm.cmd run check:vendor
 ```
 
 Audit an intended production configuration without printing secret values:
