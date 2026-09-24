@@ -19,6 +19,7 @@ from .features import feature_controls
 from .forms import AvailabilityForm
 from .models import CallRequest, Editor, EditorAssignment, EditorProficiency, SupportRequest
 from .orders import ORDER_PAYMENT_STATES, PROJECT_WORKFLOW_STATES, order_page
+from .projects import PROJECT_QUEUES, project_page
 
 
 def editor_register(request):
@@ -161,31 +162,23 @@ def admin_page(request, page):
             {"title": "Analytics", **operational_analytics()},
         )
     if page == "projects":
-        queue = request.GET.get("queue", "all")
-        projects = visible_projects(request.user)
-        if queue == "unassigned":
-            projects = (
-                projects.filter(order__payment_status="confirmed")
-                .annotate(
-                    has_editor=Exists(
-                        EditorAssignment.objects.filter(project=OuterRef("pk"), ended_at__isnull=True)
-                    )
-                )
-                .filter(has_editor=False)
-                .exclude(status__in=["completed", "cancelled"])
-            )
-        elif queue == "active":
-            projects = projects.filter(status__in=["editor_assigned", "editing"])
-        elif queue == "review":
-            projects = projects.filter(status="awaiting_review")
-        elif queue == "revision":
-            projects = projects.filter(status__in=["revision_requested", "revision_in_progress"])
-        elif queue == "completed":
-            projects = projects.filter(status="completed")
-        else:
-            queue = "all"
+        projects, older_cursor, queue, project_search = project_page(
+            request.user,
+            request.GET.get("before"),
+            request.GET.get("queue", "all"),
+            request.GET.get("q", ""),
+        )
         return render(
-            request, "projects.html", {"title": "Projects", "projects": projects, "admin_queue": queue}
+            request,
+            "operations/projects.html",
+            {
+                "title": "Projects",
+                "projects": projects,
+                "older_project_cursor": older_cursor,
+                "admin_queue": queue,
+                "project_search": project_search,
+                "project_queues": PROJECT_QUEUES,
+            },
         )
     if page == "calls":
         return render(

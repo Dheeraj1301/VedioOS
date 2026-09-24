@@ -1,0 +1,14 @@
+{% extends 'workspace.html' %}{% block workspace_content %}
+<div class="page-heading"><div><p class="eyebrow">Admin / Projects</p><h1>Project operations</h1><p class="muted">Track paid work, assignment, review, revisions and recorded deadlines.</p></div></div>
+<form class="panel detail-panel" method="get" role="search">
+  <label for="project-search">Find a project</label>
+  <div class="feature-row"><input id="project-search" name="q" type="search" maxlength="120" value="{{ project_search }}" placeholder="Project, client name or email"><input type="hidden" name="queue" value="{{ admin_queue }}"><button class="button" type="submit">Search</button></div>
+</form>
+<nav aria-label="Project queues" class="commerce-filters">{% for value, label in project_queues %}<a class="text-link" href="?queue={{ value }}{% if project_search %}&amp;q={{ project_search|urlencode }}{% endif %}">{{ label }}</a>{% endfor %}</nav>
+<p class="muted">Showing: {{ admin_queue|title }}{% if project_search %} matching “{{ project_search }}”{% endif %}</p>
+<section class="panel"><ul class="data-list">{% for project in projects %}<li>
+  <div class="feature-row"><div><h3><a class="text-link" href="{% url 'admin_project' project.id %}">{{ project.title }}</a></h3><p>{{ project.client.user.name }} · {{ project.client.user.email }}</p><p>Created {{ project.created_at|date:"M j, Y H:i" }} UTC · {{ project.id }}</p></div><div><span class="badge">{{ project.get_status_display }}</span><span class="badge">{% if project.order %}{{ project.order.get_payment_status_display }}{% else %}No order{% endif %}</span></div></div>
+  <ul class="metric-list"><li><span>Current editor</span><strong>{{ project.current_editor_name|default:"Unassigned" }}</strong></li><li><span>Ready files</span><strong>{{ project.ready_file_count }}</strong></li><li><span>Open revisions</span><strong>{{ project.open_revision_count }}</strong></li><li><span>Deadline</span><strong>{% if project.expected_delivery_at %}{{ project.expected_delivery_at|date:"M j, H:i" }} UTC{% else %}Not set{% endif %}</strong></li></ul>
+</li>{% empty %}<li class="empty-state"><h3>No matching projects.</h3><p>Try another queue or search.</p></li>{% endfor %}</ul></section>
+{% if older_project_cursor %}<p><a class="text-link" href="?queue={{ admin_queue }}{% if project_search %}&amp;q={{ project_search|urlencode }}{% endif %}&amp;before={{ older_project_cursor|urlencode }}">Older projects →</a></p>{% endif %}
+{% endblock %}
