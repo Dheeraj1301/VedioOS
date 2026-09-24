@@ -6,6 +6,24 @@ from core.models import CommercePolicy, UploadPolicy
 
 from .models import AssignmentPolicy, EarningPolicy
 
+LAUNCH_DECISIONS = [
+    ("D02", "Production media", "Storage, file policy, scanning, retention and recovery"),
+    ("D03", "Fixed plans", "Names, prices, limits, priority and delivery terms"),
+    ("D04", "Custom pricing", "Base, service prices and quote-change handling"),
+    ("D05", "Payments", "Gateway, tax, invoice, refund and dispute policy"),
+    ("D06", "Deadlines", "Clock, pauses, thresholds, overrides and breaches"),
+    ("D07", "Editor eligibility", "Approval, proficiency, availability and capacity"),
+    ("D08", "AI classification", "Release scope, provider, data and evaluation"),
+    ("D09", "Automatic assignment", "Rotation, fallback, queue and retry policy"),
+    ("D10", "Editor earnings", "Coin value, earning, redemption and payout policy"),
+    ("D11", "Review terms", "Revision, acceptance, cancellation and reopening"),
+    ("D12", "Communication", "Channels, templates, consultations and ownership"),
+    ("D13", "Monthly packages", "Price, allowance, renewal and dedicated editor"),
+    ("D14", "Public content", "Claims, testimonials, contacts and service terms"),
+    ("D15", "Business analytics", "Financial formulas, timezone and retention"),
+    ("D16", "Production operations", "Hosting, monitoring, recovery and incidents"),
+]
+
 
 def _state(enabled, configured=True):
     if not configured:
@@ -137,4 +155,10 @@ def feature_controls():
             "url": "/admin/assignments/",
         },
     ]
-    return {"features": rows}
+    return {
+        "features": rows,
+        "launch_decisions": [
+            {"id": decision_id, "name": name, "detail": detail}
+            for decision_id, name, detail in LAUNCH_DECISIONS
+        ],
+    }

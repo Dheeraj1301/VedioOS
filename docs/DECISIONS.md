@@ -2,6 +2,8 @@
 
 Do not substitute invented production values for these decisions. Development fixtures may use clearly labeled demo settings isolated from production. Resolve only the decisions needed for the current phase; unrelated open questions should not halt useful work.
 
+Use the [owner decision checklist](OWNER_DECISION_CHECKLIST.md) to collect exact activation values or explicitly exclude a capability from the first release. Record approved answers in this file; never record credentials here.
+
 ## Decision register
 
 | ID | Decision needed | Resolve before |

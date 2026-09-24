@@ -31,6 +31,10 @@ class FeatureControlTests(TestCase):
         self.assertContains(response, "Feature controls")
         self.assertContains(response, "Monthly package sales")
         self.assertContains(response, "Locked pending D13")
+        self.assertContains(response, "Owner decisions required")
+        self.assertContains(response, "Open decision checklist")
+        for number in range(2, 17):
+            self.assertContains(response, f"D{number:02d} ·")
 
     @override_settings(
         DEBUG=True,
@@ -95,3 +99,7 @@ class FeatureControlTests(TestCase):
             self.assertEqual(states[name], "Enabled")
         self.assertEqual(states["Payment gateway"], "Development sandbox")
         self.assertEqual(states["Payout processing"], "Development sandbox")
+        self.assertEqual(
+            [item["id"] for item in feature_controls()["launch_decisions"]],
+            [f"D{number:02d}" for number in range(2, 17)],
+        )
