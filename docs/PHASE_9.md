@@ -44,6 +44,12 @@ Cleanup runs after success and failure and deletes every version and delete mark
 
 The reconciliation is database-to-storage only. It does not list or delete unreferenced bucket objects because retention and orphan-cleanup policy remain part of D02.
 
+## Workflow reconciliation
+
+`reconcile_workflows` provides a read-only cross-record consistency audit. It checks that confirmed orders activated their projects and retained priced agreement snapshots, confirmed payment records match order amount/currency, active assignments belong to paid projects, ready files have completion/version metadata, submitted versions and revisions belong to the same project, and completed deliveries have a client-owned acceptance for the attributed version and assignment.
+
+Failures are reported only as aggregate category counts; client, project, payment, file and storage identifiers are omitted. On 2026-09-24 the connected Supabase records passed every workflow check.
+
 ## Pre-migration snapshot integrity
 
 `snapshot_database` now writes a companion SHA-256 manifest for every private row snapshot. Verify the latest manifested snapshot with:
@@ -91,7 +97,7 @@ The runs reported no browser page errors or horizontal overflow. Screenshots rem
 ## Verification
 
 - Unit checks cover a secure disabled-feature release scope, insecure settings, policy/provider inconsistencies, and secret-free JSON output.
-- The full isolated suite passes 155 tests with 10 opt-in integration tests skipped.
+- The full isolated suite passes 157 tests with 10 opt-in integration tests skipped.
 - All five opt-in Edge lifecycle suites pass with real local private-storage integrity where applicable.
 - Django system and migration checks and Ruff pass.
 - This slice changes no database schema. Supabase remains synchronized through `operations.0013`.
@@ -101,6 +107,6 @@ The runs reported no browser page errors or horizontal overflow. Screenshots rem
 
 - Resolve the manual gates printed by the command, including D02–D16 as applicable to the release scope.
 - Select hosting, production storage, email, payment/payout and monitoring providers; configure credentials through an approved secret store.
-- Exercise full PostgreSQL role/grant/extension and media backup/restore procedures with approved recovery targets; row-level restore and ready-file reconciliation are complete.
+- Exercise full PostgreSQL role/grant/extension and media backup/restore procedures with approved recovery targets; row-level restore, ready-file reconciliation and workflow reconciliation are complete.
 - Run `check_release`, `check --deploy`, database protections, the storage preflight against the selected production provider, manual assistive-technology checks, approved large-file targets and the complete client-to-payout lifecycle with real providers in the intended environment.
 - Obtain explicit production deployment authorization.
