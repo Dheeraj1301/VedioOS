@@ -8,13 +8,14 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.views.decorators.http import require_POST
 
-from core.models import Client, Order
+from core.models import Order
 from core.payment_history import PAYMENT_STATUSES, payment_page
 from core.permissions import role_required, visible_projects
 
 from .analytics import operational_analytics
 from .assignments import approve_proficiency, change_availability, editor_roster, open_workload
 from .calls import complete_call, schedule_call
+from .clients import CLIENT_STATES, client_page
 from .features import feature_controls
 from .forms import AvailabilityForm
 from .models import CallRequest, Editor, EditorAssignment, EditorProficiency, SupportRequest
@@ -211,10 +212,20 @@ def admin_page(request, page):
             },
         )
     if page == "clients":
+        clients, older_cursor, client_state, client_search = client_page(
+            request.GET.get("before"), request.GET.get("state", "all"), request.GET.get("q", "")
+        )
         return render(
             request,
             "operations/clients.html",
-            {"title": "Clients", "clients": Client.objects.select_related("user")},
+            {
+                "title": "Clients",
+                "clients": clients,
+                "older_client_cursor": older_cursor,
+                "client_state": client_state,
+                "client_search": client_search,
+                "client_states": CLIENT_STATES,
+            },
         )
     if page == "orders":
         orders = Order.objects.select_related("project")

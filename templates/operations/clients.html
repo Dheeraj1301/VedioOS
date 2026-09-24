@@ -1,1 +1,19 @@
-{% extends 'workspace.html' %}{% block workspace_content %}<div class="page-heading"><h1>Clients</h1></div><section class="panel"><ul class="data-list">{% for client in clients %}<li><h3>{{ client.user.name }}</h3><p>{{ client.user.email }}</p></li>{% empty %}<li class="empty-state"><h3>No clients registered yet.</h3></li>{% endfor %}</ul></section>{% endblock %}
+{% extends 'workspace.html' %}{% block workspace_content %}
+<div class="page-heading"><div><p class="eyebrow">Admin / Clients</p><h1>Client operations</h1><p class="muted">Account, work, payment and support status from current platform records.</p></div></div>
+<form class="panel detail-panel" method="get" role="search">
+  <label for="client-search">Find a client</label>
+  <div class="feature-row"><input id="client-search" name="q" type="search" maxlength="120" value="{{ client_search }}" placeholder="Name or email"><input type="hidden" name="state" value="{{ client_state }}"><button class="button" type="submit">Search</button></div>
+</form>
+<nav class="commerce-filters" aria-label="Filter clients by account state">
+  <a class="text-link" href="?state=all{% if client_search %}&amp;q={{ client_search|urlencode }}{% endif %}">All</a>
+  {% for value, label in client_states %}<a class="text-link" href="?state={{ value }}{% if client_search %}&amp;q={{ client_search|urlencode }}{% endif %}">{{ label }}</a>{% endfor %}
+</nav>
+<p class="muted">Showing: {{ client_state|cut:"_"|title }}{% if client_search %} matching “{{ client_search }}”{% endif %}</p>
+<section class="panel"><ul class="data-list">
+  {% for client in clients %}<li>
+    <div class="feature-row"><div><h3>{{ client.user.name }}</h3><p>{{ client.user.email }}</p><p>Joined {{ client.created_at|date:"M j, Y H:i" }} UTC{% if client.last_project_at %} · Last project {{ client.last_project_at|date:"M j, Y H:i" }} UTC{% endif %}</p></div><span class="badge">{% if client.user.is_active %}Active{% elif not client.user.email_verified_at %}Awaiting email verification{% else %}Inactive{% endif %}</span></div>
+    <ul class="metric-list"><li><span>Projects</span><strong>{{ client.project_count }}</strong></li><li><span>Open work</span><strong>{{ client.open_project_count }}</strong></li><li><span>Completed</span><strong>{{ client.completed_project_count }}</strong></li><li><span>Confirmed orders</span><strong>{{ client.confirmed_order_count }}</strong></li><li><span>Open support</span><strong>{{ client.open_support_count }}</strong></li></ul>
+  </li>{% empty %}<li class="empty-state"><h3>No matching clients.</h3><p>Try another account filter or search.</p></li>{% endfor %}
+</ul></section>
+{% if older_client_cursor %}<p><a class="text-link" href="?state={{ client_state }}{% if client_search %}&amp;q={{ client_search|urlencode }}{% endif %}&amp;before={{ older_client_cursor|urlencode }}">Older clients →</a></p>{% endif %}
+{% endblock %}
