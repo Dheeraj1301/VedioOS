@@ -8,6 +8,7 @@
   <article><p>Completed projects</p><strong>{{ headline.completed_projects }}</strong></article>
   <article><p>Open assignments</p><strong>{{ headline.open_assignments }}</strong></article>
   <article><p>Pending payouts</p><strong>{{ headline.pending_payouts }}</strong></article>
+  <article><p>Open support requests</p><strong><a href="/admin/support/?status=all">{{ headline.open_support }}</a></strong></article>
 </div>
 <div class="analytics-grid">
   <section class="panel"><div class="panel-heading"><h2>Orders by payment state</h2><a href="/admin/orders/">Open orders ↗</a></div><ul class="metric-list">{% for row in orders %}<li><span>{{ row.label }}</span><strong>{{ row.count }}</strong></li>{% endfor %}</ul></section>

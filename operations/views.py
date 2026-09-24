@@ -15,7 +15,7 @@ from .analytics import operational_analytics
 from .assignments import approve_proficiency, change_availability, editor_roster, open_workload
 from .calls import complete_call, schedule_call
 from .forms import AvailabilityForm
-from .models import CallRequest, Editor, EditorAssignment, EditorProficiency
+from .models import CallRequest, Editor, EditorAssignment, EditorProficiency, SupportRequest
 
 
 def editor_register(request):
@@ -118,6 +118,9 @@ def admin_dashboard(request):
             .exclude(status__in=["completed", "cancelled"])
             .count(),
             "call_count": CallRequest.objects.filter(status="requested").count(),
+            "support_count": SupportRequest.objects.filter(
+                status__in=[SupportRequest.Status.OPEN, SupportRequest.Status.IN_PROGRESS]
+            ).count(),
             "editor_count": Editor.objects.count(),
             "pending_count": Editor.objects.filter(approved=False).count(),
             "projects": visible_projects(request.user)[:5],

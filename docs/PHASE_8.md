@@ -1,6 +1,6 @@
 # Phase 8 — Broader commercial features
 
-Status: in progress. The operational analytics slice was verified on 2026-09-24. Package sales and production business analytics remain disabled pending owner policy.
+Status: in progress. Operational analytics and private client-support slices were verified on 2026-09-24. Package sales and production business analytics remain disabled pending owner policy.
 
 ## Available now
 
@@ -8,13 +8,16 @@ Status: in progress. The operational analytics slice was verified on 2026-09-24.
 - Every figure is derived directly from current source records. The page labels its UTC generation time and links administrators back to the corresponding operational lists for reconciliation.
 - The route is protected by the existing server-side admin role check. Clients, editors and anonymous visitors cannot access it.
 - Revenue, refunds, trends, delivery averages, revision rates, package performance and retention are deliberately withheld. D15 must define their formulas, financial inclusion rules and reporting timezone before those figures can be presented.
+- Clients can open a categorized support request, optionally link one of their own projects, and continue a private conversation while the request is open. Administrators can filter the queue, send client-visible replies, keep separate internal notes, and move requests through open, in-progress, resolved and closed states.
+- Backend authorization protects every support list, detail, message and status action. Another client cannot view a case or attach someone else's project; clients cannot post internal notes or change status. Submission keys make case creation and messages retry-safe.
+- Support notifications contain only event summaries. Audit entries record category, request, project, audience and status changes without copying support-message bodies.
 
 ## Verification
 
 - Focused tests reconcile representative confirmed/refunded orders, open/completed projects, assignment, editor availability, pending payout and held-notification records against the rendered analytics data.
 - Access checks cover anonymous redirect, authenticated client denial and admin success.
-- The full isolated suite passes 115 tests with 10 opt-in integration tests skipped. Ruff, Django system and migration checks pass.
-- This slice changes no database schema. The selected Supabase migration state remains `core.0007` and `operations.0012`; ordinary application writes continue to persist there.
+- The full isolated suite passes 119 tests with 10 opt-in integration tests skipped. Ruff, Django system and migration checks pass.
+- Additive migration `operations.0013` created private `support_requests` and `support_messages` tables after ignored private row snapshot `database-snapshot-20260924T064606086761Z.json`. Both tables were empty after migration, the status index and audience constraint are present, all 46 tables retain RLS and browser roles have no schema access.
 - No paid subscription or upgrade was required.
 
 ## Remaining before the Phase 8 gate

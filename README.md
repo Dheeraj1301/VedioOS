@@ -16,13 +16,15 @@ Phase 5 adds private editor submissions, version history, revision requests, exp
 
 Phase 6 adds prospective coin rules, acceptance-linked pending credits, admin release, an editor wallet and a sandbox redemption flow with reserved balances. See [Phase 6 evidence and activation limits](docs/PHASE_6.md). The connected project's earning and redemption policy remains disabled; real coin value and payout method await owner decisions.
 
-Phase 7 now includes admin status queues, paid consultation tracking, recipient-scoped in-app notifications with older-history pages, and alerts for already-recorded overdue deadlines. See [Phase 7 scope and remaining work](docs/PHASE_7.md). The full Phase 7 gate remains open.
+Phase 7 now includes admin status queues, paid consultation tracking, recipient-scoped in-app notifications with older-history pages, alerts for already-recorded overdue deadlines, and a durable external-delivery outbox held safely by default. See [Phase 7 scope and remaining work](docs/PHASE_7.md). The full Phase 7 gate remains open.
 
-The owner-requested account and order-flow revision is being completed before the next roadmap phase. Password, editor-ID, navigation, music and separate inspiration-upload changes are verified; email verification and the four-block plan/custom screen are next. See [the live change checklist](docs/OWNER_CHANGES_2026_09_19.md).
+The owner-requested password, editor-ID, navigation, email verification, inspiration-upload and four-block plan/custom changes are verified. See [the change record](docs/OWNER_CHANGES_2026_09_19.md).
 
 Project details also support client/team messages and separate internal notes with protected older-message pages. Current project access is checked on the backend; the [Phase 7 evidence](docs/PHASE_7.md) records the remaining launch work.
 
 Admins can inspect a protected audit timeline at `/admin/audit/`. It shows action, actor, target and time; raw private event details stay out of the page.
+
+Phase 8 is in progress. Admins have reconciled operational analytics, and clients can open private support requests with shared replies while administrators keep separate internal notes and manage status. See [Phase 8 evidence](docs/PHASE_8.md). Monthly package sales and production business metrics remain disabled pending owner policy.
 
 ## Read before developing
 

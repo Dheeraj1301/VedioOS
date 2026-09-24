@@ -11,6 +11,7 @@ from .models import (
     EditorAssignment,
     NotificationDelivery,
     RedemptionRequest,
+    SupportRequest,
 )
 
 
@@ -68,6 +69,9 @@ def operational_analytics():
             "completed_projects": project_counts.get(Project.Status.COMPLETED, 0),
             "open_assignments": open_assignments.count(),
             "pending_payouts": payout_counts.get("requested", 0),
+            "open_support": SupportRequest.objects.filter(
+                status__in=[SupportRequest.Status.OPEN, SupportRequest.Status.IN_PROGRESS]
+            ).count(),
         },
         "orders": _rows(Order._meta.get_field("payment_status").choices, order_counts),
         "projects": _rows(Project.Status.choices, project_counts),

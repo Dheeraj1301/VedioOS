@@ -5,7 +5,7 @@ from core import views
 from core.delivery_views import delivery_action, mark_notification_read, notifications
 from core.message_views import message_post
 from operations import assignment_views as assignments
-from operations import audit_views, earning_views
+from operations import audit_views, earning_views, support_views
 from operations import views as ops
 
 urlpatterns = [
@@ -34,6 +34,8 @@ urlpatterns = [
         "client/projects/<uuid:project_id>/", views.project_detail, {"area": "client"}, name="client_project"
     ),
     path("client/payments/", views.payment_history, name="payment_history"),
+    path("client/support/", support_views.client_support, name="client_support"),
+    path("client/support/create/", support_views.create_support, name="create_support"),
     path("client/projects/<uuid:project_id>/quote/", commerce.quote_page, name="quote_select"),
     path("api/custom-estimate/", commerce.estimate_custom, name="estimate_custom"),
     path(
@@ -52,6 +54,18 @@ urlpatterns = [
     path("editor/<str:page>/", ops.editor_page),
     path("admin/", ops.admin_dashboard, name="admin_dashboard"),
     path("admin/audit/", audit_views.audit_timeline, name="audit_timeline"),
+    path("admin/support/", support_views.admin_support, name="admin_support"),
+    path("support/<uuid:request_id>/", support_views.support_detail, name="support_detail"),
+    path(
+        "support/<uuid:request_id>/messages/",
+        support_views.support_message,
+        name="support_message",
+    ),
+    path(
+        "support/<uuid:request_id>/status/",
+        support_views.support_status,
+        name="support_status",
+    ),
     path("admin/calls/<uuid:call_id>/action/", ops.call_action, name="call_action"),
     path("admin/assignments/", assignments.assignments, name="assignments"),
     path("admin/assignments/policy/", assignments.assignment_policy, name="assignment_policy"),

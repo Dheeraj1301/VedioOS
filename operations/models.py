@@ -276,6 +276,59 @@ class ProjectMessage(Record):
         ]
 
 
+class SupportRequest(Record):
+    class Category(models.TextChoices):
+        PROJECT = "project", "Project help"
+        PAYMENT = "payment", "Payment question"
+        ACCOUNT = "account", "Account help"
+        TECHNICAL = "technical", "Technical problem"
+        OTHER = "other", "Other"
+
+    class Status(models.TextChoices):
+        OPEN = "open", "Open"
+        IN_PROGRESS = "in_progress", "In progress"
+        RESOLVED = "resolved", "Resolved"
+        CLOSED = "closed", "Closed"
+
+    client = models.ForeignKey("core.Client", on_delete=models.PROTECT, related_name="support_requests")
+    project = models.ForeignKey(
+        Project, null=True, blank=True, on_delete=models.PROTECT, related_name="support_requests"
+    )
+    subject = models.CharField(max_length=160)
+    category = models.CharField(max_length=20, choices=Category.choices)
+    status = models.CharField(max_length=20, choices=Status.choices, default=Status.OPEN)
+    request_key = models.UUIDField(unique=True)
+
+    class Meta:
+        db_table = "support_requests"
+        ordering = ["-updated_at", "-id"]
+        indexes = [models.Index(fields=["status", "-updated_at"], name="support_status_updated_idx")]
+
+
+class SupportMessage(Record):
+    class Audience(models.TextChoices):
+        SHARED = "shared", "Client and support team"
+        INTERNAL = "internal", "Support team only"
+
+    support_request = models.ForeignKey(
+        SupportRequest, on_delete=models.PROTECT, related_name="messages"
+    )
+    author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT)
+    audience = models.CharField(max_length=10, choices=Audience.choices)
+    body = models.TextField(max_length=5000)
+    request_key = models.UUIDField(unique=True)
+
+    class Meta:
+        db_table = "support_messages"
+        ordering = ["created_at", "id"]
+        constraints = [
+            models.CheckConstraint(
+                condition=models.Q(audience__in=["shared", "internal"]),
+                name="valid_support_message_audience",
+            )
+        ]
+
+
 class EditorCoins(Record):
     editor = models.OneToOneField(Editor, on_delete=models.PROTECT, related_name="wallet")
     # Balance is derived from the ledger. No editable cached balance or invented conversion.

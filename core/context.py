@@ -4,6 +4,7 @@ NAV = {
         ("Plan a new edit", "/client/new-order/"),
         ("My projects", "/client/projects/"),
         ("Payment history", "/client/payments/"),
+        ("Support", "/client/support/"),
     ],
     "editor": [
         ("Assigned projects", "/editor/"),
@@ -23,6 +24,7 @@ NAV = {
         ("Plans / Pricing", "/admin/pricing/"),
         ("Calls", "/admin/calls/"),
         ("Payouts", "/admin/payouts/"),
+        ("Support", "/admin/support/"),
         ("Audit", "/admin/audit/"),
         ("Analytics", "/admin/analytics/"),
     ],
