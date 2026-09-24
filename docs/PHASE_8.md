@@ -11,13 +11,16 @@ Status: in progress. Operational analytics and private client-support slices wer
 - Clients can open a categorized support request, optionally link one of their own projects, and continue a private conversation while the request is open. Administrators can filter the queue, send client-visible replies, keep separate internal notes, and move requests through open, in-progress, resolved and closed states.
 - Backend authorization protects every support list, detail, message and status action. Another client cannot view a case or attach someone else's project; clients cannot post internal notes or change status. Submission keys make case creation and messages retry-safe.
 - Support notifications contain only event summaries. Audit entries record category, request, project, audience and status changes without copying support-message bodies.
+- Admin → Feature controls provides one protected inventory of actual workflow controls. It reflects persisted commerce, review, upload, assignment and earning policies plus environment-controlled payment, payout and notification modes, with links to existing configuration pages. Package sales and AI remain visibly locked pending D13 and D08.
+- The control center does not introduce a generic bypass flag or display credentials. Existing validation, order snapshots, payment verification and authorization boundaries remain authoritative.
 
 ## Verification
 
 - Focused tests reconcile representative confirmed/refunded orders, open/completed projects, assignment, editor availability, pending payout and held-notification records against the rendered analytics data.
 - Access checks cover anonymous redirect, authenticated client denial and admin success.
-- The full isolated suite passes 119 tests with 10 opt-in integration tests skipped. Ruff, Django system and migration checks pass.
+- The full isolated suite passes 121 tests with 10 opt-in integration tests skipped. Ruff, Django system and migration checks pass.
 - Additive migration `operations.0013` created private `support_requests` and `support_messages` tables after ignored private row snapshot `database-snapshot-20260924T064606086761Z.json`. Both tables were empty after migration, the status index and audience constraint are present, all 46 tables retain RLS and browser roles have no schema access.
+- The feature-control inventory changes no schema; Supabase remains synchronized through `operations.0013`.
 - No paid subscription or upgrade was required.
 
 ## Remaining before the Phase 8 gate

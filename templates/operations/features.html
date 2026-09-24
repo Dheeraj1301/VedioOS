@@ -1,0 +1,5 @@
+{% extends 'workspace.html' %}{% block workspace_content %}
+<div class="page-heading"><div><p class="eyebrow">Admin / Configuration</p><h1>Feature controls</h1><p class="muted">A live inventory of the controls that decide which workflows can run.</p></div></div>
+<section class="panel"><ul class="data-list">{% for feature in features %}<li><div class="feature-row"><div><strong>{{ feature.name }}</strong><p>{{ feature.detail }}</p></div><div><span class="badge">{{ feature.state }}</span>{% if feature.url %}<a class="text-link" href="{{ feature.url }}">Configure</a>{% else %}<span class="muted">{{ feature.control|default:"Environment controlled" }}</span>{% endif %}</div></div></li>{% endfor %}</ul></section>
+<section class="panel detail-panel"><h2>Production boundary</h2><p>This page reflects real application settings. It does not activate unfinished providers or replace the owner decisions required for payments, payouts, packages, AI, deadlines, notifications or commercial terms.</p></section>
+{% endblock %}

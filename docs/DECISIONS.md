@@ -43,6 +43,8 @@ Notification delivery foundation: every in-app notice receives one durable exter
 
 Client-support foundation: clients can open private support requests and optionally link only their own projects. Shared messages are visible to that client and administrators; internal notes remain administrator-only. Administrators control status. Submission keys make creation/messages retry-safe, notifications contain event summaries, and audit entries exclude message bodies. External support contacts and service obligations remain part of D14/D12.
 
+Feature-control inventory: the admin workspace reports existing validated policy and environment states rather than adding a generic flag that could bypass business or security gates. Configuration links lead to the current commerce, assignment, earning and package-draft controls. Provider-backed payments, payouts, notifications, package sales and AI remain disabled or locked until their recorded decisions are resolved.
+
 ### Phase 4 allocation milestone — 2026-09-16
 
 The owner authorized continuing development. Implemented admin assessment, capacity controls and configurable transactional allocation; no provider, capacity or business policy was approved by inference. The skip/wait clarification has no recorded answer, so the shared policy remains unset and disabled. Technical choice: serialize allocation and eligibility changes on one policy row, keep independent persistent proficiency cursors, and verify concurrency on PostgreSQL. Supported operational choices and remaining D07–D09 decisions are documented in [Phase 4](PHASE_4.md). No paid service or AI integration was added.

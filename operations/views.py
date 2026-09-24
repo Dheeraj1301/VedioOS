@@ -14,6 +14,7 @@ from core.permissions import role_required, visible_projects
 from .analytics import operational_analytics
 from .assignments import approve_proficiency, change_availability, editor_roster, open_workload
 from .calls import complete_call, schedule_call
+from .features import feature_controls
 from .forms import AvailabilityForm
 from .models import CallRequest, Editor, EditorAssignment, EditorProficiency, SupportRequest
 
@@ -130,6 +131,12 @@ def admin_dashboard(request):
 
 @role_required("admin")
 def admin_page(request, page):
+    if page == "features":
+        return render(
+            request,
+            "operations/features.html",
+            {"title": "Feature controls", **feature_controls()},
+        )
     if page == "analytics":
         return render(
             request,
