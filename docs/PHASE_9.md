@@ -44,6 +44,10 @@ Cleanup runs after success and failure and deletes every version and delete mark
 
 The reconciliation is database-to-storage only. It does not list or delete unreferenced bucket objects because retention and orphan-cleanup policy remain part of D02.
 
+`inventory_private_storage` closes the read-only inventory gap by paginating every object version and delete marker in the configured private bucket and comparing exact key/version pairs with database file records. It fails for ready records without immutable versions, referenced versions missing from storage, leftover synthetic preflight objects or invalid provider pagination. It reports unreferenced versions and delete markers as aggregate warnings because D02 has not authorized retention or deletion behavior. It never prints filenames, object keys, credentials or signed URLs and never modifies storage.
+
+On 2026-09-24 the connected inventory passed: two database references matched two bucket objects and two immutable versions, with zero missing references, unreferenced versions, delete markers, pending reservations or synthetic probe artifacts. This confirms the current inventory is clean; production media backup/restore and deletion policy remain open.
+
 ## Workflow reconciliation
 
 `reconcile_workflows` provides a read-only cross-record consistency audit. It checks that confirmed orders activated their projects and retained priced agreement snapshots, confirmed payment records match order amount/currency, active assignments belong to paid projects, ready files have completion/version metadata, submitted versions and revisions belong to the same project, and completed deliveries have a client-owned acceptance for the attributed version and assignment.
@@ -125,7 +129,7 @@ The runs reported no browser page errors or horizontal overflow. Screenshots rem
 ## Verification
 
 - Unit checks cover a secure disabled-feature release scope, insecure settings, policy/provider inconsistencies, and secret-free JSON output.
-- The full isolated suite passes 165 tests with 10 opt-in integration tests skipped.
+- The full isolated suite passes 169 tests with 10 opt-in integration tests skipped.
 - All five opt-in Edge lifecycle suites pass with real local private-storage integrity where applicable.
 - Django system and migration checks and Ruff pass.
 - This slice changes no database schema. Supabase remains synchronized through `operations.0013`.

@@ -7,6 +7,7 @@ from .health import database_ready
 from .models import File
 from .snapshot_integrity import verify_snapshot
 from .storage import storage_client
+from .storage_inventory import inventory_private_storage
 from .storage_preflight import check_private_storage
 from .storage_reconciliation import reconcile_ready_files
 from .workflow_reconciliation import workflow_findings
@@ -65,6 +66,10 @@ def collect_release_evidence(*, active_storage=False):
             "status": "fail",
             "code": "storage_not_configured",
         }
+        checks["storage_inventory"] = {
+            "status": "fail",
+            "code": "storage_not_configured",
+        }
     else:
         try:
             files = File.objects.filter(state="ready").only(
@@ -77,10 +82,21 @@ def collect_release_evidence(*, active_storage=False):
                 "code": "consistent",
                 "checked": storage_report["checked"],
             }
+            inventory_files = File.objects.only("object_key", "storage_version", "state").iterator(
+                chunk_size=100
+            )
+            inventory = inventory_private_storage(
+                inventory_files, storage, settings.S3_BUCKET
+            )
+            checks["storage_inventory"] = inventory
         except Exception:
             checks["storage_records"] = {
                 "status": "fail",
                 "code": "storage_reconciliation_failed",
+            }
+            checks["storage_inventory"] = {
+                "status": "fail",
+                "code": "storage_inventory_failed",
             }
 
     snapshot = _latest_snapshot()
@@ -130,7 +146,13 @@ def collect_release_evidence(*, active_storage=False):
                 "code": "active_storage_check_failed",
             }
 
-    required = ["database", "database_protection", "workflows", "storage_records"]
+    required = [
+        "database",
+        "database_protection",
+        "workflows",
+        "storage_records",
+        "storage_inventory",
+    ]
     selected = required + (["active_storage"] if active_storage else [])
     snapshot_failed = checks["snapshot"]["status"] == "fail"
     passed = all(checks[name]["status"] == "pass" for name in selected) and not snapshot_failed
