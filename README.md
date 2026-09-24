@@ -187,6 +187,14 @@ Use `--report-only` for a development baseline or `--json` for CI. A passing con
 
 Deployment probes are available at `/health/live/` for process liveness and `/health/ready/` for database/migration readiness. They return generic uncached JSON and do not verify external providers.
 
+Verify the configured private-storage transport with synthetic bytes:
+
+```powershell
+.venv/Scripts/python.exe manage.py check_private_storage
+```
+
+The command requires bucket versioning, uploads a unique 128 KiB synthetic object, verifies its signed byte-identical download and anonymous denial, then removes every probe version. It prints no credentials or signed URLs and creates no application database record.
+
 Before an approved additive Supabase migration, capture and verify the ignored private row snapshot:
 
 ```powershell
