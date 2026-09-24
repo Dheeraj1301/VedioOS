@@ -60,10 +60,23 @@ These results are evidence that the checker fails closed. They are not a request
 
 `verify_cloud` provides a rollback-only check against the configured PostgreSQL database. It follows the current mandatory email-verification and administrator-issued editor-ID flows, checks all three role areas and project-level denial, and proves that its synthetic records were removed.
 
+## Representative browser lifecycle
+
+On 2026-09-24, all five opt-in Microsoft Edge walkthroughs passed against isolated temporary databases. The delivery and mobile flows used the real loopback private storage service and removed their synthetic objects afterward.
+
+- Commerce: admin catalog configuration, server custom quote, mobile agreement acceptance, signed sandbox payment, duplicate callback and protected receipt.
+- Assignment: capacity/policy configuration, manual complexity, persistent round robin, assigned-editor access, audited reassignment and former-editor denial.
+- Delivery: private editor output, revision request, replacement version, explicit acceptance, first-draft acceptance and byte-identical private downloads on desktop and mobile.
+- Earnings: pending credit, admin release, wallet reservation, failed payout release and successful sandbox payout.
+- Operations/mobile: 390px and 320px project views, password visibility, keyboard skip navigation, separate inspiration upload, rejected-upload recovery, original-byte integrity, message isolation, notification history and the audit timeline.
+
+The runs reported no browser page errors or horizontal overflow. Screenshots remain in ignored `.runtime/screenshots`; they contain synthetic fixtures and are not published. This is local development evidence. It does not validate a real payment/payout provider, production media hosting, email delivery, assistive technology or production load.
+
 ## Verification
 
 - Unit checks cover a secure disabled-feature release scope, insecure settings, policy/provider inconsistencies, and secret-free JSON output.
 - The full isolated suite passes 136 tests with 10 opt-in integration tests skipped.
+- All five opt-in Edge lifecycle suites pass with real local private-storage integrity where applicable.
 - Django system and migration checks and Ruff pass.
 - This slice changes no database schema. Supabase remains synchronized through `operations.0013`.
 - No deployment, domain, provider subscription or paid upgrade was performed.
@@ -73,5 +86,5 @@ These results are evidence that the checker fails closed. They are not a request
 - Resolve the manual gates printed by the command, including D02–D16 as applicable to the release scope.
 - Select hosting, production storage, email, payment/payout and monitoring providers; configure credentials through an approved secret store.
 - Design and exercise full database and media backup/restore procedures with approved recovery targets.
-- Run `check_release`, `check --deploy`, database protections, browser/accessibility checks, large-file tests and the complete client-to-payout lifecycle in the intended environment.
+- Run `check_release`, `check --deploy`, database protections, manual assistive-technology checks, approved large-file targets and the complete client-to-payout lifecycle with real providers in the intended environment.
 - Obtain explicit production deployment authorization.
