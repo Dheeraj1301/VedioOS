@@ -191,9 +191,10 @@ Verify the configured private-storage transport with synthetic bytes:
 
 ```powershell
 .venv/Scripts/python.exe manage.py check_private_storage
+.venv/Scripts/python.exe manage.py reconcile_private_storage
 ```
 
-The command requires bucket versioning, uploads a unique 128 KiB synthetic object, verifies its signed byte-identical download and anonymous denial, then removes every probe version. It prints no credentials or signed URLs and creates no application database record.
+The first command requires bucket versioning, uploads a unique 128 KiB synthetic object, verifies its signed byte-identical download and anonymous denial, then removes every probe version. The reconciliation command performs a read-only comparison of every ready database file against its exact private object version, size and SHA-256 checksum. Both commands omit credentials, signed URLs, client filenames and object keys from output.
 
 Before an approved additive Supabase migration, capture and verify the ignored private row snapshot:
 

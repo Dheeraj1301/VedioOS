@@ -40,6 +40,10 @@ Storage, email, payment and notification provider monitoring still requires the 
 
 Cleanup runs after success and failure and deletes every version and delete marker for the unique probe key. The command fails when cleanup cannot be verified and never prints credentials or signed URLs. On 2026-09-24 it passed against the current loopback private-storage service and left no probe version behind. Production storage remains unverified until D02 selects and configures that provider.
 
+`reconcile_private_storage` performs the complementary read-only consistency check. For every database file marked ready, it requests the exact persisted object version and compares stored byte size and SHA-256 checksum with database metadata. Errors are aggregated by category; client filenames, object keys, credentials and signed URLs are omitted. On 2026-09-24 both ready Supabase file records reconciled with their private objects.
+
+The reconciliation is database-to-storage only. It does not list or delete unreferenced bucket objects because retention and orphan-cleanup policy remain part of D02.
+
 ## Pre-migration snapshot integrity
 
 `snapshot_database` now writes a companion SHA-256 manifest for every private row snapshot. Verify the latest manifested snapshot with:
@@ -87,7 +91,7 @@ The runs reported no browser page errors or horizontal overflow. Screenshots rem
 ## Verification
 
 - Unit checks cover a secure disabled-feature release scope, insecure settings, policy/provider inconsistencies, and secret-free JSON output.
-- The full isolated suite passes 151 tests with 10 opt-in integration tests skipped.
+- The full isolated suite passes 155 tests with 10 opt-in integration tests skipped.
 - All five opt-in Edge lifecycle suites pass with real local private-storage integrity where applicable.
 - Django system and migration checks and Ruff pass.
 - This slice changes no database schema. Supabase remains synchronized through `operations.0013`.
@@ -97,6 +101,6 @@ The runs reported no browser page errors or horizontal overflow. Screenshots rem
 
 - Resolve the manual gates printed by the command, including D02–D16 as applicable to the release scope.
 - Select hosting, production storage, email, payment/payout and monitoring providers; configure credentials through an approved secret store.
-- Exercise full PostgreSQL role/grant/extension and media backup/restore procedures with approved recovery targets; the row-level isolated rehearsal is complete.
+- Exercise full PostgreSQL role/grant/extension and media backup/restore procedures with approved recovery targets; row-level restore and ready-file reconciliation are complete.
 - Run `check_release`, `check --deploy`, database protections, the storage preflight against the selected production provider, manual assistive-technology checks, approved large-file targets and the complete client-to-payout lifecycle with real providers in the intended environment.
 - Obtain explicit production deployment authorization.
