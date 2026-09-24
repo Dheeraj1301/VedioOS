@@ -181,6 +181,15 @@ Use `--report-only` for a development baseline or `--json` for CI. A passing con
 
 Deployment probes are available at `/health/live/` for process liveness and `/health/ready/` for database/migration readiness. They return generic uncached JSON and do not verify external providers.
 
+Before an approved additive Supabase migration, capture and verify the ignored private row snapshot:
+
+```powershell
+.venv/Scripts/python.exe manage.py snapshot_database
+.venv/Scripts/python.exe manage.py verify_database_snapshot --against-database
+```
+
+The snapshot and `.sha256` manifest are migration safeguards containing private rows. They are not full PostgreSQL/media backups and must never be committed or shared through GitHub.
+
 The last command runs the foundation, commerce, assignment, delivery and earnings backend suites. Browser and real-storage tests are intentionally opt-in, so run the commands in the next two sections for the complete check.
 
 ### Real private-storage integrity tests

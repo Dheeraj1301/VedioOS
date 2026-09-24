@@ -34,6 +34,20 @@ It also prints the manual decision and exercise gates that cannot be inferred fr
 
 Storage, email, payment and notification provider monitoring still requires the approved providers and D16 alert ownership; these probes do not claim those integrations are healthy.
 
+## Pre-migration snapshot integrity
+
+`snapshot_database` now writes a companion SHA-256 manifest for every private row snapshot. Verify the latest manifested snapshot with:
+
+```powershell
+.venv/Scripts/python.exe manage.py verify_database_snapshot
+```
+
+Pass `--against-database` immediately after capture to compare the snapshot's table inventory and row counts with the current private PostgreSQL schema. The verifier refuses paths outside ignored `.runtime`, rejects missing/malformed manifests, detects changed bytes, validates the expected `vedioos` structure and never prints row content.
+
+The 2026-09-24 baseline created `database-snapshot-20260924T080930544992Z.json` plus its ignored manifest and verified 46 tables / 297 rows against Supabase. These artifacts contain private data and remain local.
+
+This remains a pre-migration row snapshot. It does not contain PostgreSQL roles, grants, extensions or media objects and has no automated restore path. `pg_dump` and `pg_restore` are unavailable on this host. A real database and media backup/restore exercise remains blocked on D02/D16, the chosen providers and approved recovery targets.
+
 ## Current development baseline
 
 The connected development configuration reports 10 expected blockers: debug mode; local-only hosts; no trusted production CSRF origin; non-secure development cookies; no HTTPS redirect/HSTS; loopback HTTP storage; console email; and a localhost sender. It reports five disabled-workflow warnings for real payments, payouts, external notification email, automatic assignment and prospective earnings.
@@ -43,7 +57,7 @@ These results are evidence that the checker fails closed. They are not a request
 ## Verification
 
 - Unit checks cover a secure disabled-feature release scope, insecure settings, policy/provider inconsistencies, and secret-free JSON output.
-- The full isolated suite passes 131 tests with 10 opt-in integration tests skipped.
+- The full isolated suite passes 135 tests with 10 opt-in integration tests skipped.
 - Django system and migration checks and Ruff pass.
 - This slice changes no database schema. Supabase remains synchronized through `operations.0013`.
 - No deployment, domain, provider subscription or paid upgrade was performed.

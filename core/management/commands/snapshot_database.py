@@ -7,6 +7,8 @@ from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
 from django.db import connection, transaction
 
+from core.snapshot_integrity import write_manifest
+
 
 class Command(BaseCommand):
     help = "Save a consistent private-schema row snapshot in ignored .runtime before migrations."
@@ -34,6 +36,8 @@ class Command(BaseCommand):
         path = directory / f"database-snapshot-{datetime.now(timezone.utc):%Y%m%dT%H%M%S%fZ}.json"
         with path.open("x", encoding="utf-8") as stream:
             json.dump({"schema": schema, "tables": snapshot}, stream, default=str)
+        manifest = write_manifest(path)
         self.stdout.write(
-            f"Saved private row snapshot: {path.name}; {len(tables)} tables. Keep this ignored file private. This is not a full database/role backup."
+            f"Saved private row snapshot: {path.name}; {len(tables)} tables; integrity manifest: "
+            f"{manifest.name}. Keep both ignored files private. This is not a full database/role backup."
         )
