@@ -192,9 +192,10 @@ Before an approved additive Supabase migration, capture and verify the ignored p
 ```powershell
 .venv/Scripts/python.exe manage.py snapshot_database
 .venv/Scripts/python.exe manage.py verify_database_snapshot --against-database
+.venv/Scripts/python.exe manage.py rehearse_database_restore
 ```
 
-The snapshot and `.sha256` manifest are migration safeguards containing private rows. They are not full PostgreSQL/media backups and must never be committed or shared through GitHub.
+The rehearsal verifies the manifest, migrates a disposable SQLite database, restores every captured row, checks schema columns, migration history, foreign keys and database integrity, then deletes the temporary database. It never writes to Supabase. The snapshot and `.sha256` manifest are migration safeguards containing private rows. They are not full PostgreSQL/media backups and must never be committed or shared through GitHub.
 
 The last command runs the foundation, commerce, assignment, delivery and earnings backend suites. Browser and real-storage tests are intentionally opt-in, so run the commands in the next two sections for the complete check.
 

@@ -46,7 +46,11 @@ Pass `--against-database` immediately after capture to compare the snapshot's ta
 
 The 2026-09-24 baseline created `database-snapshot-20260924T080930544992Z.json` plus its ignored manifest and verified 46 tables / 297 rows against Supabase. These artifacts contain private data and remain local.
 
-This remains a pre-migration row snapshot. It does not contain PostgreSQL roles, grants, extensions or media objects and has no automated restore path. `pg_dump` and `pg_restore` are unavailable on this host. A real database and media backup/restore exercise remains blocked on D02/D16, the chosen providers and approved recovery targets.
+`rehearse_database_restore` now validates that a manifested row snapshot can be loaded into a newly migrated, disposable SQLite database. The command requires a snapshot inside ignored `.runtime`, verifies its digest, requires an exact table/column match, restores all rows, checks migration history, foreign keys and database integrity, and removes the temporary database. It has no option that targets Supabase or another existing database.
+
+On 2026-09-24 the command restored the 46-table / 297-row baseline successfully without modifying the live database. Unit tests also prove schema drift is rejected without printing private row content.
+
+This remains a pre-migration row-level rehearsal. It does not restore PostgreSQL roles, grants, extensions, sequences, provider-managed backups or media objects. `pg_dump` and `pg_restore` are unavailable on this host. A full production database and media backup/restore exercise remains blocked on D02/D16, the chosen providers and approved recovery targets.
 
 ## Current development baseline
 
@@ -77,7 +81,7 @@ The runs reported no browser page errors or horizontal overflow. Screenshots rem
 ## Verification
 
 - Unit checks cover a secure disabled-feature release scope, insecure settings, policy/provider inconsistencies, and secret-free JSON output.
-- The full isolated suite passes 136 tests with 10 opt-in integration tests skipped.
+- The full isolated suite passes 147 tests with 10 opt-in integration tests skipped.
 - All five opt-in Edge lifecycle suites pass with real local private-storage integrity where applicable.
 - Django system and migration checks and Ruff pass.
 - This slice changes no database schema. Supabase remains synchronized through `operations.0013`.
@@ -87,6 +91,6 @@ The runs reported no browser page errors or horizontal overflow. Screenshots rem
 
 - Resolve the manual gates printed by the command, including D02–D16 as applicable to the release scope.
 - Select hosting, production storage, email, payment/payout and monitoring providers; configure credentials through an approved secret store.
-- Design and exercise full database and media backup/restore procedures with approved recovery targets.
+- Exercise full PostgreSQL role/grant/extension and media backup/restore procedures with approved recovery targets; the row-level isolated rehearsal is complete.
 - Run `check_release`, `check --deploy`, database protections, manual assistive-technology checks, approved large-file targets and the complete client-to-payout lifecycle with real providers in the intended environment.
 - Obtain explicit production deployment authorization.
