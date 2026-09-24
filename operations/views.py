@@ -9,6 +9,7 @@ from django.utils import timezone
 from django.views.decorators.http import require_POST
 
 from core.models import Client, Order
+from core.payment_history import PAYMENT_STATUSES, payment_page
 from core.permissions import role_required, visible_projects
 
 from .analytics import operational_analytics
@@ -131,6 +132,21 @@ def admin_dashboard(request):
 
 @role_required("admin")
 def admin_page(request, page):
+    if page == "payments":
+        payments, older_cursor, payment_filter = payment_page(
+            request.user, request.GET.get("before"), request.GET.get("status", "all")
+        )
+        return render(
+            request,
+            "operations/payments.html",
+            {
+                "title": "Payments",
+                "payments": payments,
+                "older_payment_cursor": older_cursor,
+                "payment_filter": payment_filter,
+                "payment_statuses": PAYMENT_STATUSES,
+            },
+        )
     if page == "features":
         return render(
             request,

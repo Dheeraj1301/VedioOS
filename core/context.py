@@ -17,6 +17,7 @@ NAV = {
     "admin": [
         ("Overview", "/admin/"),
         ("Orders", "/admin/orders/"),
+        ("Payments", "/admin/payments/"),
         ("Projects", "/admin/projects/"),
         ("Editors", "/admin/editors/"),
         ("Clients", "/admin/clients/"),

@@ -27,11 +27,11 @@ from .models import (
     File,
     InfluencerPackage,
     Order,
-    Payment,
     Plan,
     UploadPolicy,
     User,
 )
+from .payment_history import PAYMENT_STATUSES, payment_page
 from .permissions import can_upload, project_for, role_required, visible_files, visible_projects
 from .storage import download_permission, inspect_object, upload_permission
 
@@ -344,14 +344,18 @@ def project_detail(request, project_id, area):
 
 @role_required("client")
 def payment_history(request):
+    payments, older_cursor, payment_filter = payment_page(
+        request.user, request.GET.get("before"), request.GET.get("status", "all")
+    )
     return render(
         request,
         "client/payments.html",
         {
             "title": "Payment history",
-            "payments": Payment.objects.filter(order__project__client__user=request.user).select_related(
-                "order__project"
-            ),
+            "payments": payments,
+            "older_payment_cursor": older_cursor,
+            "payment_filter": payment_filter,
+            "payment_statuses": PAYMENT_STATUSES,
         },
     )
 
