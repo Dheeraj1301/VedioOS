@@ -17,14 +17,18 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
+      DEBUG: "true"
       PYTHONDONTWRITEBYTECODE: "1"
       PYTHONUNBUFFERED: "1"
+      SECRET_KEY: "ci-only-synthetic-key-0123456789abcdef-0123456789abcdef-0123456789"
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v7
         with:
           python-version: "3.13"
           cache: pip
