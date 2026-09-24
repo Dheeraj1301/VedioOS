@@ -115,7 +115,7 @@ The first-version scope is all 28 priorities in original brief section 34, cover
 
 ## Phase 9 — Production readiness
 
-**2026-09-24: configuration-audit foundation verified.** `check_release` now fails closed on insecure runtime/provider combinations, supports secret-free JSON for CI and lists the manual policy/recovery gates. The current development environment intentionally fails; no deployment is authorized. See [Phase 9 evidence](PHASE_9.md).
+**2026-09-24: configuration-audit and deployment-health foundations verified.** `check_release` fails closed on insecure runtime/provider combinations, supports secret-free JSON for CI and lists manual policy/recovery gates. Generic liveness and database/migration readiness probes are available for a future orchestrator. The current development environment intentionally fails the release audit; no deployment is authorized. See [Phase 9 evidence](PHASE_9.md).
 
 - Verify complete client → payment → assignment → editor → revision/acceptance → final download → earnings flow in the intended environment.
 - Check authorization for every role and project resource, original-file integrity, concurrency, event replay, and large-file interruption/recovery.

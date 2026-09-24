@@ -179,6 +179,8 @@ Audit an intended production configuration without printing secret values:
 
 Use `--report-only` for a development baseline or `--json` for CI. A passing configuration audit does not replace the manual policy, provider, backup/restore, accessibility and end-to-end gates in [Phase 9](docs/PHASE_9.md).
 
+Deployment probes are available at `/health/live/` for process liveness and `/health/ready/` for database/migration readiness. They return generic uncached JSON and do not verify external providers.
+
 The last command runs the foundation, commerce, assignment, delivery and earnings backend suites. Browser and real-storage tests are intentionally opt-in, so run the commands in the next two sections for the complete check.
 
 ### Real private-storage integrity tests

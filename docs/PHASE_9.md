@@ -26,6 +26,14 @@ The audit checks:
 
 It also prints the manual decision and exercise gates that cannot be inferred from environment variables.
 
+## Deployment health probes
+
+- `GET /health/live/` confirms only that the Django process can serve a request. It does not query dependencies, which lets an orchestrator distinguish a dead process from a temporarily unavailable database.
+- `GET /health/ready/` verifies a database query and confirms there are no unapplied Django migrations. It returns HTTP 503 until both checks pass.
+- Both responses are uncached generic JSON. Dependency names, schema details, credentials and exception text are never returned. Mutating HTTP methods are rejected.
+
+Storage, email, payment and notification provider monitoring still requires the approved providers and D16 alert ownership; these probes do not claim those integrations are healthy.
+
 ## Current development baseline
 
 The connected development configuration reports 10 expected blockers: debug mode; local-only hosts; no trusted production CSRF origin; non-secure development cookies; no HTTPS redirect/HSTS; loopback HTTP storage; console email; and a localhost sender. It reports five disabled-workflow warnings for real payments, payouts, external notification email, automatic assignment and prospective earnings.
@@ -35,7 +43,7 @@ These results are evidence that the checker fails closed. They are not a request
 ## Verification
 
 - Unit checks cover a secure disabled-feature release scope, insecure settings, policy/provider inconsistencies, and secret-free JSON output.
-- The full isolated suite passes 127 tests with 10 opt-in integration tests skipped.
+- The full isolated suite passes 131 tests with 10 opt-in integration tests skipped.
 - Django system and migration checks and Ruff pass.
 - This slice changes no database schema. Supabase remains synchronized through `operations.0013`.
 - No deployment, domain, provider subscription or paid upgrade was performed.

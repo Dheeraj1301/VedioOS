@@ -3,12 +3,15 @@ from django.urls import path
 from core import commerce_views as commerce
 from core import views
 from core.delivery_views import delivery_action, mark_notification_read, notifications
+from core.health import liveness, readiness
 from core.message_views import message_post
 from operations import assignment_views as assignments
 from operations import audit_views, earning_views, support_views
 from operations import views as ops
 
 urlpatterns = [
+    path("health/live/", liveness, name="health_live"),
+    path("health/ready/", readiness, name="health_ready"),
     path("editor/wallet/", earning_views.wallet, name="wallet"),
     path("editor/wallet/redeem/", earning_views.redeem, name="redeem"),
     path("admin/earnings/", earning_views.earning_settings, name="earning_settings"),
