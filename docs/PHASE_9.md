@@ -54,6 +54,10 @@ The connected development configuration reports 10 expected blockers: debug mode
 
 These results are evidence that the checker fails closed. They are not a request to replace development settings with invented production values.
 
+## Continuous verification
+
+`.github/workflows/ci.yml` runs on every push and pull request with read-only repository permission. It installs the committed Python lock file on Python 3.13, checks Django configuration and migration drift, runs Ruff, and executes the isolated backend suite. The workflow receives no provider credentials and therefore cannot mutate Supabase, private storage, payments or payouts. Provider, storage and browser checks remain explicit integration gates.
+
 ## Verification
 
 - Unit checks cover a secure disabled-feature release scope, insecure settings, policy/provider inconsistencies, and secret-free JSON output.

@@ -115,7 +115,7 @@ The first-version scope is all 28 priorities in original brief section 34, cover
 
 ## Phase 9 — Production readiness
 
-**2026-09-24: configuration-audit, deployment-health and snapshot-integrity foundations verified.** `check_release` fails closed on insecure runtime/provider combinations, generic liveness/readiness probes support a future orchestrator, and private pre-migration row snapshots now have verified SHA-256 manifests. Full database/media restore remains open. The current development environment intentionally fails the release audit; no deployment is authorized. See [Phase 9 evidence](PHASE_9.md).
+**2026-09-24: configuration-audit, deployment-health, snapshot-integrity and continuous-verification foundations verified.** `check_release` fails closed on insecure runtime/provider combinations, generic liveness/readiness probes support a future orchestrator, private pre-migration row snapshots have verified SHA-256 manifests, and a secret-free GitHub Actions gate checks every push and pull request. Full database/media restore remains open. The current development environment intentionally fails the release audit; no deployment is authorized. See [Phase 9 evidence](PHASE_9.md).
 
 - Verify complete client → payment → assignment → editor → revision/acceptance → final download → earnings flow in the intended environment.
 - Check authorization for every role and project resource, original-file integrity, concurrency, event replay, and large-file interruption/recovery.
