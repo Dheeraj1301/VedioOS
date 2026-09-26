@@ -4,6 +4,7 @@ from django.conf import settings
 
 from .account_reconciliation import account_reconciliation_report
 from .audit_reconciliation import audit_reconciliation_report
+from .commerce_reconciliation import commerce_reconciliation_report
 from .database_security import database_security_report
 from .health import database_ready
 from .models import File
@@ -56,6 +57,11 @@ def collect_release_evidence(*, active_storage=False):
             "status": "fail",
             "code": "notification_outbox_failed",
         }
+
+    try:
+        checks["commerce"] = commerce_reconciliation_report()
+    except Exception:
+        checks["commerce"] = {"status": "fail", "code": "commerce_reconciliation_failed"}
 
     try:
         security = database_security_report()
@@ -172,6 +178,7 @@ def collect_release_evidence(*, active_storage=False):
         "accounts",
         "audit_history",
         "notification_outbox",
+        "commerce",
         "database_protection",
         "workflows",
         "storage_records",

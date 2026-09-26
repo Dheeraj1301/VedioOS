@@ -106,6 +106,14 @@ Expired processing leases, held work after provider enablement, and active unsen
 
 On 2026-09-26 the connected audit passed with zero notices and zero delivery rows, matching the current shared data. The outbox worker remains disabled and no email was sent. D12 must still approve the provider, sender domain, templates, preferences and worker schedule before activation.
 
+## Commerce reconciliation
+
+`reconcile_commerce` validates the persisted financial workflow without contacting a payment provider. Quote snapshots must contain itemized positive integer amounts, a matching total and currency, a supported quote kind and captured terms. Accepted quotes must match the order's immutable agreement snapshot. Payment records must match their order total and currency, maintain a single payment per order, follow confirmed/failed state transitions and retain a valid provider-event digest. Paid projects must contain each requested consultation stage, and consultation requests must belong to the project client.
+
+The command reports only aggregate inventory and finding counts. It never prints quote contents, provider references, event identifiers or user/project identifiers, and it does not create, repair or settle records.
+
+On 2026-09-26 the connected audit passed with two pending orders and zero quotes, payments, payment events or consultation requests. It found no critical inconsistencies or operational warnings. Real checkout remains disabled pending D03-D05 commercial policy and provider decisions.
+
 ## Pre-migration snapshot integrity
 
 `snapshot_database` now writes a companion SHA-256 manifest for every private row snapshot. Verify the latest manifested snapshot with:
@@ -153,7 +161,7 @@ The runs reported no browser page errors or horizontal overflow. Screenshots rem
 ## Verification
 
 - Unit checks cover a secure disabled-feature release scope, insecure settings, policy/provider inconsistencies, and secret-free JSON output.
-- The full isolated suite passes 180 tests with 10 opt-in integration tests skipped.
+- The full isolated suite passes 184 tests with 10 opt-in integration tests skipped.
 - All five opt-in Edge lifecycle suites pass with real local private-storage integrity where applicable.
 - Django system and migration checks and Ruff pass.
 - This slice changes no database schema. Supabase remains synchronized through `operations.0013`.

@@ -31,6 +31,7 @@ The pre-change data export is stored in ignored `.runtime/pre-phase3.json`. Veri
 $env:RUN_COMMERCE_BROWSER='1'
 .venv/Scripts/python.exe manage.py test tests.test_commerce_browser
 .venv/Scripts/python.exe manage.py verify_commerce_cloud
+.venv/Scripts/python.exe manage.py reconcile_commerce
 .venv/Scripts/python.exe manage.py check_database
 .venv/Scripts/python.exe manage.py makemigrations --check --dry-run
 .venv/Scripts/ruff.exe check .
@@ -39,6 +40,8 @@ $env:RUN_COMMERCE_BROWSER='1'
 37 automated checks passed, including 17 commerce checks. One real Edge browser test passed through admin configuration → client custom quote → mobile acceptance → signed gateway event → duplicate callback → receipt. No browser page errors or mobile horizontal overflow. Screenshots are in ignored `.runtime/screenshots/phase3-*.png`.
 
 The PostgreSQL verification command passed quote calculation, acceptance, payment activation, duplicate-event handling and rollback. It temporarily overrides test policy inside one transaction; all changes roll back. This is not a concurrent production gateway/load test.
+
+The read-only `reconcile_commerce` command also checks the connected environment for malformed quote snapshots, accepted-order drift, duplicate or mismatched payments, missing/invalid payment events, unpaid consultation requests and missing paid consultation stages. It emits aggregate counts only and is included in `collect_release_evidence`.
 
 ## Payment adapter boundary
 

@@ -194,19 +194,22 @@ Verify the configured private-storage transport with synthetic bytes:
 .venv/Scripts/python.exe manage.py reconcile_accounts
 .venv/Scripts/python.exe manage.py reconcile_audit_history
 .venv/Scripts/python.exe manage.py reconcile_notification_outbox
+.venv/Scripts/python.exe manage.py reconcile_commerce
 .venv/Scripts/python.exe manage.py check_private_storage
 .venv/Scripts/python.exe manage.py reconcile_private_storage
 .venv/Scripts/python.exe manage.py inventory_private_storage
 .venv/Scripts/python.exe manage.py reconcile_workflows
 ```
 
-`collect_release_evidence` is the recommended connected-environment summary. It verifies database/migration readiness, account/profile/session consistency, the private Supabase schema and RLS, cross-record workflow consistency, and every ready private-storage record. It also verifies the latest manifested snapshot when one exists. Use `--json` for machine-readable output or `--report-only` to record failures without a nonzero exit. Add `--active-storage` only when a synthetic write exercise is intended.
+`collect_release_evidence` is the recommended connected-environment summary. It verifies database/migration readiness, account/profile/session consistency, quote/order/payment consistency, the private Supabase schema and RLS, cross-record workflow consistency, and every ready private-storage record. It also verifies the latest manifested snapshot when one exists. Use `--json` for machine-readable output or `--report-only` to record failures without a nonzero exit. Add `--active-storage` only when a synthetic write exercise is intended.
 
 `reconcile_accounts` checks role/profile relationships, editor availability/wallet foundations, administrator flags and authenticated sessions without printing names, emails, IDs or session keys. Existing active clients created before mandatory verification are aggregate lifecycle warnings; the command does not deactivate or rewrite accounts.
 
 `reconcile_audit_history` checks that sensitive workflow records have the expected lifecycle events, that attributable actions have actors, and that nested audit details contain no credentials, URLs, message bodies or private media identifiers. Imported identities without historical onboarding events are reported as aggregate legacy warnings; the command never creates replacement history.
 
 `reconcile_notification_outbox` checks the one-delivery-per-notice contract, held/pending/processing/retry/sent/cancelled state metadata, retry limits, expired leases, current recipient/project eligibility and safe error/provider references. It reports aggregate state counts without printing recipients or message content and never sends email.
+
+`reconcile_commerce` checks quote snapshots, accepted-order terms, integer payment totals and currencies, payment-event evidence, payment state transitions, and paid consultation requests. It reports aggregate counts without printing commercial records or provider references. It is read-only and does not activate a gateway, collect money or invent prices.
 
 `check_private_storage` requires bucket versioning, uploads a unique 128 KiB synthetic object, verifies its signed byte-identical download and anonymous denial, then removes every probe version. The storage reconciliation command performs a read-only comparison of every ready database file against its exact private object version, size and SHA-256 checksum. The inventory command paginates every immutable bucket version and compares it with database references; missing referenced media and leftover probes fail, while unreferenced versions and delete markers remain warnings until D02 defines retention. Workflow reconciliation checks payment activation, assignment eligibility, file/version/revision links and delivery acceptance. These commands omit credentials, signed URLs and private record identifiers from output.
 
