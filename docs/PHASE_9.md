@@ -138,6 +138,14 @@ The command emits aggregate inventory and finding counts only. It does not expos
 
 On 2026-09-26 the connected audit passed with zero versions, revisions or acceptances and no operational warnings. Production review terms remain governed by D11.
 
+## Communication and support reconciliation
+
+`reconcile_communications` validates stored conversation boundaries without reading content into its report. A client project message must belong to that client's project and remain shared; editor messages must retain assignment history; administrators may create shared or internal notes. Support cases must belong to their client, may link only that client's project, use valid category/state values, and retain the original shared client message under the same replay key. Later support messages must come from that client or an administrator, and client messages cannot become internal notes.
+
+The command prints only aggregate counts. It omits message text and all user, project, request and message identifiers, and it does not notify, reply, resolve or close anything.
+
+On 2026-09-26 the connected audit passed with zero project messages, support requests or support messages and no warnings. External communication remains disabled pending D12.
+
 ## Pre-migration snapshot integrity
 
 `snapshot_database` now writes a companion SHA-256 manifest for every private row snapshot. Verify the latest manifested snapshot with:
@@ -185,7 +193,7 @@ The runs reported no browser page errors or horizontal overflow. Screenshots rem
 ## Verification
 
 - Unit checks cover a secure disabled-feature release scope, insecure settings, policy/provider inconsistencies, and secret-free JSON output.
-- The full isolated suite passes 197 tests with 10 opt-in integration tests skipped.
+- The full isolated suite passes 201 tests with 10 opt-in integration tests skipped.
 - All five opt-in Edge lifecycle suites pass with real local private-storage integrity where applicable.
 - Django system and migration checks and Ruff pass.
 - This slice changes no database schema. Supabase remains synchronized through `operations.0013`.

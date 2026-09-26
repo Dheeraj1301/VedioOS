@@ -196,6 +196,7 @@ Verify the configured private-storage transport with synthetic bytes:
 .venv/Scripts/python.exe manage.py reconcile_audit_history
 .venv/Scripts/python.exe manage.py reconcile_notification_outbox
 .venv/Scripts/python.exe manage.py reconcile_commerce
+.venv/Scripts/python.exe manage.py reconcile_communications
 .venv/Scripts/python.exe manage.py reconcile_delivery
 .venv/Scripts/python.exe manage.py reconcile_earnings
 .venv/Scripts/python.exe manage.py check_private_storage
@@ -215,6 +216,8 @@ Verify the configured private-storage transport with synthetic bytes:
 `reconcile_notification_outbox` checks the one-delivery-per-notice contract, held/pending/processing/retry/sent/cancelled state metadata, retry limits, expired leases, current recipient/project eligibility and safe error/provider references. It reports aggregate state counts without printing recipients or message content and never sends email.
 
 `reconcile_commerce` checks quote snapshots, accepted-order terms, integer payment totals and currencies, payment-event evidence, payment state transitions, and paid consultation requests. It reports aggregate counts without printing commercial records or provider references. It is read-only and does not activate a gateway, collect money or invent prices.
+
+`reconcile_communications` checks project-message authorship and audience rules plus private support-case ownership, state, opening messages and replies. It reports aggregate counts without printing message text or user, project, support or message identifiers. It is read-only and does not send notices, reply to clients or change case status.
 
 `reconcile_delivery` checks submitted-version numbering and private-file links, assignment attribution, revision ownership/allowances/state, and explicit acceptance of the latest version. It reports aggregate counts without printing project, version or file identifiers. It is read-only and does not change project status, revise files or accept delivery.
 
