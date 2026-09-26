@@ -82,6 +82,14 @@ The output inventories installed extension names, versions and schemas plus the 
 
 This evidence defines what a full restore must reproduce. It does not back up or restore provider-owned roles, extensions, triggers or grants; that exercise still requires the D16 recovery target and Supabase-supported backup procedure.
 
+## Account and session reconciliation
+
+`reconcile_accounts` provides a read-only identity consistency audit. Every client, editor and admin role must have exactly its matching profile; profiles cannot point to another role or overlap. Editors must retain their availability and wallet foundations, approved editors must retain attributable proficiency review, and application identities cannot silently gain Django staff/superuser flags. Active authenticated sessions are decoded only to count invalid, missing or inactive user references; no session key or user identifier is printed.
+
+Active clients without an email-verification timestamp and approved inactive editors are lifecycle warnings rather than automatic failures. The former preserves the recorded decision that accounts predating mandatory verification remain active. D16 must still define suspension, deletion, retention and session-revocation operating policy before launch.
+
+On 2026-09-26 the connected audit passed for six users, three clients, two editors, one admin and one authenticated session. It found zero critical inconsistencies. Three grandfathered active client accounts without verification timestamps were reported as aggregate warnings; the command made no account or session changes.
+
 ## Pre-migration snapshot integrity
 
 `snapshot_database` now writes a companion SHA-256 manifest for every private row snapshot. Verify the latest manifested snapshot with:
@@ -129,7 +137,7 @@ The runs reported no browser page errors or horizontal overflow. Screenshots rem
 ## Verification
 
 - Unit checks cover a secure disabled-feature release scope, insecure settings, policy/provider inconsistencies, and secret-free JSON output.
-- The full isolated suite passes 169 tests with 10 opt-in integration tests skipped.
+- The full isolated suite passes 173 tests with 10 opt-in integration tests skipped.
 - All five opt-in Edge lifecycle suites pass with real local private-storage integrity where applicable.
 - Django system and migration checks and Ruff pass.
 - This slice changes no database schema. Supabase remains synchronized through `operations.0013`.

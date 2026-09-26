@@ -2,6 +2,7 @@
 
 from django.conf import settings
 
+from .account_reconciliation import account_reconciliation_report
 from .database_security import database_security_report
 from .health import database_ready
 from .models import File
@@ -35,6 +36,11 @@ def collect_release_evidence(*, active_storage=False):
         }
     except Exception:
         checks["database"] = {"status": "fail", "code": "database_check_failed"}
+
+    try:
+        checks["accounts"] = account_reconciliation_report()
+    except Exception:
+        checks["accounts"] = {"status": "fail", "code": "account_reconciliation_failed"}
 
     try:
         security = database_security_report()
@@ -148,6 +154,7 @@ def collect_release_evidence(*, active_storage=False):
 
     required = [
         "database",
+        "accounts",
         "database_protection",
         "workflows",
         "storage_records",
