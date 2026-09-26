@@ -32,6 +32,7 @@ Only administrators can configure/release/process; editors see and request only 
 
 ```powershell
 .venv/Scripts/python.exe manage.py test tests.test_earnings tests.test_delivery tests.test_assignments tests.test_commerce tests.test_foundation tests.test_database_config
+.venv/Scripts/python.exe manage.py reconcile_earnings
 $env:RUN_EARNING_BROWSER='1'
 .venv/Scripts/python.exe manage.py test tests.test_earning_browser
 .venv/Scripts/python.exe manage.py verify_wallet_concurrency
@@ -39,3 +40,7 @@ $env:RUN_EARNING_BROWSER='1'
 ```
 
 The browser test uses isolated SQLite and synthetic accounts; the concurrency command uses the configured development PostgreSQL project and removes only its own fixture IDs. Do not enable sandbox settings on a production deployment.
+
+`reconcile_earnings` is a separate read-only connected-environment check. It verifies that accepted-work states match the exact pending/closed/credit entries from their saved rule, redemption states match reserve/redeem/release entries, decision metadata is attributable, ledger links and signs are valid, and no wallet has a negative pending or redeemable aggregate. It prints aggregate counts only and is included in the consolidated release evidence.
+
+On 2026-09-26 the connected reconciliation passed for two editor wallets with no acceptances, coin transactions or redemption requests. This is a clean disabled-policy baseline; it does not prove or activate a real payout provider.

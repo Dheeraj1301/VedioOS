@@ -114,6 +114,14 @@ The command reports only aggregate inventory and finding counts. It never prints
 
 On 2026-09-26 the connected audit passed with two pending orders and zero quotes, payments, payment events or consultation requests. It found no critical inconsistencies or operational warnings. Real checkout remains disabled pending D03-D05 commercial policy and provider decisions.
 
+## Earnings and redemption reconciliation
+
+`reconcile_earnings` validates the persisted editor ledger without changing balances or contacting a payout provider. Pending and earned acceptances must match the exact append-only entries required by their saved earning rule. Redemption requests must have a matching reserve and the correct redeem or release entry for their final state. Wallet, project and redemption links, transaction signs, administrator decisions and nonnegative wallet aggregates are checked together.
+
+The command reports aggregate inventory and finding counts only. It does not expose wallet, acceptance, project, payout-reference or request identifiers, and it does not backfill old agreements or infer coin values.
+
+On 2026-09-26 the connected audit passed for two editor wallets with zero acceptances, transactions or redemptions and no warnings. Earnings and redemptions remain disabled pending D10 and a real payout-provider decision.
+
 ## Pre-migration snapshot integrity
 
 `snapshot_database` now writes a companion SHA-256 manifest for every private row snapshot. Verify the latest manifested snapshot with:
@@ -161,7 +169,7 @@ The runs reported no browser page errors or horizontal overflow. Screenshots rem
 ## Verification
 
 - Unit checks cover a secure disabled-feature release scope, insecure settings, policy/provider inconsistencies, and secret-free JSON output.
-- The full isolated suite passes 184 tests with 10 opt-in integration tests skipped.
+- The full isolated suite passes 188 tests with 10 opt-in integration tests skipped.
 - All five opt-in Edge lifecycle suites pass with real local private-storage integrity where applicable.
 - Django system and migration checks and Ruff pass.
 - This slice changes no database schema. Supabase remains synchronized through `operations.0013`.

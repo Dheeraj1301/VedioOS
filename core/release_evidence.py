@@ -6,6 +6,7 @@ from .account_reconciliation import account_reconciliation_report
 from .audit_reconciliation import audit_reconciliation_report
 from .commerce_reconciliation import commerce_reconciliation_report
 from .database_security import database_security_report
+from .earnings_reconciliation import earnings_reconciliation_report
 from .health import database_ready
 from .models import File
 from .notification_reconciliation import notification_reconciliation_report
@@ -62,6 +63,11 @@ def collect_release_evidence(*, active_storage=False):
         checks["commerce"] = commerce_reconciliation_report()
     except Exception:
         checks["commerce"] = {"status": "fail", "code": "commerce_reconciliation_failed"}
+
+    try:
+        checks["earnings"] = earnings_reconciliation_report()
+    except Exception:
+        checks["earnings"] = {"status": "fail", "code": "earnings_reconciliation_failed"}
 
     try:
         security = database_security_report()
@@ -179,6 +185,7 @@ def collect_release_evidence(*, active_storage=False):
         "audit_history",
         "notification_outbox",
         "commerce",
+        "earnings",
         "database_protection",
         "workflows",
         "storage_records",
