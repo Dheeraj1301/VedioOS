@@ -53,6 +53,7 @@ Checks:
 $env:RUN_ASSIGNMENT_BROWSER='1'
 .venv/Scripts/python.exe manage.py test tests.test_assignment_browser
 .venv/Scripts/python.exe manage.py verify_assignment_concurrency
+.venv/Scripts/python.exe manage.py reconcile_assignments
 .venv/Scripts/python.exe manage.py migrate --check
 .venv/Scripts/python.exe manage.py makemigrations --check --dry-run
 .venv/Scripts/python.exe manage.py check_database
@@ -62,6 +63,10 @@ $env:RUN_ASSIGNMENT_BROWSER='1'
 52 automated checks passed, including 15 allocation tests. Coverage includes fair E1 → E2 → E3 rotation after E1 finishes, separate groups, skip/wait, stale forms, payment restrictions, capacity, audit/history and former-editor file-access denial. The real Edge browser test passed policy/capacity configuration → assessment → round robin → editor access → reassignment → old-editor denial, including mobile layout.
 
 PostgreSQL concurrency verification creates narrowly scoped synthetic records and removes only those records afterward. Two competing admins cannot double-assign one project; two competing projects cannot overbook one editor. Shared policy stays disabled and rotation positions are preserved. It also runs an automatic allocation/retry smoke check in a rolled-back transaction. Use an isolated database instead when live allocation is enabled.
+
+`reconcile_assignments` provides a separate read-only connected-environment check. It validates enabled policy completeness, attributed manual complexity reviews, funded queue records, waiting/assigned state, immutable assignment policy snapshots, current editor capacity, and round-robin pointer consistency. Historical assignments remain valid when later complexity or availability changes; current proficiency drift is reported as an operational warning rather than silently rewriting history.
+
+On 2026-09-26 the connected reconciliation passed with zero complexity reviews, queue records or assignments and three zero-position proficiency rotations. The shared assignment policy remains disabled, and the command made no allocation or pointer changes.
 
 ## Remaining decisions and next milestone
 

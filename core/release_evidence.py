@@ -3,6 +3,7 @@
 from django.conf import settings
 
 from .account_reconciliation import account_reconciliation_report
+from .assignment_reconciliation import assignment_reconciliation_report
 from .audit_reconciliation import audit_reconciliation_report
 from .commerce_reconciliation import commerce_reconciliation_report
 from .database_security import database_security_report
@@ -45,6 +46,11 @@ def collect_release_evidence(*, active_storage=False):
         checks["accounts"] = account_reconciliation_report()
     except Exception:
         checks["accounts"] = {"status": "fail", "code": "account_reconciliation_failed"}
+
+    try:
+        checks["assignments"] = assignment_reconciliation_report()
+    except Exception:
+        checks["assignments"] = {"status": "fail", "code": "assignment_reconciliation_failed"}
 
     try:
         checks["audit_history"] = audit_reconciliation_report()
@@ -182,6 +188,7 @@ def collect_release_evidence(*, active_storage=False):
     required = [
         "database",
         "accounts",
+        "assignments",
         "audit_history",
         "notification_outbox",
         "commerce",

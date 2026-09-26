@@ -192,6 +192,7 @@ Verify the configured private-storage transport with synthetic bytes:
 ```powershell
 .venv/Scripts/python.exe manage.py collect_release_evidence
 .venv/Scripts/python.exe manage.py reconcile_accounts
+.venv/Scripts/python.exe manage.py reconcile_assignments
 .venv/Scripts/python.exe manage.py reconcile_audit_history
 .venv/Scripts/python.exe manage.py reconcile_notification_outbox
 .venv/Scripts/python.exe manage.py reconcile_commerce
@@ -205,6 +206,8 @@ Verify the configured private-storage transport with synthetic bytes:
 `collect_release_evidence` is the recommended connected-environment summary. It verifies database/migration readiness, account/profile/session consistency, quote/order/payment consistency, the private Supabase schema and RLS, cross-record workflow consistency, and every ready private-storage record. It also verifies the latest manifested snapshot when one exists. Use `--json` for machine-readable output or `--report-only` to record failures without a nonzero exit. Add `--active-storage` only when a synthetic write exercise is intended.
 
 `reconcile_accounts` checks role/profile relationships, editor availability/wallet foundations, administrator flags and authenticated sessions without printing names, emails, IDs or session keys. Existing active clients created before mandatory verification are aggregate lifecycle warnings; the command does not deactivate or rewrite accounts.
+
+`reconcile_assignments` checks enabled policy completeness, admin complexity reviews, paid queue state, assignment snapshots, editor capacity and persistent round-robin pointers. It reports aggregate counts without printing project, editor or queue identifiers. It is read-only and does not classify projects, assign work or advance a rotation.
 
 `reconcile_audit_history` checks that sensitive workflow records have the expected lifecycle events, that attributable actions have actors, and that nested audit details contain no credentials, URLs, message bodies or private media identifiers. Imported identities without historical onboarding events are reported as aggregate legacy warnings; the command never creates replacement history.
 

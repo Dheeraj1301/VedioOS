@@ -122,6 +122,14 @@ The command reports aggregate inventory and finding counts only. It does not exp
 
 On 2026-09-26 the connected audit passed for two editor wallets with zero acceptances, transactions or redemptions and no warnings. Earnings and redemptions remain disabled pending D10 and a real payout-provider decision.
 
+## Assignment-state reconciliation
+
+`reconcile_assignments` validates allocation records without assigning work. Enabled assignment policy must be complete; complexity reviews must be attributable admin decisions; queue records must reference funded projects and current proficiency; waiting/assigned state must match the current assignment; policy snapshots must describe a supported manual or automatic decision; open editor workload must remain within capacity; and each persisted round-robin sequence must have a consistent pointer.
+
+The command emits aggregate counts only. It does not expose project, editor, queue or assignment identifiers, and it does not classify projects, change editor eligibility, process waiting work or advance rotation state.
+
+On 2026-09-26 the connected audit passed with zero complexity, queue or assignment records and three initialized zero-position rotation records. Automatic and manual allocation remain disabled pending D07-D09.
+
 ## Pre-migration snapshot integrity
 
 `snapshot_database` now writes a companion SHA-256 manifest for every private row snapshot. Verify the latest manifested snapshot with:
@@ -169,7 +177,7 @@ The runs reported no browser page errors or horizontal overflow. Screenshots rem
 ## Verification
 
 - Unit checks cover a secure disabled-feature release scope, insecure settings, policy/provider inconsistencies, and secret-free JSON output.
-- The full isolated suite passes 188 tests with 10 opt-in integration tests skipped.
+- The full isolated suite passes 193 tests with 10 opt-in integration tests skipped.
 - All five opt-in Edge lifecycle suites pass with real local private-storage integrity where applicable.
 - Django system and migration checks and Ruff pass.
 - This slice changes no database schema. Supabase remains synchronized through `operations.0013`.
