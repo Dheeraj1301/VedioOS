@@ -8,6 +8,10 @@ class RegistrationForm(UserCreationForm):
     def __init__(self, *args, **kwargs):
         kwargs.setdefault("label_suffix", "")
         super().__init__(*args, **kwargs)
+        self.fields["password1"].help_text = (
+            "Use at least 8 characters with an uppercase letter, lowercase letter, "
+            "number, and special character."
+        )
 
     class Meta:
         model = User

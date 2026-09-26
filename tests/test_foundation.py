@@ -79,6 +79,18 @@ class FoundationTests(TestCase):
             "category": "source",
         }
 
+    def test_registration_shows_one_concise_password_instruction(self):
+        response = Browser().get("/register/")
+        self.assertContains(
+            response,
+            "Use at least 8 characters with an uppercase letter, lowercase letter, "
+            "number, and special character.",
+            count=1,
+        )
+        self.assertNotContains(response, "commonly used password")
+        self.assertNotContains(response, "entirely numeric")
+        self.assertNotContains(response, "too similar to your other personal information")
+
     @override_settings(EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend")
     def test_client_registration_verification_login_logout(self):
         browser = Browser()
