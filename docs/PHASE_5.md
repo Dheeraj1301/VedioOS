@@ -39,9 +39,14 @@ Downloads retain exact storage-version selection and temporary access URLs. No t
 
 ```powershell
 .venv/Scripts/python.exe manage.py test tests.test_delivery tests.test_assignments tests.test_commerce tests.test_foundation tests.test_database_config
+.venv/Scripts/python.exe manage.py reconcile_delivery
 $env:RUN_DELIVERY_BROWSER='1'
 .venv/Scripts/python.exe manage.py test tests.test_delivery_browser
 .venv/Scripts/python.exe manage.py verify_delivery_concurrency
 ```
 
 Browser verification requires running private local S3 and installed Edge. Unit/browser tests use isolated test databases. The concurrency command requires development PostgreSQL, creates synthetic metadata with no real storage objects, and cleans up exact fixture IDs. If interrupted, inspect its synthetic records before retrying; never flush the shared database.
+
+`reconcile_delivery` provides a separate read-only connected-environment check. It verifies contiguous version numbers, ready private output objects, submission assignment/uploader attribution, revision ownership and allowance snapshots, requested/addressed state, latest-version acceptance, client ownership and accepted agreement terms. It emits aggregate counts only and is included in the consolidated release evidence.
+
+On 2026-09-26 the connected reconciliation passed with zero submitted versions, revision requests or acceptances. The command changed no project, file or review record and did not access media bytes.

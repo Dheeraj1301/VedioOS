@@ -130,6 +130,14 @@ The command emits aggregate counts only. It does not expose project, editor, que
 
 On 2026-09-26 the connected audit passed with zero complexity, queue or assignment records and three initialized zero-position rotation records. Automatic and manual allocation remain disabled pending D07-D09.
 
+## Delivery and review reconciliation
+
+`reconcile_delivery` validates the complete persisted review chain without reading or changing media. Submitted versions must form a contiguous history and reference a ready private draft/final object uploaded by the attributed assignment editor. Revision requests must belong to the project client, target that project's version, remain within the snapshotted allowance and have state consistent with later versions. Acceptance must belong to the client, target the latest version, match its assignment and agreement snapshot, and agree with the completed project and accepted-version timestamp.
+
+The command emits aggregate inventory and finding counts only. It does not expose project, version, file, assignment or client identifiers and cannot submit, revise, accept or reopen work.
+
+On 2026-09-26 the connected audit passed with zero versions, revisions or acceptances and no operational warnings. Production review terms remain governed by D11.
+
 ## Pre-migration snapshot integrity
 
 `snapshot_database` now writes a companion SHA-256 manifest for every private row snapshot. Verify the latest manifested snapshot with:
@@ -177,7 +185,7 @@ The runs reported no browser page errors or horizontal overflow. Screenshots rem
 ## Verification
 
 - Unit checks cover a secure disabled-feature release scope, insecure settings, policy/provider inconsistencies, and secret-free JSON output.
-- The full isolated suite passes 193 tests with 10 opt-in integration tests skipped.
+- The full isolated suite passes 197 tests with 10 opt-in integration tests skipped.
 - All five opt-in Edge lifecycle suites pass with real local private-storage integrity where applicable.
 - Django system and migration checks and Ruff pass.
 - This slice changes no database schema. Supabase remains synchronized through `operations.0013`.

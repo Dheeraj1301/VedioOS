@@ -7,6 +7,7 @@ from .assignment_reconciliation import assignment_reconciliation_report
 from .audit_reconciliation import audit_reconciliation_report
 from .commerce_reconciliation import commerce_reconciliation_report
 from .database_security import database_security_report
+from .delivery_reconciliation import delivery_reconciliation_report
 from .earnings_reconciliation import earnings_reconciliation_report
 from .health import database_ready
 from .models import File
@@ -69,6 +70,11 @@ def collect_release_evidence(*, active_storage=False):
         checks["commerce"] = commerce_reconciliation_report()
     except Exception:
         checks["commerce"] = {"status": "fail", "code": "commerce_reconciliation_failed"}
+
+    try:
+        checks["delivery"] = delivery_reconciliation_report()
+    except Exception:
+        checks["delivery"] = {"status": "fail", "code": "delivery_reconciliation_failed"}
 
     try:
         checks["earnings"] = earnings_reconciliation_report()
@@ -192,6 +198,7 @@ def collect_release_evidence(*, active_storage=False):
         "audit_history",
         "notification_outbox",
         "commerce",
+        "delivery",
         "earnings",
         "database_protection",
         "workflows",
