@@ -7,6 +7,7 @@ from .audit_reconciliation import audit_reconciliation_report
 from .database_security import database_security_report
 from .health import database_ready
 from .models import File
+from .notification_reconciliation import notification_reconciliation_report
 from .snapshot_integrity import verify_snapshot
 from .storage import storage_client
 from .storage_inventory import inventory_private_storage
@@ -47,6 +48,14 @@ def collect_release_evidence(*, active_storage=False):
         checks["audit_history"] = audit_reconciliation_report()
     except Exception:
         checks["audit_history"] = {"status": "fail", "code": "audit_reconciliation_failed"}
+
+    try:
+        checks["notification_outbox"] = notification_reconciliation_report()
+    except Exception:
+        checks["notification_outbox"] = {
+            "status": "fail",
+            "code": "notification_outbox_failed",
+        }
 
     try:
         security = database_security_report()
@@ -162,6 +171,7 @@ def collect_release_evidence(*, active_storage=False):
         "database",
         "accounts",
         "audit_history",
+        "notification_outbox",
         "database_protection",
         "workflows",
         "storage_records",

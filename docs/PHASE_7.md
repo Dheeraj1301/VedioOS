@@ -16,6 +16,7 @@ Status: in progress, operations and project communication slices verified on 202
 - Browser failures now use consistent 403, 404 and 500 recovery pages. They show a clear status and safe workspace/home route; temporary server failures also offer a same-page retry. API failures return generic JSON, and neither response type renders exception text, project details, object paths or signed URLs.
 - Project workflows now expose keyboard skip navigation, a focusable main landmark, distinct accessible names for each private-file download, polite upload/download progress announcements and assertive failure announcements. Rejected uploads restore the action so a keyboard or screen-reader user can correct the file and retry.
 - External notification delivery now has a durable one-row-per-notice outbox. Delivery is held by default; explicit enablement creates pending work, workers claim with a lease, failures record only a safe error class and a bounded retry time, and stale claims can be recovered. Current project access and active recipient state are checked immediately before email delivery. Reprocessing a sent row does not resend it. Older held notices require explicit release after policy review.
+- `reconcile_notification_outbox` provides a read-only state-machine audit for every delivery row. It checks the one-row-per-notice contract, timestamps, leases, retry metadata, attempt limits, recipient/project eligibility and safe provider/error references. It reports only aggregate counts and does not send or release notifications.
 
 ## Lifecycle audit inventory
 

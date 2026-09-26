@@ -98,6 +98,14 @@ The command reports aggregate category counts only. It never prints event detail
 
 On 2026-09-26 the connected reconciliation passed all critical checks across 17 audit events. Every current project and ready file has its required events, and no unsafe detail payload was found. Two imported clients and one imported admin without matching onboarding events remain explicit legacy warnings.
 
+## Notification-outbox reconciliation
+
+`reconcile_notification_outbox` validates the durable external-delivery state machine without sending email. Every in-app notice must have exactly one delivery row. Held, pending, processing, failed, sent and cancelled rows must have consistent attempt, retry, lease, sent and provider metadata; retryable rows cannot remain at the attempt limit. Queued recipients must still be active, have an address and retain current project access. Error codes and provider references cannot contain URLs or signed-request material.
+
+Expired processing leases, held work after provider enablement, and active unsent rows while delivery is disabled are reported as operational warnings. The command prints aggregate counts only and does not expose recipients, projects, event keys or message content.
+
+On 2026-09-26 the connected audit passed with zero notices and zero delivery rows, matching the current shared data. The outbox worker remains disabled and no email was sent. D12 must still approve the provider, sender domain, templates, preferences and worker schedule before activation.
+
 ## Pre-migration snapshot integrity
 
 `snapshot_database` now writes a companion SHA-256 manifest for every private row snapshot. Verify the latest manifested snapshot with:
@@ -145,7 +153,7 @@ The runs reported no browser page errors or horizontal overflow. Screenshots rem
 ## Verification
 
 - Unit checks cover a secure disabled-feature release scope, insecure settings, policy/provider inconsistencies, and secret-free JSON output.
-- The full isolated suite passes 176 tests with 10 opt-in integration tests skipped.
+- The full isolated suite passes 180 tests with 10 opt-in integration tests skipped.
 - All five opt-in Edge lifecycle suites pass with real local private-storage integrity where applicable.
 - Django system and migration checks and Ruff pass.
 - This slice changes no database schema. Supabase remains synchronized through `operations.0013`.
