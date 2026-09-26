@@ -90,6 +90,14 @@ Active clients without an email-verification timestamp and approved inactive edi
 
 On 2026-09-26 the connected audit passed for six users, three clients, two editors, one admin and one authenticated session. It found zero critical inconsistencies. Three grandfathered active client accounts without verification timestamps were reported as aggregate warnings; the command made no account or session changes.
 
+## Audit-history reconciliation
+
+`reconcile_audit_history` verifies lifecycle-event coverage for projects, ready-file reservations/completions, confirmed payments, assignments, submitted versions, revisions, acceptances, consultations, project/support messages, support requests and redemption requests. It also rejects empty actions/targets, unexpected unattributed events, malformed details, and nested audit payloads containing credentials, URLs, message bodies, instructions, contact fields, filenames or private object keys.
+
+The command reports aggregate category counts only. It never prints event details, actors, targets or record identifiers and does not create synthetic replacement history. Missing client/editor/admin onboarding events are warnings because imported pre-audit identities cannot be reconstructed honestly.
+
+On 2026-09-26 the connected reconciliation passed all critical checks across 17 audit events. Every current project and ready file has its required events, and no unsafe detail payload was found. Two imported clients and one imported admin without matching onboarding events remain explicit legacy warnings.
+
 ## Pre-migration snapshot integrity
 
 `snapshot_database` now writes a companion SHA-256 manifest for every private row snapshot. Verify the latest manifested snapshot with:
@@ -137,7 +145,7 @@ The runs reported no browser page errors or horizontal overflow. Screenshots rem
 ## Verification
 
 - Unit checks cover a secure disabled-feature release scope, insecure settings, policy/provider inconsistencies, and secret-free JSON output.
-- The full isolated suite passes 173 tests with 10 opt-in integration tests skipped.
+- The full isolated suite passes 176 tests with 10 opt-in integration tests skipped.
 - All five opt-in Edge lifecycle suites pass with real local private-storage integrity where applicable.
 - Django system and migration checks and Ruff pass.
 - This slice changes no database schema. Supabase remains synchronized through `operations.0013`.
