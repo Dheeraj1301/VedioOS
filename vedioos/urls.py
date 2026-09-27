@@ -33,6 +33,7 @@ urlpatterns = [
     path("dashboard/", views.dashboard, name="dashboard"),
     path("client/", views.client_dashboard, name="client_dashboard"),
     path("client/new-order/", views.new_order, name="new_order"),
+    path("client/projects/<uuid:project_id>/edit/", views.edit_project, name="edit_project"),
     path("client/projects/", views.my_projects, name="my_projects"),
     path(
         "client/projects/<uuid:project_id>/", views.project_detail, {"area": "client"}, name="client_project"

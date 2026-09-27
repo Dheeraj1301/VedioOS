@@ -397,6 +397,66 @@ class FoundationTests(TestCase):
         for label in ["Plan 1", "Plan 2", "Plan 3", "Customize my edit"]:
             self.assertContains(response, label)
 
+    def test_saved_brief_remains_populated_until_create_new_is_clicked(self):
+        browser = self.auth(self.owner)
+        response = browser.post(
+            "/client/new-order/?new=1",
+            {
+                "title": "Persistent brief",
+                "order_choice": "custom",
+                "reel_duration": "30_50",
+                "requirements": "Keep this exact direction",
+                "reference_notes": "Warm documentary reference",
+                "song_choice": "provide",
+                "song_information": "Licensed track",
+            },
+        )
+        project = Project.objects.get(title="Persistent brief")
+        self.assertRedirects(response, f"/client/projects/{project.id}/")
+
+        resumed = browser.get("/client/new-order/")
+        self.assertContains(resumed, "Persistent brief")
+        self.assertContains(resumed, "Keep this exact direction")
+        self.assertContains(resumed, "Warm documentary reference")
+        self.assertContains(resumed, "Create New")
+        self.assertContains(resumed, 'value="custom" required checked', html=False)
+
+        blank = browser.get("/client/new-order/?new=1")
+        self.assertNotContains(blank, "Persistent brief")
+        self.assertNotContains(blank, "Keep this exact direction")
+
+    def test_owner_can_edit_saved_creative_brief_without_creating_another_project(self):
+        browser = self.auth(self.owner)
+        detail = browser.get(f"/client/projects/{self.project.id}/")
+        self.assertContains(detail, f'/client/projects/{self.project.id}/edit/')
+        project_count = Project.objects.count()
+
+        response = browser.post(
+            f"/client/projects/{self.project.id}/edit/",
+            {
+                "title": "Updated brief",
+                "order_choice": "custom",
+                "reel_duration": "60_plus",
+                "requirements": "Updated creative direction",
+                "song_choice": "suggest",
+            },
+        )
+        self.assertRedirects(response, f"/client/projects/{self.project.id}/")
+        self.project.refresh_from_db()
+        self.assertEqual(self.project.title, "Updated brief")
+        self.assertEqual(self.project.requirements, "Updated creative direction")
+        self.assertEqual(Project.objects.count(), project_count)
+        self.assertTrue(
+            AuditLog.objects.filter(
+                action="project.brief_updated", actor=self.owner, target_id=str(self.project.id)
+            ).exists()
+        )
+
+        self.assertEqual(
+            self.auth(self.other).get(f"/client/projects/{self.project.id}/edit/").status_code,
+            404,
+        )
+
     def test_available_plan_selection_is_persisted_and_custom_fields_are_rejected(self):
         plan = Plan.objects.create(
             slot=1,

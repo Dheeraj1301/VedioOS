@@ -54,6 +54,9 @@ class ProjectForm(forms.ModelForm):
         self.fields["order_choice"].choices = [
             (f"plan:{plan.pk}", plan.name) for plan in self.available_plans
         ] + [("custom", "Customize my edit")]
+        if self.instance.pk and hasattr(self.instance, "order"):
+            order = self.instance.order
+            self.initial["order_choice"] = f"plan:{order.plan_id}" if order.plan_id else "custom"
 
     def clean(self):
         data = super().clean()

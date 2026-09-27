@@ -33,3 +33,11 @@ Status: requested interface changes are implemented. Production commercial activ
 - Additive migration `core.0006` was applied after snapshot `database-snapshot-20260919T152202844758Z.json`; project customization columns and the font-reference category are present. All 43 tables retain RLS and browser roles retain no schema access.
 - Additive migration `core.0007` was applied after snapshot `database-snapshot-20260923T194410855257Z.json`; custom-service mapping codes are present and unique when configured. No production prices or mappings were inserted. All 43 tables retain RLS and browser roles retain no schema access.
 - Additive migration `operations.0012` was applied after snapshot `database-snapshot-20260923T200315654878Z.json`; the durable email-delivery outbox and due-work index are present. Existing notices would be held rather than sent; the shared database had no notices to backfill. All 44 tables retain RLS and browser roles retain no schema access. Email delivery remains disabled.
+
+## Creative-brief form continuity — 2026-09-27
+
+- After **Save and Proceed**, the active unpaid draft is retained in the authenticated session and reopening **Plan a new edit** repopulates every saved field.
+- **Create New** is the explicit blank-form action; it does not overwrite the prior draft.
+- The project’s **Creative Brief** summary offers **Edit** to its owning client while the draft remains unpaid and no quote agreement has been accepted. Saving updates the same project and records an attributable audit event.
+- Ownership is enforced by the backend. Other clients cannot open the edit route, and paid or commercially accepted orders cannot be changed through it.
+- This is a code-only behavior change and requires no database migration or Supabase schema synchronization.

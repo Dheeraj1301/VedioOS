@@ -33,6 +33,7 @@ from .models import (
     InfluencerPackage,
     Order,
     Plan,
+    Project,
     UploadPolicy,
     User,
 )
@@ -301,29 +302,87 @@ def client_dashboard(request):
 
 @role_required("client")
 def new_order(request):
-    form = ProjectForm(request.POST or None)
+    create_new = request.GET.get("new") == "1"
+    project = None
+    if not create_new:
+        active_project_id = request.session.get("active_project_draft_id")
+        if active_project_id:
+            project = request.user.client_profile.projects.filter(
+                pk=active_project_id,
+                status="payment_pending",
+                order__payment_status="pending",
+                order__terms_snapshot={},
+            ).select_related("order").first()
+    return _project_form(request, project, create_new=create_new)
+
+
+@role_required("client")
+def edit_project(request, project_id):
+    project = get_object_or_404(
+        request.user.client_profile.projects.select_related("order"), pk=project_id
+    )
+    if (
+        project.status != "payment_pending"
+        or project.order.payment_status != "pending"
+        or project.order.terms_snapshot
+    ):
+        raise PermissionDenied
+    return _project_form(request, project)
+
+
+def _project_form(request, project=None, *, create_new=False):
+    is_new = project is None
+    form = ProjectForm(request.POST or None, instance=project)
     if request.method == "POST" and form.is_valid():
         with transaction.atomic():
-            project = form.save(commit=False)
-            project.client = request.user.client_profile
-            project.save()
+            saved_project = form.save(commit=False)
+            existing_order = None
+            if not is_new:
+                locked_project = Project.objects.select_for_update().get(
+                    pk=saved_project.pk, client=request.user.client_profile
+                )
+                existing_order = Order.objects.select_for_update().get(project=locked_project)
+                if (
+                    locked_project.status != "payment_pending"
+                    or existing_order.payment_status != "pending"
+                    or existing_order.terms_snapshot
+                ):
+                    raise PermissionDenied
+            if is_new:
+                saved_project.client = request.user.client_profile
+            saved_project.save()
             selected_plan = form.cleaned_data.get("selected_plan")
-            Order.objects.create(
-                project=project,
-                kind="plan" if selected_plan else "custom",
-                plan=selected_plan,
-            )
-            audit(request.user, "project.draft_created", project.pk)
-        messages.success(request, "Project saved. Add your original files below.")
-        return redirect("client_project", project_id=project.pk)
+            if is_new:
+                Order.objects.create(
+                    project=saved_project,
+                    kind="plan" if selected_plan else "custom",
+                    plan=selected_plan,
+                )
+                action = "project.draft_created"
+            else:
+                existing_order.kind = "plan" if selected_plan else "custom"
+                existing_order.plan = selected_plan
+                existing_order.save(update_fields=["kind", "plan", "updated_at"])
+                action = "project.brief_updated"
+            audit(request.user, action, saved_project.pk)
+        request.session["active_project_draft_id"] = str(saved_project.pk)
+        messages.success(request, "Creative brief saved. Add or review your private files below.")
+        return redirect("client_project", project_id=saved_project.pk)
     slots = {plan.slot: plan for plan in Plan.objects.order_by("slot")}
+    plan_slots = [
+        (slot, slots.get(slot), f"plan:{slots[slot].pk}" if slots.get(slot) else "")
+        for slot in range(1, 4)
+    ]
     return render(
         request,
         "client/new_order.html",
         {
             "form": form,
             "title": "Plan a new edit",
-            "plan_slots": [(slot, slots.get(slot)) for slot in range(1, 4)],
+            "project": project,
+            "create_new": create_new,
+            "selected_choice": form["order_choice"].value() or "",
+            "plan_slots": plan_slots,
             "monthly_packages": InfluencerPackage.objects.filter(active=True).order_by("name"),
         },
     )

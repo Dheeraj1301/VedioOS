@@ -1,20 +1,20 @@
 {% extends 'workspace.html' %}{% load money %}
 {% block workspace_content %}
-<div class="page-heading"><div><p class="eyebrow">Plan an edit / 01</p><h1>Tell us about your edit.</h1><p class="muted">Choose a configured plan or shape a custom brief, then add your private files.</p></div></div>
+<div class="page-heading"><div><p class="eyebrow">Plan an edit / 01</p><h1>{% if project %}Edit your creative brief.{% else %}Tell us about your edit.{% endif %}</h1><p class="muted">Choose a configured plan or shape a custom brief, then add your private files.</p></div>{% if project %}<a class="button" href="{% url 'new_order' %}?new=1">Create New <span>+</span></a>{% endif %}</div>
 <div class="notice" role="note"><strong>Before you upload:</strong> Share only footage, music, fonts, and references you have permission to use. Do not include passwords or unrelated personal documents.</div>
-<form method="post" class="form-stack new-order-form" data-new-order-form data-selected-choice="{{ form.data.order_choice|default:'' }}">{% csrf_token %}
+<form method="post" class="form-stack new-order-form" data-new-order-form data-selected-choice="{{ selected_choice }}">{% csrf_token %}
   {% if form.non_field_errors %}{{ form.non_field_errors }}{% endif %}
   <fieldset class="order-choice-fieldset"><legend>Choose one of four editing options</legend>
     {% if form.order_choice.errors %}{{ form.order_choice.errors }}{% endif %}
     <div class="order-choice-grid">
-      {% for slot,plan in plan_slots %}
+      {% for slot,plan,choice_value in plan_slots %}
       <label class="order-choice-card{% if not plan or not plan.active %} unavailable{% endif %}">
-        {% if plan and plan.active %}<input type="radio" name="order_choice" value="plan:{{ plan.id }}" required>{% else %}<input type="radio" disabled>{% endif %}
+        {% if plan and plan.active %}<input type="radio" name="order_choice" value="{{ choice_value }}" required {% if selected_choice == choice_value %}checked{% endif %}>{% else %}<input type="radio" disabled>{% endif %}
         <span class="eyebrow">Plan {{ slot }}</span><strong>{% if plan %}{{ plan.name }}{% else %}Coming soon{% endif %}</strong>
         {% if plan and plan.active %}<span>{{ plan.price_minor|money:plan.currency }}</span><small>{{ plan.features|join:", " }}</small>{% else %}<small>The team has not published this plan yet.</small>{% endif %}
       </label>
       {% endfor %}
-      <label class="order-choice-card custom-choice"><input type="radio" name="order_choice" value="custom" required {% if form.data.order_choice == 'custom' %}checked{% endif %}><span class="eyebrow">Custom</span><strong>Customize my edit</strong><small>Select the exact editing direction below. The server calculates a quote only from configured prices.</small></label>
+      <label class="order-choice-card custom-choice"><input type="radio" name="order_choice" value="custom" required {% if selected_choice == 'custom' %}checked{% endif %}><span class="eyebrow">Custom</span><strong>Customize my edit</strong><small>Select the exact editing direction below. The server calculates a quote only from configured prices.</small></label>
     </div>
   </fieldset>
   <section class="panel form-panel custom-fields" data-custom-fields hidden>
@@ -25,7 +25,7 @@
   </section>
   <div class="form-layout"><section class="panel form-panel">
     {{ form.title.as_field_group }}{{ form.requirements.as_field_group }}{{ form.reference_notes.as_field_group }}{{ form.song_choice.as_field_group }}{{ form.song_information.as_field_group }}{{ form.call_before.as_field_group }}{{ form.call_after.as_field_group }}
-    <button class="button" type="submit">Save & add files <span>↗</span></button>
+    <button class="button" type="submit">Save and Proceed <span>↗</span></button>
   </section><aside class="order-aside"><p class="eyebrow">A good starting point</p><h3>Give your editor<br>the full picture.</h3><p>Share the format, mood, audience, and any must-have moments.</p><hr><h3>Your project starts as a draft.</h3><p>Saving does not place a paid order or start editing. Review the server-calculated quote before payment.</p><p>◈ Files stay private.<br>↗ Original quality stays intact.</p></aside></div>
 </form>
 <section class="panel detail-panel monthly-plans"><p class="eyebrow">Monthly creator plans</p><h2>Recurring editing packages</h2>{% for package in monthly_packages %}<div class="file-row"><div><strong>{{ package.name }}</strong><p>{{ package.price_minor|money:package.currency }} · {{ package.video_allowance }} videos</p></div><span class="badge">Monthly</span></div>{% empty %}<p class="muted">Monthly plans are being configured. Sales stay closed until allowance, renewal, expiry and rollover terms are approved.</p>{% endfor %}</section>
