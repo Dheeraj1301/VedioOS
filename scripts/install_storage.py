@@ -16,23 +16,14 @@ if os.name != "nt":
         "This helper installs Windows AMD64 only. Install the matching SeaweedFS release for your OS into .runtime/seaweedfs/."
     )
 archive = runtime / "seaweedfs.zip"
-
-
-def sha256(path):
-    digest = hashlib.sha256()
-    with path.open("rb") as stream:
-        for chunk in iter(lambda: stream.read(1024 * 1024), b""):
-            digest.update(chunk)
-    return digest.hexdigest()
-
-
-if not archive.exists() or sha256(archive) != SHA256:
+if not archive.exists() or hashlib.file_digest(archive.open("rb"), "sha256").hexdigest() != SHA256:
     print(f"Downloading SeaweedFS {VERSION} from its official GitHub release...")
     urllib.request.urlretrieve(
         f"https://github.com/seaweedfs/seaweedfs/releases/download/{VERSION}/windows_amd64.zip", archive
     )
-if sha256(archive) != SHA256:
-    raise SystemExit("Checksum mismatch: binary was not installed.")
+with archive.open("rb") as stream:
+    if hashlib.file_digest(stream, "sha256").hexdigest() != SHA256:
+        raise SystemExit("Checksum mismatch: binary was not installed.")
 destination = runtime / "seaweedfs"
 destination.mkdir(exist_ok=True)
 with zipfile.ZipFile(archive) as bundle:
