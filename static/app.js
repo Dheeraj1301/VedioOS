@@ -82,8 +82,6 @@ if (newOrderForm) {
   const fontName = newOrderForm.querySelector('[data-font-name]');
   const wordingCheckbox = newOrderForm.querySelector('#id_wants_wording');
   const fontSelection = newOrderForm.querySelector('#id_wording_direction');
-  const songChoice = newOrderForm.querySelector('#id_song_choice');
-  const songInformation = newOrderForm.querySelector('[data-song-information]');
   const estimate = newOrderForm.querySelector('#custom-estimate');
   let estimateRequest = 0;
   [...newOrderForm.querySelectorAll('[name="order_choice"]')]
@@ -98,9 +96,6 @@ if (newOrderForm) {
     const ownFont = wording && fontSelection.value === 'own_font';
     fontName.hidden = !ownFont;
     fontName.querySelectorAll('input').forEach(field => field.disabled = !ownFont);
-    const providesSong = ['provide', 'both'].includes(songChoice.value);
-    songInformation.hidden = !providesSong;
-    songInformation.querySelectorAll('textarea').forEach(field => field.disabled = !providesSong);
     if (custom) updateCustomEstimate();
   };
   const updateCustomEstimate = async () => {
