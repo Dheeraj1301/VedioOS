@@ -291,6 +291,10 @@ def dashboard(request):
 
 @role_required("client")
 def client_dashboard(request):
+    # The overview is a persistent status screen, not a flash-message inbox.
+    # Consume queued notices so redirects and repeated form submissions cannot
+    # stack stale banners above the dashboard content.
+    list(messages.get_messages(request))
     projects = visible_projects(request.user)
     return render(
         request,
@@ -550,7 +554,7 @@ def request_upload(request, project_id):
                 or not content_type.startswith("image/")
             ):
                 raise ValueError
-        elif category != "reference" and content_type not in policy.allowed_types.get(suffix, []):
+        elif category not in ["reference", "source"] and content_type not in policy.allowed_types.get(suffix, []):
             raise ValueError
     except (ValueError, KeyError, TypeError):
         return JsonResponse(

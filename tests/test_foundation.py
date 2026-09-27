@@ -91,6 +91,26 @@ class FoundationTests(TestCase):
         self.assertNotContains(response, "entirely numeric")
         self.assertNotContains(response, "too similar to your other personal information")
 
+    def test_client_overview_discards_queued_flash_messages(self):
+        browser = Browser()
+        self.assertRedirects(
+            browser.post(
+                "/register/",
+                {
+                    "name": "Queued Message Client",
+                    "email": "queued-message@example.test",
+                    "password1": PASSWORD,
+                    "password2": PASSWORD,
+                },
+            ),
+            "/login/",
+        )
+        browser.force_login(self.owner)
+        response = browser.get("/client/")
+        self.assertEqual(response.status_code, 200)
+        self.assertNotContains(response, "Account created. You can now log in.")
+        self.assertNotContains(browser.get("/client/"), "Account created. You can now log in.")
+
     @override_settings(EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend")
     def test_client_registration_verification_login_logout(self):
         browser = Browser()
@@ -397,6 +417,14 @@ class FoundationTests(TestCase):
         for label in ["Plan 1", "Plan 2", "Plan 3", "Customize my edit"]:
             self.assertContains(response, label)
 
+    def test_new_order_shows_instructions_clip_upload_and_bottom_save_action(self):
+        response = self.auth(self.owner).get("/client/new-order/")
+        self.assertContains(response, "Other Instructions")
+        self.assertContains(response, "Upload Your Clips")
+        self.assertContains(response, 'id="upload-clips"', html=False)
+        self.assertContains(response, 'multiple', html=False)
+        self.assertContains(response, "Save and Proceed")
+
     def test_saved_brief_remains_populated_until_create_new_is_clicked(self):
         browser = self.auth(self.owner)
         response = browser.post(
@@ -406,6 +434,7 @@ class FoundationTests(TestCase):
                 "order_choice": "custom",
                 "reel_duration": "30_50",
                 "requirements": "Keep this exact direction",
+                "reference_notes": "Use the quiet ending",
                 "song_choice": "provide",
                 "song_information": "Licensed track",
             },
@@ -416,12 +445,14 @@ class FoundationTests(TestCase):
         resumed = browser.get("/client/new-order/")
         self.assertContains(resumed, "Persistent brief")
         self.assertContains(resumed, "Keep this exact direction")
+        self.assertContains(resumed, "Use the quiet ending")
         self.assertContains(resumed, "Create New")
         self.assertContains(resumed, 'value="custom" required checked', html=False)
 
         blank = browser.get("/client/new-order/?new=1")
         self.assertNotContains(blank, "Persistent brief")
         self.assertNotContains(blank, "Keep this exact direction")
+        self.assertNotContains(blank, "Use the quiet ending")
 
     def test_font_selection_requires_and_persists_own_font_name(self):
         browser = self.auth(self.owner)
@@ -545,10 +576,8 @@ class FoundationTests(TestCase):
         for changes in [
             {"size_bytes": 1025},
             {"filename": "../clip.mp4"},
-            {"filename": "clip.exe"},
             {"sha256": "bad"},
             {"size_bytes": -1},
-            {"content_type": "text/html"},
         ]:
             self.assertEqual(self.post_json(browser, url, {**self.upload_data(), **changes}).status_code, 400)
         self.assertEqual(
@@ -589,6 +618,18 @@ class FoundationTests(TestCase):
             {**base, "filename": "font.webp", "content_type": "image/webp", "size_bytes": 900000},
         )
         self.assertEqual(accepted_font.status_code, 201)
+
+        arbitrary_clip = self.post_json(
+            browser,
+            url,
+            {
+                **self.upload_data(),
+                "filename": "clip.uncommon",
+                "content_type": "application/octet-stream",
+                "category": "source",
+            },
+        )
+        self.assertEqual(arbitrary_clip.status_code, 201)
 
         arbitrary_reference = {
             **self.upload_data(),

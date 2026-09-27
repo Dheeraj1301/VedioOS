@@ -104,6 +104,7 @@ class ProjectForm(forms.ModelForm):
             "wording_direction",
             "font_name",
             "requirements",
+            "reference_notes",
             "song_choice",
             "song_information",
             "call_before",
@@ -118,6 +119,7 @@ class ProjectForm(forms.ModelForm):
             "wording_direction": "Font selection",
             "font_name": "Font style or name",
             "requirements": "Describe the edit",
+            "reference_notes": "Other Instructions",
             "song_choice": "Music preference",
             "song_information": "Song name or instructions",
             "call_before": "Talk to an editor before editing",
@@ -125,5 +127,5 @@ class ProjectForm(forms.ModelForm):
         }
         widgets = {
             name: forms.Textarea(attrs={"rows": 3})
-            for name in ["requirements", "song_information"]
+            for name in ["requirements", "reference_notes", "song_information"]
         }
