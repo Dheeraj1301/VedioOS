@@ -446,6 +446,40 @@ class FoundationTests(TestCase):
         self.assertContains(form_page, "Font selection")
         self.assertNotContains(form_page, "Inspiration and reference notes")
 
+    def test_song_details_are_conditional_and_suggestion_choice_clears_them(self):
+        browser = self.auth(self.owner)
+        blank = browser.get("/client/new-order/?new=1")
+        self.assertContains(blank, "Song Name or Link")
+        self.assertContains(blank, "data-song-information hidden")
+
+        created = browser.post(
+            "/client/new-order/?new=1",
+            {
+                "title": "Song choice brief",
+                "order_choice": "custom",
+                "reel_duration": "30_50",
+                "song_choice": "provide",
+                "song_information": "https://example.test/licensed-track",
+            },
+        )
+        project = Project.objects.get(title="Song choice brief")
+        self.assertRedirects(created, f"/client/projects/{project.id}/")
+        self.assertEqual(project.song_information, "https://example.test/licensed-track")
+
+        changed = browser.post(
+            f"/client/projects/{project.id}/edit/",
+            {
+                "title": project.title,
+                "order_choice": "custom",
+                "reel_duration": "30_50",
+                "song_choice": "suggest",
+                "song_information": "This hidden value must not persist",
+            },
+        )
+        self.assertRedirects(changed, f"/client/projects/{project.id}/")
+        project.refresh_from_db()
+        self.assertEqual(project.song_information, "")
+
     def test_owner_can_edit_saved_creative_brief_without_creating_another_project(self):
         browser = self.auth(self.owner)
         detail = browser.get(f"/client/projects/{self.project.id}/")

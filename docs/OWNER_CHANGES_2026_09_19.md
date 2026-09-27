@@ -50,3 +50,10 @@ Status: requested interface changes are implemented. Production commercial activ
 - The separate **Add Inspiration Reel/Video** uploader accepts multiple formats and enforces a maximum of three active uploads per project. The limit is serialized on the project row to prevent concurrent requests bypassing it.
 - The edit-description label is now **Describe the edit**.
 - Additive migration `core.0008` stores the optional font name on project drafts. It was applied to the selected Supabase project on 2026-09-27 after recording the pre-change schema/migration/security state: two existing project rows, no pre-existing column or migration record, RLS enabled, and no browser-role schema access. Post-change checks confirm the 120-character non-null column with no database default, the matching Django migration record, unchanged RLS, and unchanged browser-role isolation.
+
+## Conditional song details — 2026-09-27
+
+- The optional song-details field is labeled **Song Name or Link** and is hidden by default.
+- It becomes visible only for **I will provide my own song** and the combined provide-plus-editor-suggestion option.
+- Choosing **Suggest a song for me** keeps song details hidden and clears stale song information on the backend, including forged hidden-field submissions.
+- This is a code-only behavior change and requires no database migration.
