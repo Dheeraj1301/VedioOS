@@ -137,7 +137,15 @@ Issue an editor ID and initial password from the same trusted terminal. The edit
 
 An editor can log in before approval, but an admin must approve proficiency at `/admin/editors/` before assignment. Client and administrator-issued passwords require at least 8 characters with an uppercase letter, lowercase letter, number and special character.
 
-New client accounts remain inactive until the client opens the expiring verification link. In local development, the console email backend prints that link in the `runserver` terminal. Configure an approved production email provider and verified sending domain before launch; no paid email service is required for local development or automated tests. Existing active client accounts are not deactivated by this migration.
+New client accounts remain inactive until the client enters the six digit code sent to the registered email. The code is stored only as a password hash in the private Supabase schema, expires after ten minutes, is replaced on resend, and locks after five failed attempts. In local development, the console email backend prints the code in the `runserver` terminal. Real inbox delivery requires an approved SMTP provider, verified sender and ignored environment credentials; no paid email service is required for local development or automated tests. Existing active client accounts are not deactivated by this migration.
+
+Every team preview intended to use shared data must set `SHARED_PREVIEW_REQUIRED=true`, `SUPABASE_PROJECT_REF=lmwvoniiykmfzuxigzqf`, and the privately supplied Supabase connection settings in its ignored `.env`. Confirm the binding before starting the server:
+
+```powershell
+.venv/Scripts/python.exe manage.py check_shared_preview
+```
+
+The command refuses SQLite, the wrong project, the wrong schema, or pending migrations and prints aggregate counts only. In Supabase Studio, select schema **vedioos**; `public` and Supabase Auth's `auth.users` are intentionally separate from this Django application.
 
 External notification delivery is held by default. In-app notices work without a provider. After approving an email provider, sender domain, templates and notification policy, set `NOTIFICATION_EMAIL_ENABLED=true` and schedule this bounded command from a trusted worker:
 

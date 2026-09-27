@@ -19,7 +19,12 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.views.decorators.http import require_GET, require_POST
 
-from .email_verification import send_verification_email, verification_payload
+from .email_verification import (
+    VerificationCooldown,
+    check_verification_code,
+    send_verification_email,
+    verification_payload,
+)
 from .forms import LoginForm, ProjectForm, RegistrationForm
 from .models import (
     AuthAttempt,
@@ -86,7 +91,7 @@ def register(request):
                     audit(user, "client.registered", user.pk)
                 request.session["verification_email"] = user.email
                 try:
-                    send_verification_email(request, user)
+                    send_verification_email(user)
                 except Exception:
                     messages.error(
                         request,
@@ -142,15 +147,67 @@ def resend_verification(request):
     ).first()
     if user:
         try:
-            send_verification_email(request, user)
+            send_verification_email(user)
+        except VerificationCooldown:
+            pass
         except Exception:
             pass
     request.session["verification_email"] = email
     messages.success(
         request,
-        "If an unverified client account matches that email, a new verification link has been sent.",
+        "If an eligible unverified client account matches that email, a verification code has been sent.",
     )
     return redirect("verification_pending")
+
+
+@require_POST
+def verify_email_otp(request):
+    if request.user.is_authenticated:
+        return redirect("dashboard")
+    if auth_rate_limited(request):
+        return render(
+            request,
+            "error.html",
+            {"message": "Too many attempts. Please try again in 15 minutes."},
+            status=429,
+        )
+    email = request.POST.get("email", "").strip().lower()[:254]
+    code = request.POST.get("code", "").strip()
+    request.session["verification_email"] = email
+    if not re.fullmatch(r"\d{6}", code):
+        messages.error(request, "Enter the six digit code from your email.")
+        return redirect("verification_pending")
+
+    with transaction.atomic():
+        user = (
+            User.objects.select_for_update()
+            .filter(
+                email__iexact=email,
+                role="client",
+                is_active=False,
+                email_verified_at__isnull=True,
+            )
+            .first()
+        )
+        result = check_verification_code(user, code) if user else "invalid"
+        if result == "verified":
+            user.email_verified_at = timezone.now()
+            user.is_active = True
+            user.save(update_fields=["email_verified_at", "is_active"])
+            audit(user, "client.email_verified", user.pk, {"method": "email_otp"})
+
+    if result != "verified":
+        detail = {
+            "expired": "That code has expired. Request a new code.",
+            "locked": "Too many incorrect attempts. Request a new code.",
+        }.get(result, "That code is invalid. Check the email and try again.")
+        messages.error(request, detail)
+        return redirect("verification_pending")
+
+    login(request, user)
+    request.session.pop("verification_email", None)
+    messages.success(request, "Email verified. Your client workspace is ready.")
+    return redirect("client_dashboard")
 
 
 @require_GET

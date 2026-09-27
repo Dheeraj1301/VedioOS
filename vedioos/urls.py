@@ -24,6 +24,7 @@ urlpatterns = [
     path("", views.landing, name="landing"),
     path("register/", views.register, name="register"),
     path("verify-email/", views.verification_pending, name="verification_pending"),
+    path("verify-email/code/", views.verify_email_otp, name="verify_email_otp"),
     path("verify-email/resend/", views.resend_verification, name="resend_verification"),
     path("verify-email/<str:token>/", views.verify_email, name="verify_email"),
     path("register/editor/", ops.editor_register, name="editor_register"),

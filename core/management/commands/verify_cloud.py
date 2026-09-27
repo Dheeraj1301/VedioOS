@@ -1,15 +1,16 @@
 """Exercise current auth and project permissions in one rolled-back transaction."""
 
+import re
 import secrets
 import uuid
 
+from django.core import mail
 from django.core.management.base import BaseCommand, CommandError
 from django.db import connection, transaction
 from django.test import Client as Browser
 from django.test.utils import override_settings
 from django.urls import reverse
 
-from core.email_verification import verification_token
 from core.models import Project, User
 from operations.models import Admin, Editor, EditorAvailability, EditorCoins
 
@@ -51,8 +52,9 @@ def run_cloud_checks(write):
                 blocked_login.status_code == 200 and not client.session.get("_auth_user_id"),
                 "unverified client login is rejected",
             )
-            verification = client.get(
-                reverse("verify_email", args=[verification_token(client_user)])
+            code = re.search(r"\b\d{6}\b", mail.outbox[-1].body).group()
+            verification = client.post(
+                reverse("verify_email_otp"), {"email": email, "code": code}
             )
             require(
                 verification.status_code == 302 and verification.url == reverse("client_dashboard"),

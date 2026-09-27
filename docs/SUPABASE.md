@@ -29,18 +29,23 @@ The original local database is retained at `.runtime/db.sqlite3`, with a pre-tra
 
 Authentication still uses Django's shared `users` identity and sessions, now persisted in Supabase PostgreSQL. This connection does not switch to Supabase Auth. Original media remains in the existing private S3-compatible local storage service; file metadata is in PostgreSQL. A separate Supabase Storage integration requires compatible integrity/versioning decisions and credentials.
 
+Client email verification also follows this identity boundary. Django creates a short-lived six digit challenge in `vedioos.email_verification_challenges`, stores only its password hash, and sends the code through Django's configured email backend. Supabase Auth SMTP/template settings do not send mail for these Django accounts because they are not records in `auth.users`. Configure the approved SMTP provider in each server's ignored `.env`; never put SMTP credentials in Git or browser code.
+
 ## Run and verify
 
 ```powershell
 .venv/Scripts/python.exe manage.py migrate
 .venv/Scripts/python.exe manage.py check_database
+.venv/Scripts/python.exe manage.py check_shared_preview
 .venv/Scripts/python.exe manage.py verify_cloud
 .venv/Scripts/python.exe manage.py runserver 127.0.0.1:8000 --noreload
 ```
 
 `verify_cloud` creates synthetic users/project/session records inside a transaction and rolls them back. It does not drop or flush the shared database. Normal `manage.py test` commands automatically use `vedioos.test_settings` and an isolated SQLite test database.
 
-The verifier follows the current account contract: client registration remains inactive until email verification, editor self-registration redirects to login, and the synthetic editor signs in with an administrator-issued editor ID. Its email uses Django's in-memory backend and is never sent externally.
+The verifier follows the current account contract: client registration remains inactive until its email OTP is consumed, editor self-registration redirects to login, and the synthetic editor signs in with an administrator-issued editor ID. Its email uses Django's in-memory backend and is never sent externally.
+
+For a shared preview, set `SHARED_PREVIEW_REQUIRED=true`. Startup then refuses a missing/wrong Supabase project URL or a schema other than `vedioos`. Teammates still need the credentials through the team's private secret channel; the repository deliberately cannot distribute them.
 
 For deliberate offline development:
 

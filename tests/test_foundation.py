@@ -11,7 +11,16 @@ from django.test import Client as Browser
 from django.test import TestCase, override_settings
 from django.utils import timezone
 
-from core.models import Client, File, Order, Plan, Project, UploadPolicy, User
+from core.models import (
+    Client,
+    EmailVerificationChallenge,
+    File,
+    Order,
+    Plan,
+    Project,
+    UploadPolicy,
+    User,
+)
 from operations.models import (
     Admin,
     AuditLog,
@@ -90,14 +99,14 @@ class FoundationTests(TestCase):
         )
         self.assertEqual(blocked_login.status_code, 200)
         self.assertFalse(browser.session.get("_auth_user_id"))
-        mail.outbox.clear()
+        code = re.search(r"\b\d{6}\b", mail.outbox[0].body).group()
         self.assertRedirects(
-            browser.post("/verify-email/resend/", {"email": "NEW@example.test"}),
-            "/verify-email/",
+            browser.post(
+                "/verify-email/code/",
+                {"email": "NEW@example.test", "code": code},
+            ),
+            "/client/",
         )
-        self.assertEqual(len(mail.outbox), 1)
-        verification_url = re.search(r"https?://[^\s]+/verify-email/[^\s]+/", mail.outbox[0].body).group()
-        self.assertRedirects(browser.get(verification_url), "/client/")
         user.refresh_from_db()
         self.assertTrue(user.is_active)
         self.assertIsNotNone(user.email_verified_at)
@@ -125,6 +134,37 @@ class FoundationTests(TestCase):
         response = browser.get("/verify-email/not-a-valid-token/")
         self.assertEqual(response.status_code, 400)
         self.assertNotContains(response, "not-a-valid-token", status_code=400)
+
+    @override_settings(
+        EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend",
+        EMAIL_OTP_RESEND_SECONDS=0,
+    )
+    def test_resend_replaces_code_and_wrong_codes_are_limited(self):
+        user = User.objects.create_user(
+            "otp@example.test", PASSWORD, name="OTP Client", is_active=False
+        )
+        Client.objects.create(user=user)
+        from core.email_verification import send_verification_email
+
+        send_verification_email(user)
+        first_code = re.search(r"\b\d{6}\b", mail.outbox[-1].body).group()
+        self.assertRedirects(
+            Browser().post("/verify-email/resend/", {"email": user.email}),
+            "/verify-email/",
+        )
+        second_code = re.search(r"\b\d{6}\b", mail.outbox[-1].body).group()
+        self.assertNotEqual(first_code, second_code)
+        browser = Browser()
+        self.assertRedirects(
+            browser.post("/verify-email/code/", {"email": user.email, "code": first_code}),
+            "/verify-email/",
+        )
+        self.assertFalse(browser.session.get("_auth_user_id"))
+        self.assertRedirects(
+            browser.post("/verify-email/code/", {"email": user.email, "code": second_code}),
+            "/client/",
+        )
+        self.assertFalse(EmailVerificationChallenge.objects.filter(user=user).exists())
 
     def editor_data(self):
         return {

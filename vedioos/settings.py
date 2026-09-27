@@ -1,5 +1,6 @@
 import os
 from pathlib import Path
+from urllib.parse import urlparse
 
 from django.core.exceptions import ImproperlyConfigured
 from dotenv import load_dotenv
@@ -7,6 +8,8 @@ from dotenv import load_dotenv
 BASE_DIR = Path(__file__).resolve().parent.parent
 load_dotenv(BASE_DIR / ".env")
 DEBUG = os.getenv("DEBUG", "false").lower() == "true"
+SUPABASE_PROJECT_REF = os.getenv("SUPABASE_PROJECT_REF", "")
+SHARED_PREVIEW_REQUIRED = os.getenv("SHARED_PREVIEW_REQUIRED", "false").lower() == "true"
 SECRET_KEY = os.getenv("SECRET_KEY", "")
 if not SECRET_KEY:
     raise ImproperlyConfigured(
@@ -83,6 +86,16 @@ else:
             "OPTIONS": {"timeout": 20},
         }
     }
+if SHARED_PREVIEW_REQUIRED:
+    database_url = os.getenv("DATABASE_URL", "")
+    parsed_database_url = urlparse(database_url)
+    identity = f"{parsed_database_url.username or ''}@{parsed_database_url.hostname or ''}"
+    if not database_url or not SUPABASE_PROJECT_REF or SUPABASE_PROJECT_REF not in identity:
+        raise ImproperlyConfigured(
+            "SHARED_PREVIEW_REQUIRED needs DATABASE_URL for the configured SUPABASE_PROJECT_REF."
+        )
+    if os.getenv("DATABASE_SCHEMA", "vedioos") != "vedioos":
+        raise ImproperlyConfigured("Shared previews must use the private vedioos schema.")
 AUTH_USER_MODEL = "core.User"
 AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
@@ -113,6 +126,18 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 EMAIL_BACKEND = os.getenv("EMAIL_BACKEND", "django.core.mail.backends.console.EmailBackend")
 DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL", "VedioOS <no-reply@localhost>")
 EMAIL_VERIFICATION_MAX_AGE = int(os.getenv("EMAIL_VERIFICATION_MAX_AGE", "86400"))
+EMAIL_OTP_MAX_AGE_SECONDS = int(os.getenv("EMAIL_OTP_MAX_AGE_SECONDS", "600"))
+EMAIL_OTP_RESEND_SECONDS = int(os.getenv("EMAIL_OTP_RESEND_SECONDS", "60"))
+EMAIL_OTP_MAX_ATTEMPTS = int(os.getenv("EMAIL_OTP_MAX_ATTEMPTS", "5"))
+EMAIL_HOST = os.getenv("EMAIL_HOST", "")
+EMAIL_PORT = int(os.getenv("EMAIL_PORT", "587"))
+EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER", "")
+EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD", "")
+EMAIL_USE_TLS = os.getenv("EMAIL_USE_TLS", "true").lower() == "true"
+EMAIL_USE_SSL = os.getenv("EMAIL_USE_SSL", "false").lower() == "true"
+EMAIL_TIMEOUT = int(os.getenv("EMAIL_TIMEOUT", "10"))
+if EMAIL_USE_TLS and EMAIL_USE_SSL:
+    raise ImproperlyConfigured("EMAIL_USE_TLS and EMAIL_USE_SSL cannot both be enabled.")
 NOTIFICATION_EMAIL_ENABLED = os.getenv("NOTIFICATION_EMAIL_ENABLED", "false").lower() == "true"
 NOTIFICATION_DELIVERY_MAX_ATTEMPTS = int(os.getenv("NOTIFICATION_DELIVERY_MAX_ATTEMPTS", "5"))
 DATA_UPLOAD_MAX_MEMORY_SIZE = 262144

@@ -174,6 +174,10 @@ Admin → Feature controls now displays D02–D16 as an explicit launch-decision
 
 ## Continuous verification
 
+### Shared preview and email OTP update — 2026-09-27
+
+The shared-preview guard now refuses SQLite, a mismatched Supabase project, the wrong schema, or pending migrations when `SHARED_PREVIEW_REQUIRED=true`. `check_shared_preview` reports the binding and aggregate record counts without exposing credentials or rows. Client activation now uses a persisted six digit OTP with hashed challenge storage, expiry, resend replacement/cooldown and attempt limits. Migration `core.0008` was applied after a verified 46-table / 299-row private snapshot; the resulting 47-table schema passed RLS and browser-role isolation audits. `verify_cloud` exercised the OTP registration flow, all roles, project persistence and denial cases inside a rolled-back transaction.
+
 `.github/workflows/ci.yml` runs on every push and pull request with read-only repository permission. Its backend job installs the committed Python lock file on Python 3.13, checks Django configuration and migration drift, runs Ruff, and executes the isolated backend suite. Its frontend job installs `package-lock.json` on Node.js 22 without lifecycle scripts, syntax-checks every repository JavaScript module, rebuilds the committed hash library and fails if that output differs. The workflow receives no provider credentials and therefore cannot mutate Supabase, private storage, payments or payouts. Provider, storage and browser checks remain explicit integration gates.
 
 `verify_cloud` provides a rollback-only check against the configured PostgreSQL database. It follows the current mandatory email-verification and administrator-issued editor-ID flows, checks all three role areas and project-level denial, and proves that its synthetic records were removed.
@@ -193,10 +197,10 @@ The runs reported no browser page errors or horizontal overflow. Screenshots rem
 ## Verification
 
 - Unit checks cover a secure disabled-feature release scope, insecure settings, policy/provider inconsistencies, and secret-free JSON output.
-- The full isolated suite passes 201 tests with 10 opt-in integration tests skipped.
+- The full isolated suite passes 202 tests with 10 opt-in integration tests skipped.
 - All five opt-in Edge lifecycle suites pass with real local private-storage integrity where applicable.
 - Django system and migration checks and Ruff pass.
-- This slice changes no database schema. Supabase remains synchronized through `operations.0013`.
+- Supabase is synchronized through `core.0008` and `operations.0013`; all 47 tables retain RLS and private browser-role isolation.
 - No deployment, domain, provider subscription or paid upgrade was performed.
 
 ## Remaining before the Phase 9 gate
