@@ -41,3 +41,12 @@ Status: requested interface changes are implemented. Production commercial activ
 - The project’s **Creative Brief** summary offers **Edit** to its owning client while the draft remains unpaid and no quote agreement has been accepted. Saving updates the same project and records an attributable audit event.
 - Ownership is enforced by the backend. Other clients cannot open the edit route, and paid or commercially accepted orders cannot be changed through it.
 - This is a code-only behavior change and requires no database migration or Supabase schema synchronization.
+
+## Font and inspiration inputs — 2026-09-27
+
+- The custom-order field is presented as **Font selection**. Choosing **I have my own font** requires a persisted font style/name; choosing **I will upload font inspiration** enables a separate private image upload after the draft is saved.
+- Font-inspiration uploads accept one image smaller than 1 MB. Document/PDF files and non-image media are rejected by the backend as well as filtered by the browser picker.
+- The free-text inspiration/reference-notes control is removed from the order form and summary. Its historical database column is retained so existing data is not destroyed.
+- The separate **Add Inspiration Reel/Video** uploader accepts multiple formats and enforces a maximum of three active uploads per project. The limit is serialized on the project row to prevent concurrent requests bypassing it.
+- The edit-description label is now **Describe the edit**.
+- Additive migration `core.0008` stores the optional font name on project drafts. It was applied to the selected Supabase project on 2026-09-27 after recording the pre-change schema/migration/security state: two existing project rows, no pre-existing column or migration record, RLS enabled, and no browser-role schema access. Post-change checks confirm the 120-character non-null column with no database default, the matching Django migration record, unchanged RLS, and unchanged browser-role isolation.

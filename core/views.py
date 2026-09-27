@@ -13,7 +13,7 @@ from django.contrib.auth import login, logout
 from django.core import signing
 from django.core.exceptions import PermissionDenied
 from django.db import IntegrityError, transaction
-from django.db.models import F
+from django.db.models import F, Q
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
@@ -40,6 +40,10 @@ from .models import (
 from .payment_history import PAYMENT_STATUSES, payment_page
 from .permissions import can_upload, project_for, role_required, visible_files, visible_projects
 from .storage import download_permission, inspect_object, upload_permission
+
+FONT_REFERENCE_MAX_BYTES = 1024 * 1024
+FONT_IMAGE_EXTENSIONS = {".avif", ".bmp", ".gif", ".heic", ".heif", ".jpeg", ".jpg", ".png", ".tif", ".tiff", ".webp"}
+INSPIRATION_UPLOAD_LIMIT = 3
 
 
 def audit(user, action, target, detail=None):
@@ -417,6 +421,9 @@ def project_detail(request, project_id, area):
     from operations.messages import message_page
 
     project_messages, older_cursor = message_page(request.user, project, request.GET.get("messages_before"))
+    active_inspiration_count = project.files.filter(category="reference").filter(
+        Q(state="ready") | Q(state="pending", expires_at__gt=timezone.now())
+    ).count()
 
     return render(
         request,
@@ -451,6 +458,8 @@ def project_detail(request, project_id, area):
             ) and project.wants_wording and project.wording_direction == "font_inspiration",
             "upload_policy": policy,
             "max_upload_mb": policy.max_bytes // 1048576 if policy else 0,
+            "active_inspiration_count": active_inspiration_count,
+            "inspiration_upload_limit": INSPIRATION_UPLOAD_LIMIT,
             "current_assignment": project.assignments.filter(ended_at__isnull=True)
             .select_related("editor__user")
             .first(),
@@ -529,31 +538,51 @@ def request_upload(request, project_id):
             raise ValueError
         if not isinstance(digest, str) or not re.fullmatch("[0-9a-f]{64}", digest):
             raise ValueError
+        if not can_upload(request.user, project, category):
+            raise PermissionDenied
         suffix = PurePath(filename).suffix.lower()
-        if not isinstance(content_type, str) or content_type not in policy.allowed_types.get(suffix, []):
+        if not isinstance(content_type, str) or not 1 <= len(content_type) <= 100:
+            raise ValueError
+        if category == "font_reference":
+            if (
+                size >= FONT_REFERENCE_MAX_BYTES
+                or suffix not in FONT_IMAGE_EXTENSIONS
+                or not content_type.startswith("image/")
+            ):
+                raise ValueError
+        elif category != "reference" and content_type not in policy.allowed_types.get(suffix, []):
             raise ValueError
     except (ValueError, KeyError, TypeError):
         return JsonResponse(
             {"error": "Invalid upload. Check file name, supported type, size and checksum."}, status=400
         )
-    if not can_upload(request.user, project, category):
-        raise PermissionDenied
-    file_id = uuid.uuid4()
-    file = File(
-        id=file_id,
-        project=project,
-        uploader=request.user,
-        filename=filename,
-        size_bytes=size,
-        sha256=digest,
-        content_type=content_type,
-        category=category,
-        object_key=f"projects/{project.id}/{file_id}",
-        expires_at=timezone.now() + timedelta(seconds=settings.UPLOAD_TTL_SECONDS),
-    )
     try:
-        permission = upload_permission(file)
         with transaction.atomic():
+            if category == "reference":
+                locked_project = Project.objects.select_for_update().get(pk=project.pk)
+                active_count = File.objects.filter(
+                    project=locked_project, category="reference"
+                ).filter(
+                    Q(state="ready") | Q(state="pending", expires_at__gt=timezone.now())
+                ).count()
+                if active_count >= INSPIRATION_UPLOAD_LIMIT:
+                    return JsonResponse(
+                        {"error": "Maximum 3 inspiration uploads."}, status=409
+                    )
+            file_id = uuid.uuid4()
+            file = File(
+                id=file_id,
+                project=project,
+                uploader=request.user,
+                filename=filename,
+                size_bytes=size,
+                sha256=digest,
+                content_type=content_type,
+                category=category,
+                object_key=f"projects/{project.id}/{file_id}",
+                expires_at=timezone.now() + timedelta(seconds=settings.UPLOAD_TTL_SECONDS),
+            )
+            permission = upload_permission(file)
             file.save()
             audit(request.user, "file.upload_reserved", file.id)
     except (BotoCoreError, ClientError):

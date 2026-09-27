@@ -86,6 +86,11 @@ class ProjectForm(forms.ModelForm):
                 self.add_error("wording_direction", "Choose how the editor should handle wording.")
             if not data.get("wants_wording"):
                 data["wording_direction"] = ""
+        if data.get("wants_wording") and data.get("wording_direction") == "own_font":
+            if not data.get("font_name", "").strip():
+                self.add_error("font_name", "Enter the font style or name.")
+        else:
+            data["font_name"] = ""
         return data
 
     class Meta:
@@ -97,8 +102,8 @@ class ProjectForm(forms.ModelForm):
             "reel_duration",
             "wants_wording",
             "wording_direction",
+            "font_name",
             "requirements",
-            "reference_notes",
             "song_choice",
             "song_information",
             "call_before",
@@ -110,9 +115,9 @@ class ProjectForm(forms.ModelForm):
             "quality_enhancement": "Quality enhancement",
             "reel_duration": "Reel duration",
             "wants_wording": "Add wording or on-screen text",
-            "wording_direction": "Font direction",
-            "requirements": "What would you like us to edit?",
-            "reference_notes": "Inspiration and reference notes",
+            "wording_direction": "Font selection",
+            "font_name": "Font style or name",
+            "requirements": "Describe the edit",
             "song_choice": "Music preference",
             "song_information": "Song name or instructions",
             "call_before": "Talk to an editor before editing",
@@ -120,5 +125,5 @@ class ProjectForm(forms.ModelForm):
         }
         widgets = {
             name: forms.Textarea(attrs={"rows": 3})
-            for name in ["requirements", "reference_notes", "song_information"]
+            for name in ["requirements", "song_information"]
         }

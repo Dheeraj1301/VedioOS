@@ -163,6 +163,7 @@ class Project(Record):
     wording_direction = models.CharField(
         max_length=24, choices=WordingDirection.choices, blank=True
     )
+    font_name = models.CharField(max_length=120, blank=True)
     reference_notes = models.TextField(blank=True, max_length=5000)
     song_choice = models.CharField(
         max_length=20,

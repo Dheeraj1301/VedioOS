@@ -39,5 +39,5 @@ class AccessibilitySemanticsTests(TestCase):
             'aria-label="Download private source.mp4 in original quality"',
         )
         self.assertContains(response, "Upload source files")
-        self.assertContains(response, "Upload inspiration")
+        self.assertContains(response, "Add Inspiration Reel/Video")
         self.assertContains(response, 'data-fixed-category="reference"')

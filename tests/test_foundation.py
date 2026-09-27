@@ -406,7 +406,6 @@ class FoundationTests(TestCase):
                 "order_choice": "custom",
                 "reel_duration": "30_50",
                 "requirements": "Keep this exact direction",
-                "reference_notes": "Warm documentary reference",
                 "song_choice": "provide",
                 "song_information": "Licensed track",
             },
@@ -417,13 +416,35 @@ class FoundationTests(TestCase):
         resumed = browser.get("/client/new-order/")
         self.assertContains(resumed, "Persistent brief")
         self.assertContains(resumed, "Keep this exact direction")
-        self.assertContains(resumed, "Warm documentary reference")
         self.assertContains(resumed, "Create New")
         self.assertContains(resumed, 'value="custom" required checked', html=False)
 
         blank = browser.get("/client/new-order/?new=1")
         self.assertNotContains(blank, "Persistent brief")
         self.assertNotContains(blank, "Keep this exact direction")
+
+    def test_font_selection_requires_and_persists_own_font_name(self):
+        browser = self.auth(self.owner)
+        data = {
+            "title": "Typography brief",
+            "order_choice": "custom",
+            "reel_duration": "30_50",
+            "wants_wording": "on",
+            "wording_direction": "own_font",
+            "song_choice": "suggest",
+        }
+        missing = browser.post("/client/new-order/?new=1", data)
+        self.assertEqual(missing.status_code, 200)
+        self.assertContains(missing, "Enter the font style or name")
+
+        saved = browser.post("/client/new-order/?new=1", {**data, "font_name": "Montserrat"})
+        project = Project.objects.get(title="Typography brief")
+        self.assertRedirects(saved, f"/client/projects/{project.id}/")
+        self.assertEqual(project.font_name, "Montserrat")
+        form_page = browser.get("/client/new-order/")
+        self.assertContains(form_page, "Describe the edit")
+        self.assertContains(form_page, "Font selection")
+        self.assertNotContains(form_page, "Inspiration and reference notes")
 
     def test_owner_can_edit_saved_creative_brief_without_creating_another_project(self):
         browser = self.auth(self.owner)
@@ -540,6 +561,46 @@ class FoundationTests(TestCase):
             403,
         )
         self.assertEqual(self.post_json(self.auth(self.other), url, self.upload_data()).status_code, 404)
+
+    @patch("core.views.upload_permission", return_value={"method": "PUT", "url": "private", "headers": {}})
+    def test_font_and_inspiration_upload_rules_are_enforced(self, _permission):
+        browser = self.auth(self.owner)
+        self.project.wants_wording = True
+        self.project.wording_direction = "font_inspiration"
+        self.project.save(update_fields=["wants_wording", "wording_direction", "updated_at"])
+        UploadPolicy.objects.filter(pk=1).update(max_bytes=2 * 1024 * 1024)
+        url = f"/api/projects/{self.project.id}/uploads/"
+        base = {**self.upload_data(), "category": "font_reference"}
+
+        for filename, content_type, size in [
+            ("font.pdf", "application/pdf", 500),
+            ("font.docx", "application/vnd.openxmlformats-officedocument.wordprocessingml.document", 500),
+            ("font.png", "image/png", 1024 * 1024),
+        ]:
+            response = self.post_json(
+                browser,
+                url,
+                {**base, "filename": filename, "content_type": content_type, "size_bytes": size},
+            )
+            self.assertEqual(response.status_code, 400)
+        accepted_font = self.post_json(
+            browser,
+            url,
+            {**base, "filename": "font.webp", "content_type": "image/webp", "size_bytes": 900000},
+        )
+        self.assertEqual(accepted_font.status_code, 201)
+
+        arbitrary_reference = {
+            **self.upload_data(),
+            "filename": "inspiration.uncommon",
+            "content_type": "application/octet-stream",
+            "category": "reference",
+        }
+        for _ in range(3):
+            self.assertEqual(self.post_json(browser, url, arbitrary_reference).status_code, 201)
+        fourth = self.post_json(browser, url, arbitrary_reference)
+        self.assertEqual(fourth.status_code, 409)
+        self.assertEqual(fourth.json()["error"], "Maximum 3 inspiration uploads.")
 
     def test_csrf_protects_mutations(self):
         browser = Browser(enforce_csrf_checks=True)

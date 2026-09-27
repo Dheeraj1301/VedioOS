@@ -14,11 +14,11 @@
 {% endif %}
 {% if can_upload_font_inspiration %}
 <section class="panel upload-panel font-inspiration-upload-panel">
-  <p class="eyebrow">Font inspiration</p><h2>Add a wording reference.</h2>
-  <p>Upload an image or video showing the typography direction. It stays private with this project.</p>
+  <p class="eyebrow">Font selection</p><h2>Upload font inspiration.</h2>
+  <p>Upload one picture under 1 MB. Word documents and PDFs are not accepted.</p>
   <form class="upload-form" data-project-id="{{ project.id }}" data-fixed-category="font_reference">{% csrf_token %}
-    <label class="file-drop" for="font-inspiration-files"><span aria-hidden="true">Aa</span><strong>Choose font inspiration</strong><small>Use a visual reference you may share</small></label>
-    <input id="font-inspiration-files" class="upload-files" type="file" multiple required>
+    <label class="file-drop" for="font-inspiration-files"><span aria-hidden="true">Aa</span><strong>Click to Upload</strong><small>Image only · less than 1 MB</small></label>
+    <input id="font-inspiration-files" class="upload-files" type="file" accept="image/*" required>
     <button class="button" type="submit">Upload font inspiration ↗</button>
     <progress class="upload-progress" max="100" value="0" hidden aria-label="Font inspiration upload progress"></progress>
     <p class="upload-status" role="status" aria-live="polite"></p>
@@ -27,10 +27,10 @@
 {% endif %}
 {% if can_upload_inspiration %}
 <section class="panel upload-panel inspiration-upload-panel">
-  <p class="eyebrow">Inspiration video</p><h2>Add a separate reference.</h2>
+  <p class="eyebrow">Inspiration</p><h2>Add Inspiration Reel/Video.</h2>
   <p>This guides the style and is stored separately from footage used in the edit.</p>
-  <form class="upload-form" data-project-id="{{ project.id }}" data-fixed-category="reference">{% csrf_token %}
-    <label class="file-drop" for="inspiration-files"><span aria-hidden="true">◎</span><strong>Choose inspiration videos</strong><small>Reference files stay private with this project</small></label>
+  <form class="upload-form" data-project-id="{{ project.id }}" data-fixed-category="reference" data-max-files="{{ inspiration_upload_limit }}" data-existing-files="{{ active_inspiration_count }}">{% csrf_token %}
+    <label class="file-drop" for="inspiration-files"><span aria-hidden="true">◎</span><strong>Add Inspiration Reel/Video</strong><small>Reference files stay private with this project</small></label>
     <input id="inspiration-files" class="upload-files" type="file" multiple required>
     <button class="button" type="submit">Upload inspiration ↗</button>
     <progress id="inspiration-progress" class="upload-progress" max="100" value="0" hidden aria-label="Inspiration upload progress"></progress>
