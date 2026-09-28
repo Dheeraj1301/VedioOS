@@ -419,13 +419,17 @@ class FoundationTests(TestCase):
         for label in ["Plan 1", "Plan 2", "Plan 3", "Customize my edit"]:
             self.assertContains(response, label)
 
-    def test_new_order_shows_instructions_clip_upload_and_bottom_save_action(self):
+    def test_new_order_shows_clip_and_inspiration_uploads_with_bottom_save_action(self):
         response = self.auth(self.owner).get("/client/new-order/")
         self.assertContains(response, "Other Instructions")
         self.assertContains(response, "Upload Your Clips")
+        self.assertContains(response, "Add Inspiration Reel/Video")
         self.assertContains(response, 'id="upload-clips"', html=False)
+        self.assertContains(response, 'id="upload-inspiration"', html=False)
         self.assertContains(response, 'multiple', html=False)
         self.assertContains(response, "Save and Proceed")
+        content = response.content.decode()
+        self.assertLess(content.index("Upload Your Clips"), content.index("Add Inspiration Reel/Video"))
 
     def test_saved_brief_remains_populated_until_create_new_is_clicked(self):
         browser = self.auth(self.owner)

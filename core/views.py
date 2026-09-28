@@ -381,6 +381,11 @@ def _project_form(request, project=None, *, create_new=False):
         (slot, slots.get(slot), f"plan:{slots[slot].pk}" if slots.get(slot) else "")
         for slot in range(1, 4)
     ]
+    active_inspiration_count = 0
+    if project:
+        active_inspiration_count = project.files.filter(category="reference").filter(
+            Q(state="ready") | Q(state="pending", expires_at__gt=timezone.now())
+        ).count()
     return render(
         request,
         "client/new_order.html",
@@ -391,6 +396,7 @@ def _project_form(request, project=None, *, create_new=False):
             "create_new": create_new,
             "selected_choice": form["order_choice"].value() or "",
             "plan_slots": plan_slots,
+            "active_inspiration_count": active_inspiration_count,
             "monthly_packages": InfluencerPackage.objects.filter(active=True).order_by("name"),
         },
     )

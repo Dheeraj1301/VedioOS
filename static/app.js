@@ -122,19 +122,36 @@ if (newOrderForm) {
     }
   };
   newOrderForm.addEventListener('change', updateOrderFields);
+  const inspirationBox = newOrderForm.querySelector('.inspiration-upload-box');
+  const inspirationInput = newOrderForm.querySelector('.brief-inspiration-files');
+  const inspirationStatus = newOrderForm.querySelector('.brief-inspiration-status');
+  const existingInspirationFiles = Number(inspirationBox.dataset.existingFiles || 0);
+  const exceedsInspirationLimit = () => existingInspirationFiles + inspirationInput.files.length > 3;
+  inspirationInput.addEventListener('change', () => {
+    if (exceedsInspirationLimit()) announce(inspirationStatus, 'Max 3 uploads.', true);
+    else if (inspirationStatus.getAttribute('role') === 'alert') announce(inspirationStatus, '');
+  });
   newOrderForm.addEventListener('submit', async event => {
     const clipInput = newOrderForm.querySelector('.brief-upload-files');
-    const files = [...clipInput.files];
-    if (!files.length) return;
+    const clipFiles = [...clipInput.files];
+    const inspirationFiles = [...inspirationInput.files];
+    if (exceedsInspirationLimit()) {
+      event.preventDefault();
+      announce(inspirationStatus, 'Max 3 uploads.', true);
+      return;
+    }
+    if (!clipFiles.length && !inspirationFiles.length) return;
     event.preventDefault();
     const button = newOrderForm.querySelector('[type="submit"]');
-    const progress = newOrderForm.querySelector('.brief-upload-progress');
-    const status = newOrderForm.querySelector('.brief-upload-status');
+    const clipProgress = newOrderForm.querySelector('.brief-upload-progress');
+    const clipStatus = newOrderForm.querySelector('.brief-upload-status');
+    const inspirationProgress = newOrderForm.querySelector('.brief-inspiration-progress');
     button.disabled = true;
     try {
-      announce(status, 'Saving your creative brief…');
+      announce(clipFiles.length ? clipStatus : inspirationStatus, 'Saving your creative brief…');
       const formData = new FormData(newOrderForm);
       formData.delete('clips');
+      formData.delete('inspiration_files');
       const response = await fetch(newOrderForm.action || window.location.href, {
         method: 'POST', credentials: 'same-origin', headers: {'X-CSRFToken': csrf()}, body: formData,
       });
@@ -144,23 +161,27 @@ if (newOrderForm) {
         return;
       }
       const projectMatch = new URL(response.url).pathname.match(/^\/client\/projects\/([0-9a-f-]+)\/$/i);
-      if (!projectMatch) throw new Error('The saved project could not be identified. Please upload your clips from the project page.');
-      for (const file of files) {
-        announce(status, `Checking original: ${file.name}`);
-        const sha256 = await window.hashOriginal(file);
-        const result = await postJSON(`/api/projects/${projectMatch[1]}/uploads/`, {
-          filename: file.name, size_bytes: file.size,
-          content_type: file.type || 'application/octet-stream', category: 'source', sha256,
-        });
-        progress.hidden = false; progress.value = 0;
-        announce(status, `Uploading ${file.name}…`);
-        await uploadOriginal(result.upload, file, progress);
-        announce(status, `Verifying ${file.name}…`);
-        await postJSON(`/api/files/${result.file_id}/complete/`);
-      }
+      if (!projectMatch) throw new Error('The saved project could not be identified. Please upload your files from the project page.');
+      const uploadFiles = async (files, category, progress, status) => {
+        for (const file of files) {
+          announce(status, `Checking original: ${file.name}`);
+          const sha256 = await window.hashOriginal(file);
+          const result = await postJSON(`/api/projects/${projectMatch[1]}/uploads/`, {
+            filename: file.name, size_bytes: file.size,
+            content_type: file.type || 'application/octet-stream', category, sha256,
+          });
+          progress.hidden = false; progress.value = 0;
+          announce(status, `Uploading ${file.name}…`);
+          await uploadOriginal(result.upload, file, progress);
+          announce(status, `Verifying ${file.name}…`);
+          await postJSON(`/api/files/${result.file_id}/complete/`);
+        }
+      };
+      await uploadFiles(clipFiles, 'source', clipProgress, clipStatus);
+      await uploadFiles(inspirationFiles, 'reference', inspirationProgress, inspirationStatus);
       window.location.assign(response.url);
     } catch (error) {
-      announce(status, error.message, true);
+      announce(clipFiles.length ? clipStatus : inspirationStatus, error.message, true);
       button.disabled = false;
     }
   });
