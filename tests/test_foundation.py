@@ -93,23 +93,25 @@ class FoundationTests(TestCase):
 
     def test_client_overview_discards_queued_flash_messages(self):
         browser = Browser()
-        self.assertRedirects(
-            browser.post(
-                "/register/",
-                {
-                    "name": "Queued Message Client",
-                    "email": "queued-message@example.test",
-                    "password1": PASSWORD,
-                    "password2": PASSWORD,
-                },
-            ),
-            "/login/",
-        )
+        with patch("core.views.send_verification_email", side_effect=RuntimeError):
+            self.assertRedirects(
+                browser.post(
+                    "/register/",
+                    {
+                        "name": "Queued Message Client",
+                        "email": "queued-message@example.test",
+                        "password1": PASSWORD,
+                        "password2": PASSWORD,
+                    },
+                ),
+                "/verify-email/",
+            )
         browser.force_login(self.owner)
         response = browser.get("/client/")
         self.assertEqual(response.status_code, 200)
-        self.assertNotContains(response, "Account created. You can now log in.")
-        self.assertNotContains(browser.get("/client/"), "Account created. You can now log in.")
+        notice = "Your account was saved, but the verification email could not be sent."
+        self.assertNotContains(response, notice)
+        self.assertNotContains(browser.get("/client/"), notice)
 
     @override_settings(EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend")
     def test_client_registration_verification_login_logout(self):
