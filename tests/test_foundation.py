@@ -111,6 +111,7 @@ class FoundationTests(TestCase):
         self.assertEqual(response.status_code, 200)
         notice = "Your account was saved, but the verification email could not be sent."
         self.assertNotContains(response, notice)
+        self.assertNotContains(response, "Good references make great edits")
         self.assertNotContains(browser.get("/client/"), notice)
 
     @override_settings(EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend")

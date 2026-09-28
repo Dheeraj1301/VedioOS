@@ -138,10 +138,35 @@ if (newOrderForm) {
   };
   newOrderForm.addEventListener('change', updateOrderFields);
   const inspirationBox = newOrderForm.querySelector('.inspiration-upload-box');
+  const clipInput = newOrderForm.querySelector('.brief-upload-files');
+  const clipStatus = newOrderForm.querySelector('.brief-upload-status');
   const inspirationInput = newOrderForm.querySelector('.brief-inspiration-files');
   const inspirationStatus = newOrderForm.querySelector('.brief-inspiration-status');
   const existingInspirationFiles = Number(inspirationBox.dataset.existingFiles || 0);
   const exceedsInspirationLimit = () => existingInspirationFiles + inspirationInput.files.length > 3;
+  let selectedClipFiles = [];
+  clipInput.addEventListener('change', () => {
+    const knownFiles = new Set(
+      selectedClipFiles.map(file => `${file.name}:${file.size}:${file.lastModified}:${file.type}`),
+    );
+    for (const file of clipInput.files) {
+      const key = `${file.name}:${file.size}:${file.lastModified}:${file.type}`;
+      if (!knownFiles.has(key)) {
+        selectedClipFiles.push(file);
+        knownFiles.add(key);
+      }
+    }
+    try {
+      const accumulatedFiles = new DataTransfer();
+      selectedClipFiles.forEach(file => accumulatedFiles.items.add(file));
+      clipInput.files = accumulatedFiles.files;
+    } catch (_error) {
+      // The internal list still preserves additive selection in older browsers.
+    }
+    if (selectedClipFiles.length) {
+      announce(clipStatus, `${selectedClipFiles.length} clip${selectedClipFiles.length === 1 ? '' : 's'} selected.`);
+    }
+  });
   inspirationInput.addEventListener('change', () => {
     if (exceedsInspirationLimit()) announce(inspirationStatus, 'Max 3 uploads.', true);
     else if (inspirationStatus.getAttribute('role') === 'alert') announce(inspirationStatus, '');
@@ -162,8 +187,7 @@ if (newOrderForm) {
     else if (fontInspirationStatus.getAttribute('role') === 'alert') announce(fontInspirationStatus, '');
   });
   newOrderForm.addEventListener('submit', async event => {
-    const clipInput = newOrderForm.querySelector('.brief-upload-files');
-    const clipFiles = [...clipInput.files];
+    const clipFiles = [...selectedClipFiles];
     const inspirationFiles = [...inspirationInput.files];
     const fontInspirationFiles = fontInspirationInput.disabled ? [] : [...fontInspirationInput.files];
     if (exceedsInspirationLimit()) {
@@ -181,7 +205,6 @@ if (newOrderForm) {
     event.preventDefault();
     const button = newOrderForm.querySelector('[type="submit"]');
     const clipProgress = newOrderForm.querySelector('.brief-upload-progress');
-    const clipStatus = newOrderForm.querySelector('.brief-upload-status');
     const inspirationProgress = newOrderForm.querySelector('.brief-inspiration-progress');
     const fontInspirationProgress = newOrderForm.querySelector('.brief-font-inspiration-progress');
     button.disabled = true;
