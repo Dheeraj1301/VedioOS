@@ -501,6 +501,9 @@ class FoundationTests(TestCase):
         form_page = browser.get("/client/new-order/")
         self.assertContains(form_page, "Describe the edit")
         self.assertContains(form_page, "Font selection")
+        self.assertContains(form_page, "data-font-inspiration hidden", html=False)
+        self.assertContains(form_page, "Click to Upload")
+        self.assertContains(form_page, 'accept="image/*"', html=False)
         self.assertNotContains(form_page, "Inspiration and reference notes")
 
     def test_owner_can_edit_saved_creative_brief_without_creating_another_project(self):
@@ -629,6 +632,7 @@ class FoundationTests(TestCase):
 
         for filename, content_type, size in [
             ("font.pdf", "application/pdf", 500),
+            ("font.doc", "application/msword", 500),
             ("font.docx", "application/vnd.openxmlformats-officedocument.wordprocessingml.document", 500),
             ("font.png", "image/png", 1024 * 1024),
         ]:

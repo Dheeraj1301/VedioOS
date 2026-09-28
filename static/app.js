@@ -80,6 +80,9 @@ if (newOrderForm) {
   const customFields = newOrderForm.querySelector('[data-custom-fields]');
   const wordingDirection = newOrderForm.querySelector('[data-wording-direction]');
   const fontName = newOrderForm.querySelector('[data-font-name]');
+  const fontInspiration = newOrderForm.querySelector('[data-font-inspiration]');
+  const fontInspirationInput = newOrderForm.querySelector('.brief-font-inspiration-files');
+  const fontInspirationStatus = newOrderForm.querySelector('.brief-font-inspiration-status');
   const wordingCheckbox = newOrderForm.querySelector('#id_wants_wording');
   const fontSelection = newOrderForm.querySelector('#id_wording_direction');
   const songChoice = newOrderForm.querySelector('#id_song_choice');
@@ -98,6 +101,9 @@ if (newOrderForm) {
     const ownFont = wording && fontSelection.value === 'own_font';
     fontName.hidden = !ownFont;
     fontName.querySelectorAll('input').forEach(field => field.disabled = !ownFont);
+    const uploadsFontInspiration = wording && fontSelection.value === 'font_inspiration';
+    fontInspiration.hidden = !uploadsFontInspiration;
+    fontInspirationInput.disabled = !uploadsFontInspiration;
     const providesSong = ['provide', 'both'].includes(songChoice.value);
     songDetails.hidden = !providesSong;
     songDetails.querySelectorAll('textarea, input').forEach(field => field.disabled = !providesSong);
@@ -136,27 +142,52 @@ if (newOrderForm) {
     if (exceedsInspirationLimit()) announce(inspirationStatus, 'Max 3 uploads.', true);
     else if (inspirationStatus.getAttribute('role') === 'alert') announce(inspirationStatus, '');
   });
+  const fontImageExtensions = ['.avif', '.bmp', '.gif', '.heic', '.heif', '.jpeg', '.jpg', '.png', '.tif', '.tiff', '.webp'];
+  const fontInspirationError = () => {
+    const file = fontInspirationInput.files[0];
+    if (!file) return '';
+    const extension = file.name.includes('.') ? `.${file.name.split('.').pop().toLowerCase()}` : '';
+    if (['.doc', '.docx', '.pdf'].includes(extension)) return 'Word documents and PDFs are not allowed.';
+    if (!file.type.startsWith('image/') || !fontImageExtensions.includes(extension)) return 'Upload a picture file.';
+    if (file.size >= 1024 * 1024) return 'The picture must be less than 1 MB.';
+    return '';
+  };
+  fontInspirationInput.addEventListener('change', () => {
+    const error = fontInspirationError();
+    if (error) announce(fontInspirationStatus, error, true);
+    else if (fontInspirationStatus.getAttribute('role') === 'alert') announce(fontInspirationStatus, '');
+  });
   newOrderForm.addEventListener('submit', async event => {
     const clipInput = newOrderForm.querySelector('.brief-upload-files');
     const clipFiles = [...clipInput.files];
     const inspirationFiles = [...inspirationInput.files];
+    const fontInspirationFiles = fontInspirationInput.disabled ? [] : [...fontInspirationInput.files];
     if (exceedsInspirationLimit()) {
       event.preventDefault();
       announce(inspirationStatus, 'Max 3 uploads.', true);
       return;
     }
-    if (!clipFiles.length && !inspirationFiles.length) return;
+    const fontError = fontInspirationError();
+    if (fontError) {
+      event.preventDefault();
+      announce(fontInspirationStatus, fontError, true);
+      return;
+    }
+    if (!clipFiles.length && !inspirationFiles.length && !fontInspirationFiles.length) return;
     event.preventDefault();
     const button = newOrderForm.querySelector('[type="submit"]');
     const clipProgress = newOrderForm.querySelector('.brief-upload-progress');
     const clipStatus = newOrderForm.querySelector('.brief-upload-status');
     const inspirationProgress = newOrderForm.querySelector('.brief-inspiration-progress');
+    const fontInspirationProgress = newOrderForm.querySelector('.brief-font-inspiration-progress');
     button.disabled = true;
     try {
-      announce(clipFiles.length ? clipStatus : inspirationStatus, 'Saving your creative brief…');
+      const activeStatus = clipFiles.length ? clipStatus : inspirationFiles.length ? inspirationStatus : fontInspirationStatus;
+      announce(activeStatus, 'Saving your creative brief…');
       const formData = new FormData(newOrderForm);
       formData.delete('clips');
       formData.delete('inspiration_files');
+      formData.delete('font_inspiration');
       const response = await fetch(newOrderForm.action || window.location.href, {
         method: 'POST', credentials: 'same-origin', headers: {'X-CSRFToken': csrf()}, body: formData,
       });
@@ -184,9 +215,11 @@ if (newOrderForm) {
       };
       await uploadFiles(clipFiles, 'source', clipProgress, clipStatus);
       await uploadFiles(inspirationFiles, 'reference', inspirationProgress, inspirationStatus);
+      await uploadFiles(fontInspirationFiles, 'font_reference', fontInspirationProgress, fontInspirationStatus);
       window.location.assign(response.url);
     } catch (error) {
-      announce(clipFiles.length ? clipStatus : inspirationStatus, error.message, true);
+      const activeStatus = clipFiles.length ? clipStatus : inspirationFiles.length ? inspirationStatus : fontInspirationStatus;
+      announce(activeStatus, error.message, true);
       button.disabled = false;
     }
   });
