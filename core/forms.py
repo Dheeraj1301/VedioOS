@@ -91,6 +91,8 @@ class ProjectForm(forms.ModelForm):
                 self.add_error("font_name", "Enter the font style or name.")
         else:
             data["font_name"] = ""
+        if data.get("song_choice") == "suggest":
+            data["song_information"] = ""
         return data
 
     class Meta:
@@ -121,7 +123,7 @@ class ProjectForm(forms.ModelForm):
             "requirements": "Describe the edit",
             "reference_notes": "Other Instructions",
             "song_choice": "Music preference",
-            "song_information": "Song name or instructions",
+            "song_information": "Song Name or Link",
             "call_before": "Talk to an editor before editing",
             "call_after": "Talk to an editor after the draft",
         }

@@ -267,7 +267,7 @@ class FoundationTests(TestCase):
         self.assertNotIn("known", choices)
         self.assertEqual(
             choices["both"],
-            "I will provide a song and would also like editor suggestions",
+            "I will provide my own song and would also like editor's suggestion",
         )
 
     def test_admin_provisioning_and_login(self):
@@ -430,6 +430,26 @@ class FoundationTests(TestCase):
         self.assertContains(response, "Save and Proceed")
         content = response.content.decode()
         self.assertLess(content.index("Upload Your Clips"), content.index("Add Inspiration Reel/Video"))
+
+    def test_song_details_are_hidden_by_default_and_cleared_for_suggestions(self):
+        browser = self.auth(self.owner)
+        response = browser.get("/client/new-order/?new=1")
+        self.assertContains(response, "Song Name or Link")
+        self.assertContains(response, "data-song-details hidden", html=False)
+
+        saved = browser.post(
+            "/client/new-order/?new=1",
+            {
+                "title": "Suggested music brief",
+                "order_choice": "custom",
+                "reel_duration": "30_50",
+                "song_choice": "suggest",
+                "song_information": "This must not be saved",
+            },
+        )
+        project = Project.objects.get(title="Suggested music brief")
+        self.assertRedirects(saved, f"/client/projects/{project.id}/")
+        self.assertEqual(project.song_information, "")
 
     def test_saved_brief_remains_populated_until_create_new_is_clicked(self):
         browser = self.auth(self.owner)

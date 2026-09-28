@@ -170,7 +170,7 @@ class Project(Record):
         choices=[
             ("provide", "I will provide my own song"),
             ("suggest", "Suggest a song for me"),
-            ("both", "I will provide a song and would also like editor suggestions"),
+            ("both", "I will provide my own song and would also like editor's suggestion"),
         ],
         default="suggest",
     )
