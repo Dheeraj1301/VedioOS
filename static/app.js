@@ -104,6 +104,10 @@ if (newOrderForm) {
     const uploadsFontInspiration = wording && fontSelection.value === 'font_inspiration';
     fontInspiration.hidden = !uploadsFontInspiration;
     fontInspirationInput.disabled = !uploadsFontInspiration;
+    if (!uploadsFontInspiration) {
+      fontInspirationInput.value = '';
+      announce(fontInspirationStatus, '');
+    }
     const providesSong = ['provide', 'both'].includes(songChoice.value);
     songDetails.hidden = !providesSong;
     songDetails.querySelectorAll('textarea, input').forEach(field => field.disabled = !providesSong);
