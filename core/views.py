@@ -577,7 +577,7 @@ def request_upload(request, project_id):
                 ).count()
                 if active_count >= INSPIRATION_UPLOAD_LIMIT:
                     return JsonResponse(
-                        {"error": "Maximum 3 inspiration uploads."}, status=409
+                        {"error": "Max uploads: 3"}, status=409
                     )
             file_id = uuid.uuid4()
             file = File(

@@ -143,8 +143,9 @@ if (newOrderForm) {
   const inspirationInput = newOrderForm.querySelector('.brief-inspiration-files');
   const inspirationStatus = newOrderForm.querySelector('.brief-inspiration-status');
   const existingInspirationFiles = Number(inspirationBox.dataset.existingFiles || 0);
-  const exceedsInspirationLimit = () => existingInspirationFiles + inspirationInput.files.length > 3;
+  const inspirationUploadLimit = 3;
   let selectedClipFiles = [];
+  let selectedInspirationFiles = [];
   clipInput.addEventListener('change', () => {
     const knownFiles = new Set(
       selectedClipFiles.map(file => `${file.name}:${file.size}:${file.lastModified}:${file.type}`),
@@ -168,8 +169,38 @@ if (newOrderForm) {
     }
   });
   inspirationInput.addEventListener('change', () => {
-    if (exceedsInspirationLimit()) announce(inspirationStatus, 'Max 3 uploads.', true);
-    else if (inspirationStatus.getAttribute('role') === 'alert') announce(inspirationStatus, '');
+    const incomingFiles = [...inspirationInput.files];
+    let remainingSlots = Math.max(
+      0,
+      inspirationUploadLimit - existingInspirationFiles - selectedInspirationFiles.length,
+    );
+    let rejected = false;
+    for (const file of incomingFiles) {
+      if (remainingSlots === 0) {
+        rejected = true;
+        continue;
+      }
+      selectedInspirationFiles.push(file);
+      remainingSlots -= 1;
+    }
+    try {
+      const acceptedFiles = new DataTransfer();
+      selectedInspirationFiles.forEach(file => acceptedFiles.items.add(file));
+      inspirationInput.files = acceptedFiles.files;
+    } catch (_error) {
+      // Submission uses the capped internal queue when FileList replacement is unavailable.
+      inspirationInput.value = '';
+    }
+    if (rejected) {
+      announce(inspirationStatus, 'Max uploads: 3', true);
+    } else if (selectedInspirationFiles.length) {
+      announce(
+        inspirationStatus,
+        `${selectedInspirationFiles.length} inspiration file${selectedInspirationFiles.length === 1 ? '' : 's'} selected.`,
+      );
+    } else if (inspirationStatus.getAttribute('role') === 'alert') {
+      announce(inspirationStatus, '');
+    }
   });
   const fontImageExtensions = ['.avif', '.bmp', '.gif', '.heic', '.heif', '.jpeg', '.jpg', '.png', '.tif', '.tiff', '.webp'];
   const fontInspirationError = () => {
@@ -188,13 +219,8 @@ if (newOrderForm) {
   });
   newOrderForm.addEventListener('submit', async event => {
     const clipFiles = [...selectedClipFiles];
-    const inspirationFiles = [...inspirationInput.files];
+    const inspirationFiles = [...selectedInspirationFiles];
     const fontInspirationFiles = fontInspirationInput.disabled ? [] : [...fontInspirationInput.files];
-    if (exceedsInspirationLimit()) {
-      event.preventDefault();
-      announce(inspirationStatus, 'Max 3 uploads.', true);
-      return;
-    }
     const fontError = fontInspirationError();
     if (fontError) {
       event.preventDefault();

@@ -672,7 +672,7 @@ class FoundationTests(TestCase):
             self.assertEqual(self.post_json(browser, url, arbitrary_reference).status_code, 201)
         fourth = self.post_json(browser, url, arbitrary_reference)
         self.assertEqual(fourth.status_code, 409)
-        self.assertEqual(fourth.json()["error"], "Maximum 3 inspiration uploads.")
+        self.assertEqual(fourth.json()["error"], "Max uploads: 3")
 
     def test_csrf_protects_mutations(self):
         browser = Browser(enforce_csrf_checks=True)
