@@ -46,6 +46,12 @@ class ProjectForm(forms.ModelForm):
     order_choice = forms.ChoiceField(
         choices=(), widget=forms.RadioSelect, label="Choose an editing option"
     )
+    pricing_period = forms.ChoiceField(
+        choices=Plan.PricingPeriod.choices,
+        initial=Plan.PricingPeriod.PER_REEL,
+        label="Pricing period",
+        required=False,
+    )
 
     def __init__(self, *args, **kwargs):
         kwargs.setdefault("label_suffix", "")
@@ -57,16 +63,24 @@ class ProjectForm(forms.ModelForm):
         if self.instance.pk and hasattr(self.instance, "order"):
             order = self.instance.order
             self.initial["order_choice"] = f"plan:{order.plan_id}" if order.plan_id else "custom"
+            self.initial["pricing_period"] = order.pricing_period
 
     def clean(self):
         data = super().clean()
         choice = data.get("order_choice", "")
+        pricing_period = data.get("pricing_period") or Plan.PricingPeriod.PER_REEL
+        data["pricing_period"] = pricing_period
         if choice.startswith("plan:"):
             plan_id = choice.partition(":")[2]
             plan = self.available_plans.filter(pk=plan_id).first()
             if not plan:
                 self.add_error("order_choice", "That plan is no longer available. Choose again.")
             data["selected_plan"] = plan
+            if plan and not plan.price_for_period(pricing_period):
+                self.add_error(
+                    "order_choice",
+                    f"{dict(Plan.PricingPeriod.choices)[pricing_period]} pricing is coming soon for this plan.",
+                )
             if any(
                 [
                     data.get("colour_grading"),
@@ -80,6 +94,7 @@ class ProjectForm(forms.ModelForm):
                     "order_choice", "Choose Customize my edit to add individual requirements."
                 )
         elif choice == "custom":
+            data["pricing_period"] = Plan.PricingPeriod.PER_REEL
             if not data.get("reel_duration"):
                 self.add_error("reel_duration", "Choose the expected reel duration.")
             if data.get("wants_wording") and not data.get("wording_direction"):

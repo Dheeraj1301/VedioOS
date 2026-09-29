@@ -4,19 +4,26 @@
 <div class="notice" role="note"><strong>Before you upload:</strong> Share only footage, music, fonts, and references you have permission to use. Do not include passwords or unrelated personal documents.</div>
 <form method="post" class="form-stack new-order-form" data-new-order-form data-selected-choice="{{ selected_choice }}" data-upload-enabled="{% if upload_policy %}true{% else %}false{% endif %}">{% csrf_token %}
   {% if form.non_field_errors %}{{ form.non_field_errors }}{% endif %}
-  <fieldset class="order-choice-fieldset"><legend>Choose one of four editing options</legend>
+  <section class="order-choice-fieldset" aria-labelledby="editing-options-title"><div class="order-choice-header"><h2 id="editing-options-title">Choose one of four editing options</h2>
+    <div class="pricing-period-toggle" role="radiogroup" aria-label="Plan pricing period">
+      <label><input type="radio" name="pricing_period" value="per_reel" {% if selected_pricing_period == 'per_reel' %}checked{% endif %}><span>Per Reel</span></label>
+      <label><input type="radio" name="pricing_period" value="monthly" {% if selected_pricing_period == 'monthly' %}checked{% endif %}><span>Monthly</span></label>
+      <label><input type="radio" name="pricing_period" value="yearly" {% if selected_pricing_period == 'yearly' %}checked{% endif %}><span>Yearly</span></label>
+    </div>
+  </div>
+    {% if form.pricing_period.errors %}{{ form.pricing_period.errors }}{% endif %}
     {% if form.order_choice.errors %}{{ form.order_choice.errors }}{% endif %}
     <div class="order-choice-grid">
       {% for slot,plan,choice_value in plan_slots %}
-      <label class="order-choice-card{% if not plan or not plan.active %} unavailable{% endif %}">
-        {% if plan and plan.active %}<input type="radio" name="order_choice" value="{{ choice_value }}" required {% if selected_choice == choice_value %}checked{% endif %}>{% else %}<input type="radio" disabled>{% endif %}
+      <label class="order-choice-card{% if not plan or not plan.active or not plan.price_minor %} unavailable{% endif %}" data-plan-card data-plan-active="{% if plan and plan.active %}true{% else %}false{% endif %}" data-price-per-reel="{% if plan and plan.price_minor %}{{ plan.price_minor|money:plan.currency }}{% endif %}" data-price-monthly="{% if plan and plan.monthly_price_minor %}{{ plan.monthly_price_minor|money:plan.currency }}{% endif %}" data-price-yearly="{% if plan and plan.yearly_price_minor %}{{ plan.yearly_price_minor|money:plan.currency }}{% endif %}">
+        {% if plan %}<input type="radio" name="order_choice" value="{{ choice_value }}" required {% if not plan.active or not plan.price_minor %}disabled{% endif %} {% if selected_choice == choice_value %}checked{% endif %}>{% else %}<input type="radio" disabled>{% endif %}
         <span class="eyebrow">Plan {{ slot }}</span><strong>{% if plan %}{{ plan.name }}{% else %}Coming soon{% endif %}</strong>
-        {% if plan and plan.active %}<span>{{ plan.price_minor|money:plan.currency }}</span><small>{{ plan.features|join:", " }}</small>{% else %}<small>The team has not published this plan yet.</small>{% endif %}
+        {% if plan and plan.active %}<span class="plan-price" data-plan-price>{% if plan.price_minor %}{{ plan.price_minor|money:plan.currency }}{% else %}Coming soon{% endif %}</span><small class="plan-period-label" data-plan-period-label>{% if plan.price_minor %}/reel{% endif %}</small><small>{{ plan.features|join:", " }}</small>{% else %}<span class="plan-price" data-plan-price>Coming soon</span><small class="plan-period-label" data-plan-period-label></small><small>The team has not published this plan yet.</small>{% endif %}
       </label>
       {% endfor %}
       <label class="order-choice-card custom-choice"><input type="radio" name="order_choice" value="custom" required {% if selected_choice == 'custom' %}checked{% endif %}><span class="eyebrow">Custom</span><strong>Customize my edit</strong><small>Select the exact editing direction below. The server calculates a quote only from configured prices.</small></label>
     </div>
-  </fieldset>
+  </section>
   <section class="panel form-panel custom-fields" data-custom-fields hidden>
     <h2>Customize your edit</h2><p class="muted">These choices are saved in the brief. Your amount is calculated only from administrator-approved prices.</p><div id="custom-estimate" class="notice" role="status" aria-live="polite"><strong>Price estimate:</strong> Choose a duration to calculate the configured amount.</div>
     <div class="choice-checks">{{ form.colour_grading.as_field_group }}{{ form.quality_enhancement.as_field_group }}</div>

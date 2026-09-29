@@ -42,6 +42,8 @@ class PlanForm(CatalogForm):
         fields = [
             "name",
             "price_minor",
+            "monthly_price_minor",
+            "yearly_price_minor",
             "currency",
             "features",
             "revision_limit",
@@ -51,7 +53,9 @@ class PlanForm(CatalogForm):
             "active",
         ]
         help_texts = {
-            "price_minor": "Integer minor units: 10000 means INR 100.00; 100 means JPY 100.",
+            "price_minor": "Per-reel amount in integer minor units: 10000 means INR 100.00; 100 means JPY 100.",
+            "monthly_price_minor": "Optional monthly amount in integer minor units. Leave blank to show Coming soon.",
+            "yearly_price_minor": "Optional yearly amount in integer minor units. Leave blank to show Coming soon.",
             "active": "Publish only approved prices and terms. This does not enable real payment.",
         }
 
@@ -65,6 +69,13 @@ class PlanForm(CatalogForm):
 
     def clean(self):
         data = super().clean()
+        for field in ["monthly_price_minor", "yearly_price_minor"]:
+            amount = data.get(field)
+            if amount is not None and not 0 < amount <= MAX_PRICE:
+                self.add_error(field, "Enter a positive amount within the supported range.")
+        if any(data.get(field) is not None for field in ["monthly_price_minor", "yearly_price_minor"]):
+            if not data.get("currency"):
+                self.add_error("currency", "Choose a currency when configuring period pricing.")
         if data.get("active"):
             for field in ["revision_limit", "delivery_hours", "duration_limit_seconds", "priority"]:
                 if data.get(field) is None:
@@ -189,6 +200,12 @@ class PolicyForm(forms.ModelForm):
 class QuoteSelectionForm(forms.Form):
     kind = forms.ChoiceField(choices=[("plan", "Choose a plan"), ("custom", "Customize your video")])
     plan = forms.ModelChoiceField(queryset=Plan.objects.none(), required=False, empty_label="Select a plan")
+    pricing_period = forms.ChoiceField(
+        choices=Plan.PricingPeriod.choices,
+        initial=Plan.PricingPeriod.PER_REEL,
+        label="Pricing period",
+        required=False,
+    )
     services = forms.ModelMultipleChoiceField(
         queryset=CustomService.objects.none(), required=False, widget=forms.CheckboxSelectMultiple
     )
@@ -207,13 +224,20 @@ class QuoteSelectionForm(forms.Form):
 
     def clean(self):
         data = super().clean()
+        data["pricing_period"] = (
+            data.get("pricing_period") or Plan.PricingPeriod.PER_REEL
+        )
         if data.get("kind") == "plan":
             if not data.get("plan"):
                 self.add_error("plan", "Select an available plan.")
+            elif not data["plan"].price_for_period(data.get("pricing_period")):
+                self.add_error("plan", "That plan is not configured for the selected pricing period.")
             if data.get("services"):
                 self.add_error("services", "Choose custom editing to select individual services.")
         elif data.get("plan"):
             self.add_error("plan", "Clear the plan when selecting custom editing.")
+        else:
+            data["pricing_period"] = Plan.PricingPeriod.PER_REEL
         return data
 
 

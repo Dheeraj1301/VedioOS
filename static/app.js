@@ -94,7 +94,25 @@ if (newOrderForm) {
   const songChoice = newOrderForm.querySelector('#id_song_choice');
   const songDetails = newOrderForm.querySelector('[data-song-details]');
   const estimate = newOrderForm.querySelector('#custom-estimate');
+  const pricingPeriodFields = [...newOrderForm.querySelectorAll('[name="pricing_period"]')];
+  const pricingPeriodLabels = {per_reel: '/reel', monthly: '/month', yearly: '/year'};
   let estimateRequest = 0;
+  const updatePlanPricing = () => {
+    const period = pricingPeriodFields.find(field => field.checked)?.value || 'per_reel';
+    const dataKey = period === 'per_reel' ? 'pricePerReel' : `price${period[0].toUpperCase()}${period.slice(1)}`;
+    newOrderForm.querySelectorAll('[data-plan-card]').forEach(card => {
+      const price = card.dataset[dataKey] || '';
+      const available = card.dataset.planActive === 'true' && Boolean(price);
+      const input = card.querySelector('[name="order_choice"]');
+      card.classList.toggle('unavailable', !available);
+      card.setAttribute('aria-disabled', String(!available));
+      input.disabled = !available;
+      if (!available && input.checked) input.checked = false;
+      card.querySelector('[data-plan-price]').textContent = price || 'Coming soon';
+      card.querySelector('[data-plan-period-label]').textContent = price ? pricingPeriodLabels[period] : '';
+    });
+  };
+  updatePlanPricing();
   [...newOrderForm.querySelectorAll('[name="order_choice"]')]
     .find(field => field.value === newOrderForm.dataset.selectedChoice)?.click();
   const updateOrderFields = () => {
@@ -142,7 +160,10 @@ if (newOrderForm) {
       if (requestNumber === estimateRequest) announce(estimate, `Estimate unavailable: ${error.message}`);
     }
   };
-  newOrderForm.addEventListener('change', updateOrderFields);
+  newOrderForm.addEventListener('change', event => {
+    if (event.target.name === 'pricing_period') updatePlanPricing();
+    updateOrderFields();
+  });
   const inspirationBox = newOrderForm.querySelector('.inspiration-upload-box');
   const clipInput = newOrderForm.querySelector('.brief-upload-files');
   const clipStatus = newOrderForm.querySelector('.brief-upload-status');

@@ -85,6 +85,7 @@ def quote_page(request, project_id):
         initial = {
             "kind": project.order.kind,
             "plan": project.order.plan_id,
+            "pricing_period": project.order.pricing_period,
         }
     form = QuoteSelectionForm(
         request.POST or None,
@@ -92,7 +93,14 @@ def quote_page(request, project_id):
         initial=initial,
     )
     if request.method == "POST":
-        if set(request.POST) - {"csrfmiddlewaretoken", "kind", "plan", "services", "scope_confirmed"}:
+        if set(request.POST) - {
+            "csrfmiddlewaretoken",
+            "kind",
+            "plan",
+            "pricing_period",
+            "services",
+            "scope_confirmed",
+        }:
             return render(
                 request,
                 "error.html",
@@ -105,8 +113,11 @@ def quote_page(request, project_id):
                     request.user,
                     project.id,
                     form.cleaned_data["kind"],
-                    form.cleaned_data["plan"].pk if form.cleaned_data["plan"] else None,
-                    [item.pk for item in form.cleaned_data["services"]],
+                    plan_id=(
+                        form.cleaned_data["plan"].pk if form.cleaned_data["plan"] else None
+                    ),
+                    service_ids=[item.pk for item in form.cleaned_data["services"]],
+                    pricing_period=form.cleaned_data["pricing_period"],
                 )
                 return redirect("quote_review", project_id=project.id, quote_id=quote.id)
             except ValidationError as exc:

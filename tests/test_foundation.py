@@ -659,6 +659,88 @@ class FoundationTests(TestCase):
         self.assertEqual(order.kind, "plan")
         self.assertEqual(order.plan, plan)
 
+    def test_plan_pricing_periods_render_validate_and_persist(self):
+        plan = Plan.objects.create(
+            slot=1,
+            name="Period plan",
+            price_minor=10000,
+            monthly_price_minor=90000,
+            yearly_price_minor=900000,
+            currency="INR",
+            features=["Cuts"],
+            revision_limit=1,
+            delivery_hours=24,
+            duration_limit_seconds=60,
+            priority=1,
+            active=True,
+        )
+        unavailable_monthly = Plan.objects.create(
+            slot=2,
+            name="Per-reel only",
+            price_minor=15000,
+            currency="INR",
+            features=["Cuts"],
+            revision_limit=1,
+            delivery_hours=24,
+            duration_limit_seconds=60,
+            priority=2,
+            active=True,
+        )
+        browser = self.auth(self.owner)
+        form_page = browser.get("/client/new-order/?new=1")
+        self.assertContains(form_page, "Per Reel")
+        self.assertContains(form_page, "Monthly")
+        self.assertContains(form_page, "Yearly")
+        self.assertContains(form_page, 'value="per_reel" checked', html=False)
+        self.assertContains(form_page, 'data-price-per-reel="INR 100.00"', html=False)
+        self.assertContains(form_page, 'data-price-monthly="INR 900.00"', html=False)
+        self.assertContains(form_page, 'data-price-yearly="INR 9,000.00"', html=False)
+
+        rejected = browser.post(
+            "/client/new-order/?new=1",
+            {
+                "title": "Unavailable period",
+                "order_choice": f"plan:{unavailable_monthly.id}",
+                "pricing_period": "monthly",
+                "song_choice": "suggest",
+            },
+        )
+        self.assertEqual(rejected.status_code, 200)
+        self.assertContains(rejected, "Monthly pricing is coming soon for this plan")
+
+        saved = browser.post(
+            "/client/new-order/?new=1",
+            {
+                "title": "Monthly plan brief",
+                "order_choice": f"plan:{plan.id}",
+                "pricing_period": "monthly",
+                "song_choice": "suggest",
+            },
+        )
+        project = Project.objects.get(title="Monthly plan brief")
+        self.assertRedirects(saved, f"/client/projects/{project.id}/")
+        self.assertEqual(project.order.plan, plan)
+        self.assertEqual(project.order.pricing_period, Plan.PricingPeriod.MONTHLY)
+        detail = browser.get(f"/client/projects/{project.id}/")
+        self.assertContains(detail, "Period plan · Monthly")
+        edit = browser.get(f"/client/projects/{project.id}/edit/")
+        self.assertContains(edit, 'value="monthly" checked', html=False)
+
+        custom = browser.post(
+            "/client/new-order/?new=1",
+            {
+                "title": "Custom ignores toggle",
+                "order_choice": "custom",
+                "pricing_period": "yearly",
+                "reel_duration": "30_50",
+                "song_choice": "suggest",
+            },
+        )
+        custom_project = Project.objects.get(title="Custom ignores toggle")
+        self.assertRedirects(custom, f"/client/projects/{custom_project.id}/")
+        self.assertEqual(custom_project.order.kind, "custom")
+        self.assertEqual(custom_project.order.pricing_period, Plan.PricingPeriod.PER_REEL)
+
     def test_private_file_access_denied(self):
         file = File.objects.create(
             project=self.project,

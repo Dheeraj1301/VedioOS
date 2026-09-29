@@ -87,9 +87,16 @@ class Client(Record):
 
 
 class Plan(Record):
+    class PricingPeriod(models.TextChoices):
+        PER_REEL = "per_reel", "Per Reel"
+        MONTHLY = "monthly", "Monthly"
+        YEARLY = "yearly", "Yearly"
+
     slot = models.PositiveSmallIntegerField(unique=True)
     name = models.CharField(max_length=100)
     price_minor = models.PositiveBigIntegerField(null=True, blank=True)
+    monthly_price_minor = models.PositiveBigIntegerField(null=True, blank=True)
+    yearly_price_minor = models.PositiveBigIntegerField(null=True, blank=True)
     currency = models.CharField(max_length=3, blank=True)
     features = models.JSONField(default=list)
     revision_limit = models.PositiveIntegerField(null=True, blank=True)
@@ -103,6 +110,14 @@ class Plan(Record):
         constraints = [
             models.CheckConstraint(condition=models.Q(slot__gte=1, slot__lte=3), name="three_plan_slots")
         ]
+
+    def price_for_period(self, pricing_period):
+        field = {
+            self.PricingPeriod.PER_REEL: "price_minor",
+            self.PricingPeriod.MONTHLY: "monthly_price_minor",
+            self.PricingPeriod.YEARLY: "yearly_price_minor",
+        }.get(pricing_period)
+        return getattr(self, field) if field else None
 
 
 class CustomService(Record):
@@ -190,6 +205,11 @@ class Order(Record):
     project = models.OneToOneField(Project, on_delete=models.PROTECT, related_name="order")
     plan = models.ForeignKey(Plan, null=True, blank=True, on_delete=models.PROTECT)
     kind = models.CharField(max_length=12, choices=[("plan", "Plan"), ("custom", "Custom")], default="custom")
+    pricing_period = models.CharField(
+        max_length=12,
+        choices=Plan.PricingPeriod.choices,
+        default=Plan.PricingPeriod.PER_REEL,
+    )
     terms_snapshot = models.JSONField(default=dict)
     total_minor = models.PositiveBigIntegerField(null=True, blank=True)
     currency = models.CharField(max_length=3, blank=True)

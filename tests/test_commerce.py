@@ -61,6 +61,8 @@ class CommerceTests(TestCase):
             slot=1,
             name="Synthetic plan",
             price_minor=25000,
+            monthly_price_minor=200000,
+            yearly_price_minor=2000000,
             currency="INR",
             features=["Test cuts"],
             revision_limit=2,
@@ -182,6 +184,33 @@ class CommerceTests(TestCase):
         self.assertEqual(order.terms_snapshot["items"][0]["name"], "Synthetic plan")
         self.assertEqual(order.terms_snapshot["terms"]["terms"], "TEST service terms")
         self.assertEqual(accept_quote(self.user, self.project.id, quote.id).id, order.id)
+
+    def test_plan_period_price_is_server_calculated_and_snapshotted(self):
+        Plan.objects.filter(pk=self.plan.pk).update(yearly_price_minor=None)
+        with self.assertRaises(ValidationError):
+            create_quote(
+                self.user,
+                self.project.id,
+                "plan",
+                self.plan.id,
+                pricing_period=Plan.PricingPeriod.YEARLY,
+            )
+
+        quote = create_quote(
+            self.user,
+            self.project.id,
+            "plan",
+            self.plan.id,
+            pricing_period=Plan.PricingPeriod.MONTHLY,
+        )
+        self.assertEqual(quote.total_minor, 200000)
+        self.assertEqual(quote.snapshot["pricing_period"], Plan.PricingPeriod.MONTHLY)
+        self.assertEqual(quote.snapshot["items"][0]["amount_minor"], 200000)
+
+        Plan.objects.filter(pk=self.plan.pk).update(monthly_price_minor=999999)
+        order = accept_quote(self.user, self.project.id, quote.id)
+        self.assertEqual(order.total_minor, 200000)
+        self.assertEqual(order.pricing_period, Plan.PricingPeriod.MONTHLY)
 
     def test_client_prices_and_privilege_changes_rejected(self):
         self.client.force_login(self.user)

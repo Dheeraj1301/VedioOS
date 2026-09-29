@@ -9,6 +9,7 @@ The new-order customization controls now request a live server-authoritative est
 ## What works
 
 - Admin → Plans / Pricing: three plan slots, features, prices in integer minor units, currency, revision/duration/delivery allowances, priority, publishing, custom services, and commercial terms.
+- Each fixed plan may also hold optional monthly and yearly amounts. The new-order selector persists the chosen pricing period and the quote snapshot uses its matching server-owned amount; missing combinations remain unavailable. This is distinct from recurring creator packages and does not define renewal or allowance policy.
 - Publishing validates required plan fields. Enabling quotes requires service, delivery, refund and tax terms. No commercial defaults or sample prices are seeded into the connected database.
 - Client → Project → Choose package / quote: select an active plan or custom base plus selected services. The server calculates the total and rejects submitted prices. Unavailable/mixed-currency items cannot be quoted.
 - Quote review displays itemized prices and commercial terms. Explicit acceptance saves a snapshot. Catalog changes cannot rewrite displayed quotes or accepted orders. A newer quote supersedes an older unaccepted review. Starting payment locks the agreement against repricing.

@@ -59,3 +59,12 @@ Status: requested interface changes are implemented. Production commercial activ
 - Reopening or editing the creative brief displays its existing ready source, image, audio, inspiration, font-inspiration and other-asset uploads. The Project Files section continues to use the same project-scoped, authorization-filtered ready-file query.
 - Regression coverage verifies multiple formats, files added during a later edit, project isolation and single rendering. A browser walkthrough verified MP4, PDF, MOV and WEBP originals through the real private-storage upload and completion APIs.
 - This is a code-only behavior change and requires no database migration or Supabase schema synchronization.
+
+## Fixed-plan pricing periods — 2026-09-29
+
+- The new-order plan selector presents **Per Reel**, **Monthly** and **Yearly** as a single-select segmented control above the three fixed plan cards. Per Reel is the default for new drafts.
+- Each published plan resolves its displayed amount from administrator-managed per-reel, monthly and yearly minor-unit fields. A missing amount displays **Coming soon** and disables only that plan/period combination.
+- The Custom card and its customization form do not change with the selector. Custom drafts normalize to Per Reel because recurring custom-order policy was not requested or approved.
+- Plan drafts persist the chosen pricing period. Reopening the brief restores it, and server-generated quotes use and snapshot the matching catalog amount instead of trusting a browser-supplied price.
+- Monthly creator packages remain separate and unavailable for purchase until D13 defines their fulfillment and renewal policies. No commercial amount is seeded by the migration.
+- Additive migration `core.0011` adds the two optional plan amounts and the order pricing-period choice. It passed the isolated migration/tests and is applied to the local preview. Synchronization to the selected Supabase project remains pending because this workspace currently has no server-only PostgreSQL connection configuration.

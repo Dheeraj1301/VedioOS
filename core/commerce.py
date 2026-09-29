@@ -83,8 +83,22 @@ def validate_catalog(item, form_class, currency):
         raise ValidationError("The selected item is unavailable or incomplete. Please choose again.")
 
 
+def normalize_pricing_period(pricing_period):
+    valid_periods = {value for value, _ in Plan.PricingPeriod.choices}
+    if pricing_period not in valid_periods:
+        raise ValidationError("Choose a valid pricing period.")
+    return pricing_period
+
+
 @transaction.atomic
-def create_quote(user, project_id, kind, plan_id=None, service_ids=()):
+def create_quote(
+    user,
+    project_id,
+    kind,
+    plan_id=None,
+    service_ids=(),
+    pricing_period=Plan.PricingPeriod.PER_REEL,
+):
     order = Order.objects.select_for_update().get(project_id=project_id, project__client__user=user)
     ensure_editable(order)
     policy = CommercePolicy.objects.select_for_update().filter(pk=1).first()
@@ -94,11 +108,15 @@ def create_quote(user, project_id, kind, plan_id=None, service_ids=()):
     }
     items = []
     if kind == "plan":
+        pricing_period = normalize_pricing_period(pricing_period)
         plan = Plan.objects.select_for_update().filter(pk=plan_id).first()
         if not plan or service_ids:
             raise ValidationError("Select a valid plan without custom add-ons.")
         validate_catalog(plan, PlanForm, policy.currency)
-        items.append({"id": str(plan.id), "name": plan.name, "amount_minor": plan.price_minor})
+        plan_price = plan.price_for_period(pricing_period)
+        if not plan_price:
+            raise ValidationError("That plan is not configured for the selected pricing period.")
+        items.append({"id": str(plan.id), "name": plan.name, "amount_minor": plan_price})
         details = {
             field: getattr(plan, field)
             for field in [
@@ -110,6 +128,7 @@ def create_quote(user, project_id, kind, plan_id=None, service_ids=()):
             ]
         }
     elif kind == "custom":
+        pricing_period = Plan.PricingPeriod.PER_REEL
         if plan_id:
             raise ValidationError("Custom pricing is not available yet.")
         ids = set(str(value) for value in service_ids)
@@ -134,9 +153,10 @@ def create_quote(user, project_id, kind, plan_id=None, service_ids=()):
     if not 0 < total <= MAX_PRICE:
         raise ValidationError("The quote total is outside the supported range. Contact the team.")
     snapshot = {
-        "version": 1,
+        "version": 2,
         "kind": kind,
         "plan_id": str(plan_id) if kind == "plan" else None,
+        "pricing_period": pricing_period,
         "items": items,
         "terms": terms,
         **details,
@@ -171,6 +191,9 @@ def accept_quote(user, project_id, quote_id):
     quote.save(update_fields=["accepted_at", "updated_at"])
     order.kind = quote.snapshot["kind"]
     order.plan_id = quote.snapshot["plan_id"]
+    order.pricing_period = quote.snapshot.get(
+        "pricing_period", Plan.PricingPeriod.PER_REEL
+    )
     order.total_minor = quote.total_minor
     order.currency = quote.currency
     order.terms_snapshot = {
@@ -178,6 +201,16 @@ def accept_quote(user, project_id, quote_id):
         "quote_id": str(quote.id),
         "accepted_at": quote.accepted_at.isoformat(),
     }
-    order.save(update_fields=["kind", "plan", "total_minor", "currency", "terms_snapshot", "updated_at"])
+    order.save(
+        update_fields=[
+            "kind",
+            "plan",
+            "pricing_period",
+            "total_minor",
+            "currency",
+            "terms_snapshot",
+            "updated_at",
+        ]
+    )
     audit(user, "quote.accepted", quote.id, {"order": str(order.id)})
     return order

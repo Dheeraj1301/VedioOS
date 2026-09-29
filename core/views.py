@@ -360,17 +360,26 @@ def _project_form(request, project=None, *, create_new=False):
                 saved_project.client = request.user.client_profile
             saved_project.save()
             selected_plan = form.cleaned_data.get("selected_plan")
+            pricing_period = (
+                form.cleaned_data["pricing_period"]
+                if selected_plan
+                else Plan.PricingPeriod.PER_REEL
+            )
             if is_new:
                 Order.objects.create(
                     project=saved_project,
                     kind="plan" if selected_plan else "custom",
                     plan=selected_plan,
+                    pricing_period=pricing_period,
                 )
                 action = "project.draft_created"
             else:
                 existing_order.kind = "plan" if selected_plan else "custom"
                 existing_order.plan = selected_plan
-                existing_order.save(update_fields=["kind", "plan", "updated_at"])
+                existing_order.pricing_period = pricing_period
+                existing_order.save(
+                    update_fields=["kind", "plan", "pricing_period", "updated_at"]
+                )
                 action = "project.brief_updated"
             audit(request.user, action, saved_project.pk)
         request.session["active_project_draft_id"] = str(saved_project.pk)
@@ -401,6 +410,9 @@ def _project_form(request, project=None, *, create_new=False):
             "project": project,
             "create_new": create_new,
             "selected_choice": form["order_choice"].value() or "",
+            "selected_pricing_period": (
+                form["pricing_period"].value() or Plan.PricingPeriod.PER_REEL
+            ),
             "plan_slots": plan_slots,
             "active_inspiration_count": active_inspiration_count,
             "existing_brief_files": existing_brief_files,
