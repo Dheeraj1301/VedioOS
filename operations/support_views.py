@@ -105,7 +105,7 @@ def support_detail(request, request_id):
 
 
 @require_POST
-@role_required("client", "admin")
+@role_required("admin")
 def support_message(request, request_id):
     if set(request.POST) - {"csrfmiddlewaretoken", "body", "audience", "request_key"}:
         from django.core.exceptions import PermissionDenied

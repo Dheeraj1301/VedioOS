@@ -4,6 +4,7 @@ import uuid
 
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import IntegrityError, transaction
+from django.db.models import Q
 from django.utils import timezone
 
 from core.models import Project, User
@@ -32,7 +33,16 @@ def support_request_for(user, request_id, *, lock=False):
 def visible_support_messages(user, support_request):
     support_request_for(user, support_request.pk)
     rows = support_request.messages.select_related("author")
-    return rows.filter(audience="shared") if user.role == "client" else rows
+    if user.role == "client":
+        return rows.filter(
+            Q(
+                author_id=support_request.client.user_id,
+                request_key=support_request.request_key,
+                audience=SupportMessage.Audience.SHARED,
+            )
+            | Q(author__role="admin", audience=SupportMessage.Audience.SHARED)
+        )
+    return rows
 
 
 def _key(raw):
@@ -112,16 +122,13 @@ def create_support_request(user, subject, category, body, project_id, request_ke
 
 @transaction.atomic
 def post_support_message(user, request_id, body, audience, request_key):
+    if user.role != "admin" or not user.is_active:
+        raise PermissionDenied
     key = _key(request_key)
     body = _text(body, "a message", 5000)
     if audience not in SupportMessage.Audience.values:
         raise ValidationError("Choose a valid message audience.")
     support_request = support_request_for(user, request_id, lock=True)
-    if user.role == "client":
-        if audience != SupportMessage.Audience.SHARED:
-            raise PermissionDenied
-        if support_request.status in {SupportRequest.Status.RESOLVED, SupportRequest.Status.CLOSED}:
-            raise ValidationError("This support request is closed. Open a new request if you need more help.")
     existing = SupportMessage.objects.filter(request_key=key).first()
     if existing:
         if (
@@ -143,15 +150,7 @@ def post_support_message(user, request_id, body, audience, request_key):
     except IntegrityError:
         raise ValidationError("This message was already processed. Reload the page.") from None
     SupportRequest.objects.filter(pk=support_request.pk).update(updated_at=timezone.now())
-    if user.role == "client":
-        for admin in User.objects.filter(role="admin", is_active=True):
-            notify(
-                admin,
-                support_request.project,
-                f"support-message:{message.pk}:recipient:{admin.pk}",
-                "New client support message.",
-            )
-    elif audience == SupportMessage.Audience.SHARED:
+    if audience == SupportMessage.Audience.SHARED:
         notify(
             support_request.client.user,
             support_request.project,

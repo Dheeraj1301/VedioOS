@@ -61,6 +61,20 @@ class SupportWorkflowTests(TestCase):
         event = AuditLog.objects.get(action="support.request_opened")
         self.assertNotIn("Please check", str(event.detail))
 
+        client_detail = self.browser(self.client_user).get(f"/support/{support_request.id}/")
+        self.assertContains(client_detail, "Please check the project status.")
+        self.assertNotContains(client_detail, 'id="support-reply"')
+        self.assertNotContains(client_detail, "Reply to the client")
+        self.assertNotContains(client_detail, "Send reply")
+        self.assertNotContains(client_detail, 'id="support-internal"')
+        self.assertNotContains(client_detail, "Request status")
+
+        admin_detail = self.browser(self.admin).get(f"/support/{support_request.id}/")
+        self.assertContains(admin_detail, "Please check the project status.")
+        self.assertContains(admin_detail, 'id="support-reply"')
+        self.assertContains(admin_detail, "Reply to the client")
+        self.assertContains(admin_detail, "Send reply")
+
     def test_cross_client_case_and_project_are_denied(self):
         support_request = self.open_request()
         other = self.browser(self.other_user)
@@ -81,6 +95,13 @@ class SupportWorkflowTests(TestCase):
 
     def test_internal_notes_are_hidden_and_shared_reply_notifies_client(self):
         support_request = self.open_request()
+        SupportMessage.objects.create(
+            support_request=support_request,
+            author=self.client_user,
+            audience=SupportMessage.Audience.SHARED,
+            body="Legacy client follow-up.",
+            request_key=uuid.uuid4(),
+        )
         admin = self.browser(self.admin)
         admin.post(
             f"/support/{support_request.id}/messages/",
@@ -92,14 +113,33 @@ class SupportWorkflowTests(TestCase):
         )
         client_response = self.browser(self.client_user).get(f"/support/{support_request.id}/")
         self.assertNotContains(client_response, "Internal investigation")
+        self.assertNotContains(client_response, "Legacy client follow-up")
+        self.assertContains(client_response, "Please check the project status.")
         self.assertContains(client_response, "We are checking this")
+        self.assertNotContains(client_response, 'id="support-reply"')
+        self.assertNotContains(client_response, "Send reply")
+        admin_response = admin.get(f"/support/{support_request.id}/")
+        self.assertContains(admin_response, "Internal investigation")
+        self.assertContains(admin_response, "Legacy client follow-up")
+        self.assertContains(admin_response, "We are checking this")
+        self.assertContains(admin_response, 'id="support-reply"')
         self.assertTrue(
             Notification.objects.filter(
                 recipient=self.client_user, event_key__startswith="support-message:"
             ).exists()
         )
 
-    def test_status_change_is_admin_only_retry_safe_and_closes_client_replies(self):
+    def test_client_cannot_post_a_reply_even_while_request_is_open(self):
+        support_request = self.open_request()
+        before = SupportMessage.objects.filter(support_request=support_request).count()
+        response = self.browser(self.client_user).post(
+            f"/support/{support_request.id}/messages/",
+            {"body": "Client reply.", "audience": "shared", "request_key": uuid.uuid4()},
+        )
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(SupportMessage.objects.filter(support_request=support_request).count(), before)
+
+    def test_status_change_is_admin_only_and_retry_safe(self):
         support_request = self.open_request()
         client = self.browser(self.client_user)
         self.assertEqual(
@@ -128,10 +168,3 @@ class SupportWorkflowTests(TestCase):
             ).count(),
             1,
         )
-        before = SupportMessage.objects.filter(support_request=support_request).count()
-        response = client.post(
-            f"/support/{support_request.id}/messages/",
-            {"body": "One more reply.", "audience": "shared", "request_key": uuid.uuid4()},
-        )
-        self.assertRedirects(response, f"/support/{support_request.id}/")
-        self.assertEqual(SupportMessage.objects.filter(support_request=support_request).count(), before)
