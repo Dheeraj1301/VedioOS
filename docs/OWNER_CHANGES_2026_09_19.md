@@ -50,3 +50,12 @@ Status: requested interface changes are implemented. Production commercial activ
 - The separate **Add Inspiration Reel/Video** uploader accepts multiple formats and enforces a maximum of three active uploads per project. The limit is serialized on the project row to prevent concurrent requests bypassing it.
 - The edit-description label is now **Describe the edit**.
 - Additive migration `core.0008` stores the optional font name on project drafts. It was applied to the selected Supabase project on 2026-09-27 after recording the pre-change schema/migration/security state: two existing project rows, no pre-existing column or migration record, RLS enabled, and no browser-role schema access. Post-change checks confirm the 120-character non-null column with no database default, the matching Django migration record, unchanged RLS, and unchanged browser-role isolation.
+
+## Creative-brief upload persistence — 2026-09-29
+
+- **Save and Proceed** now waits for every selected original to receive its upload reservation, reach private object storage, and pass the backend completion/integrity check before navigation.
+- Before leaving the form, the browser fetches the saved project and confirms every completed file ID is present in the project file metadata. A failed or unconfirmed upload keeps the client on the same saved draft and displays an error instead of silently continuing.
+- After the draft is first saved, retries use that project's edit route. Files that completed successfully are removed from the pending browser queue, preventing successful originals from being submitted twice when a later file fails.
+- Reopening or editing the creative brief displays its existing ready source, image, audio, inspiration, font-inspiration and other-asset uploads. The Project Files section continues to use the same project-scoped, authorization-filtered ready-file query.
+- Regression coverage verifies multiple formats, files added during a later edit, project isolation and single rendering. A browser walkthrough verified MP4, PDF, MOV and WEBP originals through the real private-storage upload and completion APIs.
+- This is a code-only behavior change and requires no database migration or Supabase schema synchronization.

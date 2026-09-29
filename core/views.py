@@ -382,10 +382,16 @@ def _project_form(request, project=None, *, create_new=False):
         for slot in range(1, 4)
     ]
     active_inspiration_count = 0
+    existing_brief_files = File.objects.none()
     if project:
         active_inspiration_count = project.files.filter(category="reference").filter(
             Q(state="ready") | Q(state="pending", expires_at__gt=timezone.now())
         ).count()
+        existing_brief_files = visible_files(request.user, project).filter(
+            original__isnull=True,
+            category__in=["source", "image", "audio", "reference", "font_reference", "asset"],
+        )
+    upload_policy = UploadPolicy.objects.filter(pk=1, enabled=True).first()
     return render(
         request,
         "client/new_order.html",
@@ -397,6 +403,8 @@ def _project_form(request, project=None, *, create_new=False):
             "selected_choice": form["order_choice"].value() or "",
             "plan_slots": plan_slots,
             "active_inspiration_count": active_inspiration_count,
+            "existing_brief_files": existing_brief_files,
+            "upload_policy": upload_policy,
             "monthly_packages": InfluencerPackage.objects.filter(active=True).order_by("name"),
         },
     )

@@ -6,6 +6,12 @@ async function postJSON(url, data = {}) {
   if (!response.ok) throw new Error(body.error || 'Request failed.');
   return body;
 }
+async function getJSON(url) {
+  const response = await fetch(url, {credentials: 'same-origin'});
+  const body = await response.json().catch(() => ({error: 'The request could not be completed. Please try again.'}));
+  if (!response.ok) throw new Error(body.error || 'Request failed.');
+  return body;
+}
 function announce(status, message, isError = false) {
   status.setAttribute('role', isError ? 'alert' : 'status');
   status.setAttribute('aria-live', isError ? 'assertive' : 'polite');
@@ -144,27 +150,33 @@ if (newOrderForm) {
   const inspirationStatus = newOrderForm.querySelector('.brief-inspiration-status');
   const existingInspirationFiles = Number(inspirationBox.dataset.existingFiles || 0);
   const inspirationUploadLimit = 3;
+  const uploadsEnabled = newOrderForm.dataset.uploadEnabled === 'true';
+  const fileKey = file => `${file.name}:${file.size}:${file.lastModified}:${file.type}`;
+  const syncFileInput = (input, files) => {
+    try {
+      const acceptedFiles = new DataTransfer();
+      files.forEach(file => acceptedFiles.items.add(file));
+      input.files = acceptedFiles.files;
+    } catch (_error) {
+      // Submission uses the internal queue when FileList replacement is unavailable.
+      input.value = '';
+    }
+  };
   let selectedClipFiles = [];
   let selectedInspirationFiles = [];
   clipInput.addEventListener('change', () => {
-    const knownFiles = new Set(
-      selectedClipFiles.map(file => `${file.name}:${file.size}:${file.lastModified}:${file.type}`),
-    );
+    const knownFiles = new Set(selectedClipFiles.map(fileKey));
     for (const file of clipInput.files) {
-      const key = `${file.name}:${file.size}:${file.lastModified}:${file.type}`;
+      const key = fileKey(file);
       if (!knownFiles.has(key)) {
         selectedClipFiles.push(file);
         knownFiles.add(key);
       }
     }
-    try {
-      const accumulatedFiles = new DataTransfer();
-      selectedClipFiles.forEach(file => accumulatedFiles.items.add(file));
-      clipInput.files = accumulatedFiles.files;
-    } catch (_error) {
-      // The internal list still preserves additive selection in older browsers.
-    }
-    if (selectedClipFiles.length) {
+    syncFileInput(clipInput, selectedClipFiles);
+    if (!uploadsEnabled && selectedClipFiles.length) {
+      announce(clipStatus, 'File uploads are temporarily unavailable. Your project has not been saved.', true);
+    } else if (selectedClipFiles.length) {
       announce(clipStatus, `${selectedClipFiles.length} clip${selectedClipFiles.length === 1 ? '' : 's'} selected.`);
     }
   });
@@ -183,15 +195,10 @@ if (newOrderForm) {
       selectedInspirationFiles.push(file);
       remainingSlots -= 1;
     }
-    try {
-      const acceptedFiles = new DataTransfer();
-      selectedInspirationFiles.forEach(file => acceptedFiles.items.add(file));
-      inspirationInput.files = acceptedFiles.files;
-    } catch (_error) {
-      // Submission uses the capped internal queue when FileList replacement is unavailable.
-      inspirationInput.value = '';
-    }
-    if (rejected) {
+    syncFileInput(inspirationInput, selectedInspirationFiles);
+    if (!uploadsEnabled && selectedInspirationFiles.length) {
+      announce(inspirationStatus, 'File uploads are temporarily unavailable. Your project has not been saved.', true);
+    } else if (rejected) {
       announce(inspirationStatus, 'Max uploads: 3', true);
     } else if (selectedInspirationFiles.length) {
       announce(
@@ -218,16 +225,25 @@ if (newOrderForm) {
     else if (fontInspirationStatus.getAttribute('role') === 'alert') announce(fontInspirationStatus, '');
   });
   newOrderForm.addEventListener('submit', async event => {
-    const clipFiles = [...selectedClipFiles];
-    const inspirationFiles = [...selectedInspirationFiles];
+    const clipFiles = [...(selectedClipFiles.length ? selectedClipFiles : clipInput.files)];
+    const inspirationFiles = [
+      ...(selectedInspirationFiles.length ? selectedInspirationFiles : inspirationInput.files),
+    ];
     const fontInspirationFiles = fontInspirationInput.disabled ? [] : [...fontInspirationInput.files];
+    const hasUploads = clipFiles.length || inspirationFiles.length || fontInspirationFiles.length;
+    if (hasUploads && !uploadsEnabled) {
+      event.preventDefault();
+      const activeStatus = clipFiles.length ? clipStatus : inspirationFiles.length ? inspirationStatus : fontInspirationStatus;
+      announce(activeStatus, 'File uploads are temporarily unavailable. Your project has not been saved.', true);
+      return;
+    }
     const fontError = fontInspirationError();
     if (fontError) {
       event.preventDefault();
       announce(fontInspirationStatus, fontError, true);
       return;
     }
-    if (!clipFiles.length && !inspirationFiles.length && !fontInspirationFiles.length) return;
+    if (!hasUploads) return;
     event.preventDefault();
     const button = newOrderForm.querySelector('[type="submit"]');
     const clipProgress = newOrderForm.querySelector('.brief-upload-progress');
@@ -251,11 +267,15 @@ if (newOrderForm) {
       }
       const projectMatch = new URL(response.url).pathname.match(/^\/client\/projects\/([0-9a-f-]+)\/$/i);
       if (!projectMatch) throw new Error('The saved project could not be identified. Please upload your files from the project page.');
-      const uploadFiles = async (files, category, progress, status) => {
+      const projectId = projectMatch[1];
+      newOrderForm.action = `/client/projects/${projectId}/edit/`;
+      window.history.replaceState({}, '', newOrderForm.action);
+      const uploadedFileIds = [];
+      const uploadFiles = async (files, category, progress, status, onUploaded) => {
         for (const file of files) {
           announce(status, `Checking original: ${file.name}`);
           const sha256 = await window.hashOriginal(file);
-          const result = await postJSON(`/api/projects/${projectMatch[1]}/uploads/`, {
+          const result = await postJSON(`/api/projects/${projectId}/uploads/`, {
             filename: file.name, size_bytes: file.size,
             content_type: file.type || 'application/octet-stream', category, sha256,
           });
@@ -264,11 +284,26 @@ if (newOrderForm) {
           await uploadOriginal(result.upload, file, progress);
           announce(status, `Verifying ${file.name}…`);
           await postJSON(`/api/files/${result.file_id}/complete/`);
+          uploadedFileIds.push(result.file_id);
+          onUploaded(file);
         }
       };
-      await uploadFiles(clipFiles, 'source', clipProgress, clipStatus);
-      await uploadFiles(inspirationFiles, 'reference', inspirationProgress, inspirationStatus);
-      await uploadFiles(fontInspirationFiles, 'font_reference', fontInspirationProgress, fontInspirationStatus);
+      await uploadFiles(clipFiles, 'source', clipProgress, clipStatus, file => {
+        selectedClipFiles = selectedClipFiles.filter(item => item !== file);
+        syncFileInput(clipInput, selectedClipFiles);
+      });
+      await uploadFiles(inspirationFiles, 'reference', inspirationProgress, inspirationStatus, file => {
+        selectedInspirationFiles = selectedInspirationFiles.filter(item => item !== file);
+        syncFileInput(inspirationInput, selectedInspirationFiles);
+      });
+      await uploadFiles(fontInspirationFiles, 'font_reference', fontInspirationProgress, fontInspirationStatus, () => {
+        fontInspirationInput.value = '';
+      });
+      const storedProject = await getJSON(`/api/projects/${projectId}/`);
+      const storedFileIds = new Set(storedProject.files.map(file => file.id));
+      if (uploadedFileIds.some(fileId => !storedFileIds.has(fileId))) {
+        throw new Error('A file could not be confirmed in Project Files. Please retry before leaving this page.');
+      }
       window.location.assign(response.url);
     } catch (error) {
       const activeStatus = clipFiles.length ? clipStatus : inspirationFiles.length ? inspirationStatus : fontInspirationStatus;

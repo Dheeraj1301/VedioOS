@@ -481,6 +481,88 @@ class FoundationTests(TestCase):
         self.assertNotContains(blank, "Keep this exact direction")
         self.assertNotContains(blank, "Use the quiet ending")
 
+    def test_completed_brief_uploads_remain_project_scoped_and_visible(self):
+        browser = self.auth(self.owner)
+        fixtures = [
+            ("camera-original.mp4", "video/mp4", "source"),
+            ("storyboard.pdf", "application/pdf", "source"),
+            ("inspiration.mov", "video/quicktime", "reference"),
+        ]
+        saved_files = []
+        for position, (filename, content_type, category) in enumerate(fixtures, start=1):
+            saved_files.append(
+                File.objects.create(
+                    project=self.project,
+                    uploader=self.owner,
+                    filename=filename,
+                    object_key=f"private/brief/{self.project.id}/{position}",
+                    size_bytes=position * 100,
+                    sha256=str(position) * 64,
+                    content_type=content_type,
+                    category=category,
+                    state="ready",
+                    storage_version=f"v{position}",
+                    expires_at=timezone.now(),
+                    completed_at=timezone.now(),
+                )
+            )
+
+        other_project = Project.objects.create(client=self.profile, title="Other project")
+        Order.objects.create(project=other_project)
+        File.objects.create(
+            project=other_project,
+            uploader=self.owner,
+            filename="other-project-only.pdf",
+            object_key=f"private/brief/{other_project.id}/1",
+            size_bytes=25,
+            sha256="f" * 64,
+            content_type="application/pdf",
+            category="source",
+            state="ready",
+            storage_version="other-v1",
+            expires_at=timezone.now(),
+            completed_at=timezone.now(),
+        )
+
+        detail = browser.get(f"/client/projects/{self.project.id}/")
+        edit = browser.get(f"/client/projects/{self.project.id}/edit/")
+        api = browser.get(f"/api/projects/{self.project.id}/")
+        self.assertEqual(detail.status_code, 200)
+        self.assertEqual(edit.status_code, 200)
+        self.assertEqual(api.status_code, 200)
+        self.assertContains(edit, "Previously uploaded files")
+        for saved_file in saved_files:
+            self.assertContains(detail, saved_file.filename)
+            self.assertContains(edit, saved_file.filename, count=1)
+            self.assertEqual(
+                sum(item.id == saved_file.id for item in detail.context["files"]),
+                1,
+            )
+        self.assertNotContains(detail, "other-project-only.pdf")
+        self.assertNotContains(edit, "other-project-only.pdf")
+        self.assertEqual(
+            [item["id"] for item in api.json()["files"]],
+            [str(saved_file.id) for saved_file in saved_files],
+        )
+
+        added_file = File.objects.create(
+            project=self.project,
+            uploader=self.owner,
+            filename="added-on-edit.webp",
+            object_key=f"private/brief/{self.project.id}/added",
+            size_bytes=400,
+            sha256="a" * 64,
+            content_type="image/webp",
+            category="source",
+            state="ready",
+            storage_version="added-v1",
+            expires_at=timezone.now(),
+            completed_at=timezone.now(),
+        )
+        refreshed = browser.get(f"/client/projects/{self.project.id}/edit/")
+        for saved_file in [*saved_files, added_file]:
+            self.assertContains(refreshed, saved_file.filename, count=1)
+
     def test_font_selection_requires_and_persists_own_font_name(self):
         browser = self.auth(self.owner)
         data = {
