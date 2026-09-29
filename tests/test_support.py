@@ -75,6 +75,12 @@ class SupportWorkflowTests(TestCase):
         self.assertContains(admin_detail, "Reply to the client")
         self.assertContains(admin_detail, "Send reply")
 
+        client_list = self.browser(self.client_user).get("/client/support/")
+        self.assertContains(client_list, ">View</a>")
+        self.assertNotContains(client_list, "Help with my edit")
+        admin_list = self.browser(self.admin).get("/admin/support/?status=all")
+        self.assertContains(admin_list, "Help with my edit")
+
     def test_cross_client_case_and_project_are_denied(self):
         support_request = self.open_request()
         other = self.browser(self.other_user)
