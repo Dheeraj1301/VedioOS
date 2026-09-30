@@ -29,6 +29,7 @@ urlpatterns = [
     path("verify-email/<str:token>/", views.verify_email, name="verify_email"),
     path("register/editor/", ops.editor_register, name="editor_register"),
     path("login/", views.login_view, name="login"),
+    path("editor/signin/", views.editor_login_view, name="editor_login"),
     path("logout/", views.logout_view, name="logout"),
     path("dashboard/", views.dashboard, name="dashboard"),
     path("client/", views.client_dashboard, name="client_dashboard"),

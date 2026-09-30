@@ -9,7 +9,7 @@ Hamsa's Client + Core Platform work and Dheeraj's Admin + Editor Operations work
 | Check | Evidence | Result |
 | --- | --- | --- |
 | Client registration/login/logout | Django tests plus real browser registration, logout, and login | Pass |
-| Editor registration/login | Browser application saves experience and starts unapproved; login succeeds | Pass |
+| Editor registration/login | Dedicated editor entry accepts editor ID/email, rejects non-editor roles, and reaches the editor dashboard; invalid credentials show an error | Pass |
 | Admin login | Hidden-prompt CLI provisioning test and synthetic admin browser login | Pass |
 | Client cannot enter admin/editor areas | Page/API role matrix tests and browser HTTP requests return 403 | Pass |
 | Editor cannot enter client/admin or unassigned projects | 403 for wrong areas, 404 for unassigned project; browser and backend tests | Pass |

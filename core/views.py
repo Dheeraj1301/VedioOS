@@ -247,7 +247,7 @@ def verify_email(request, token):
     return redirect("client_dashboard")
 
 
-def login_view(request):
+def _login_view(request, *, editor_only=False):
     if request.user.is_authenticated:
         return redirect("dashboard")
     if request.method == "POST" and auth_rate_limited(request):
@@ -259,19 +259,38 @@ def login_view(request):
         )
     form = LoginForm(request, data=request.POST or None)
     if request.method == "POST" and form.is_valid():
-        login(request, form.get_user())
-        return redirect("dashboard")
+        user = form.get_user()
+        if editor_only and user.role != "editor":
+            form.add_error(
+                None,
+                "This sign-in is for editor accounts. Use the regular sign-in page for this account.",
+            )
+        else:
+            login(request, user)
+            return redirect("editor_dashboard" if editor_only else "dashboard")
     return render(
         request,
         "auth.html",
         {
             "form": form,
-            "title": "Back to your next great edit.",
-            "subtitle": "Sign in to your VedioOS workspace.",
-            "button": "Log in",
-            "mode": "login",
+            "title": "Editor sign in." if editor_only else "Back to your next great edit.",
+            "subtitle": (
+                "Use your administrator-issued editor ID or editor email."
+                if editor_only
+                else "Sign in to your VedioOS workspace."
+            ),
+            "button": "Editor Sign In" if editor_only else "Log in",
+            "mode": "editor_login" if editor_only else "login",
         },
     )
+
+
+def login_view(request):
+    return _login_view(request)
+
+
+def editor_login_view(request):
+    return _login_view(request, editor_only=True)
 
 
 @require_POST

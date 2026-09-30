@@ -241,6 +241,64 @@ class FoundationTests(TestCase):
         )
         self.assertContains(browser.get("/editor/"), "awaiting approval")
 
+    def test_editor_sign_in_entry_flow_and_role_separation(self):
+        entry = Browser().get("/")
+        self.assertContains(entry, 'href="/editor/signin/">Editor Sign In')
+
+        browser = Browser()
+        response = browser.get("/editor/signin/")
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Use your administrator-issued editor ID or editor email.")
+        self.assertContains(response, 'type="submit">Editor Sign In')
+
+        invalid = browser.post(
+            "/editor/signin/",
+            {"username": self.editor.login_id, "password": "not-the-password"},
+        )
+        self.assertEqual(invalid.status_code, 200)
+        self.assertContains(invalid, "Please enter a correct email and password")
+        self.assertFalse(browser.session.get("_auth_user_id"))
+
+        self.assertRedirects(
+            browser.post(
+                "/editor/signin/",
+                {"username": self.editor.login_id.lower(), "password": PASSWORD},
+            ),
+            "/editor/",
+        )
+        self.assertEqual(browser.session.get("_auth_user_id"), str(self.editor_user.pk))
+
+        for user in [self.owner, self.admin]:
+            role_browser = Browser()
+            denied = role_browser.post(
+                "/editor/signin/",
+                {"username": user.email, "password": PASSWORD},
+            )
+            with self.subTest(role=user.role):
+                self.assertEqual(denied.status_code, 200)
+                self.assertContains(denied, "This sign-in is for editor accounts")
+                self.assertFalse(role_browser.session.get("_auth_user_id"))
+
+        regular_client = Browser()
+        self.assertRedirects(
+            regular_client.post(
+                "/login/", {"username": self.owner.email, "password": PASSWORD}
+            ),
+            "/dashboard/",
+            fetch_redirect_response=False,
+        )
+        self.assertRedirects(regular_client.get("/dashboard/"), "/client/")
+
+        regular_admin = Browser()
+        self.assertRedirects(
+            regular_admin.post(
+                "/login/", {"username": self.admin.email, "password": PASSWORD}
+            ),
+            "/dashboard/",
+            fetch_redirect_response=False,
+        )
+        self.assertRedirects(regular_admin.get("/dashboard/"), "/admin/")
+
     def test_client_password_requires_owner_approved_composition(self):
         invalid = [
             "lowercase8!",
