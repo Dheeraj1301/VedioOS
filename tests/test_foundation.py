@@ -469,7 +469,7 @@ class FoundationTests(TestCase):
         self.assertEqual(project.wording_direction, "font_inspiration")
         self.assertEqual(project.order.kind, "custom")
         detail = browser.get(f"/client/projects/{project.id}/")
-        self.assertContains(detail, "Upload font inspiration")
+        self.assertNotContains(detail, "Upload font inspiration")
 
     def test_new_order_shows_three_plan_slots_and_custom_option(self):
         response = self.auth(self.owner).get("/client/new-order/")
