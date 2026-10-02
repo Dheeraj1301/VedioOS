@@ -5,7 +5,7 @@ from django.test import TestCase
 from django.utils import timezone
 
 from core.models import Client, Order, Project, User
-from operations.models import Admin, Editor, EditorAssignment, EditorAvailability
+from operations.models import Admin, Editor, EditorAssignment
 from operations.projects import project_page
 
 PASSWORD = "Synthetic-Projects-72!Leaf"
@@ -45,7 +45,6 @@ class ProjectRosterTests(TestCase):
             previous_work="Synthetic work",
             expertise="Editing",
         )
-        EditorAvailability.objects.create(editor=editor)
         EditorAssignment.objects.create(project=assigned, editor=editor, assigned_by=cls.admin)
         for number in range(2):
             pending = Project.objects.create(

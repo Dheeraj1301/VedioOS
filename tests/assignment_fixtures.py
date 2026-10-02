@@ -5,7 +5,7 @@ import uuid
 from django.utils import timezone
 
 from core.models import Client, Order, Payment, Project, User
-from operations.models import AssignmentPolicy, Editor, EditorAvailability
+from operations.models import AssignmentPolicy, Editor
 
 POLICY_VALUES = {
     "manual_enabled": True,
@@ -39,8 +39,8 @@ def create_people(prefix=None, password=None):
         editor = Editor.objects.create(
             user=user, approved=True, approved_by=admin, proficiency_id="beginner", workload_capacity=1
         )
-        EditorAvailability.objects.create(editor=editor, status="available")
         editors.append(editor)
+    editors.sort(key=lambda item: (item.created_at, item.id))
     return admin, client, editors
 
 

@@ -7,7 +7,6 @@ from operations.models import (
     Admin,
     Editor,
     EditorAssignment,
-    EditorAvailability,
     EditorCoins,
     Notification,
     RedemptionRequest,
@@ -56,7 +55,6 @@ class OperationalAnalyticsTests(TestCase):
             proficiency_id="beginner",
             workload_capacity=2,
         )
-        EditorAvailability.objects.create(editor=editor, status="available")
         EditorAssignment.objects.create(
             project=cls.open_project, editor=editor, assigned_by=cls.admin
         )
@@ -78,7 +76,7 @@ class OperationalAnalyticsTests(TestCase):
         self.assertEqual(snapshot["headline"]["completed_projects"], 1)
         self.assertEqual(snapshot["headline"]["open_assignments"], 1)
         self.assertEqual(snapshot["headline"]["pending_payouts"], 1)
-        self.assertEqual(snapshot["editors"]["available"], 1)
+        self.assertEqual(snapshot["editors"]["available"], 0)
         self.assertEqual(
             next(row["count"] for row in snapshot["deliveries"] if row["key"] == "held"),
             1,

@@ -7,7 +7,7 @@ from django.db import transaction
 
 from core.models import User
 from core.views import audit
-from operations.models import Editor, EditorAvailability, EditorCoins
+from operations.models import Editor, EditorCoins
 
 
 class Command(BaseCommand):
@@ -45,7 +45,6 @@ class Command(BaseCommand):
                 previous_work="",
                 expertise="",
             )
-            EditorAvailability.objects.create(editor=editor, status="offline")
             EditorCoins.objects.create(editor=editor)
             audit(user, "editor.provisioned", editor.id, {"login_id": editor.login_id})
         self.stdout.write(

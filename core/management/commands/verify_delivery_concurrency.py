@@ -20,7 +20,7 @@ from core.models import (
     RevisionRequest,
     User,
 )
-from operations.models import AuditLog, Editor, EditorAssignment, EditorAvailability, Notification
+from operations.models import AuditLog, Editor, EditorAssignment, Notification
 from tests.assignment_fixtures import create_people
 from tests.test_delivery import delivery_fixture, ready_output
 
@@ -90,7 +90,6 @@ class Command(BaseCommand):
                 Payment.objects.filter(order__project_id__in=ids).delete()
                 Order.objects.filter(project_id__in=ids).delete()
                 Project.objects.filter(pk__in=ids).delete()
-                EditorAvailability.objects.filter(editor__in=editors).delete()
                 Editor.objects.filter(pk__in=[e.pk for e in editors]).delete()
                 Client.objects.filter(pk=buyer.pk).delete()
                 User.objects.filter(pk__in=users).delete()

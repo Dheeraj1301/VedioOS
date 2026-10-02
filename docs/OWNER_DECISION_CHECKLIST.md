@@ -29,9 +29,9 @@ A capability may remain disabled for a staged release only when public copy, nav
 | D04 | Custom base price, prices for every selectable service, handling of unpriced requests and quote-expiry/change behavior | Enables complete custom estimates and quotes |
 | D05 | Payment provider/methods, webhook contract, taxes/invoice fields, refunds, cancellations, disputes and reconciliation owner | Enables real checkout and financial reporting |
 | D06 | Exact 24-hour clock start/end, calendar or working hours, pause rules, warning thresholds, override authority and breach handling | Enables automatic deadlines and early warnings |
-| D07 | Approval/proficiency criteria, workload capacities, availability rules and the project states that consume capacity | Enables production editor eligibility |
+| D07 | Approval/proficiency criteria and workload capacities; availability is already defined as zero active projects = Available, one or more = Unavailable | Enables production editor eligibility |
 | D08 | Whether AI ships; provider/model, shared data, classification labels/rules, evaluation set, confidence/failure behavior and admin override | Enables AI recommendations; manual assessment remains available if excluded |
-| D09 | Busy-editor skip/wait choice, cross-level fallback, roster order, manual-assignment pointer behavior, queue priority and retry triggers | Enables automatic allocation |
+| D09 | Unavailable-editor skip/wait choice, cross-level fallback, roster order, manual-assignment pointer behavior, queue priority and retry triggers | Enables automatic allocation |
 | D10 | Coin precision/value, earning amounts/formula, release timing, reassignment/cancellation/refund effects, redemption minimum/method and payout provider | Enables real editor earnings and redemption |
 | D11 | Revision counting, excess-revision handling, latest-version acceptance rule, cancellation permissions, finality and reopening | Enables production review terms for new agreements |
 | D12 | Email/communication provider, verified domain, templates, preferences, consultation obligations/logistics, worker schedule and support ownership | Enables external notifications and production consultations |

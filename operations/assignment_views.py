@@ -83,14 +83,13 @@ def assignment_policy(request):
 
 @role_required("admin")
 def editor_operations(request, editor_id):
-    editor = get_object_or_404(Editor.objects.select_related("user", "availability"), pk=editor_id)
+    editor = get_object_or_404(Editor.objects.select_related("user"), pk=editor_id)
     form = EditorOperationsForm(
         request.POST or None,
         initial={
             "approved": editor.approved,
             "proficiency": editor.proficiency_id,
             "workload_capacity": editor.workload_capacity,
-            "status": editor.availability.status,
         },
     )
     if request.method == "POST" and form.is_valid():
@@ -102,7 +101,6 @@ def editor_operations(request, editor_id):
                 approved=data["approved"],
                 proficiency=data["proficiency"].pk if data["proficiency"] else None,
                 capacity=data["workload_capacity"],
-                status=data["status"],
                 reason=data["reason"],
             )
             messages.success(request, "Editor eligibility and capacity updated.")
@@ -115,7 +113,7 @@ def editor_operations(request, editor_id):
         {
             "title": f"Manage {editor.user.name}",
             "form": form,
-            "description": f"Current open workload: {open_workload(editor)}. Existing assignments remain until reassigned or completed.",
+            "description": f"Current active projects: {open_workload(editor)}. Availability is calculated automatically; existing assignments remain until reassigned or completed.",
         },
     )
 
@@ -186,7 +184,7 @@ def assignment_detail(request, project_id):
         for editor in (
             editor_roster()
             .filter(proficiency_id=complexity.proficiency_id)
-            .select_related("user", "availability")
+            .select_related("user")
         ):
             candidates.append(
                 {

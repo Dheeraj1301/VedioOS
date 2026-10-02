@@ -26,7 +26,6 @@ from operations.models import (
     AuditLog,
     Editor,
     EditorAssignment,
-    EditorAvailability,
     EditorCoins,
     EditorProficiency,
     RoundRobinState,
@@ -56,7 +55,6 @@ class FoundationTests(TestCase):
             previous_work="Reels",
             expertise="Color",
         )
-        EditorAvailability.objects.create(editor=cls.editor)
         EditorCoins.objects.create(editor=cls.editor)
         cls.project = Project.objects.create(client=cls.profile, title="Synthetic edit")
         Order.objects.create(project=cls.project)
@@ -233,7 +231,7 @@ class FoundationTests(TestCase):
         self.assertFalse(user.editor_profile.approved)
         self.assertIsNone(user.editor_profile.proficiency_id)
         self.assertEqual(user.editor_profile.login_id, "VED-TEST0001")
-        self.assertEqual(user.editor_profile.availability.status, "offline")
+        self.assertEqual(user.editor_profile.assignments.count(), 0)
         self.assertRedirects(
             browser.post("/login/", {"username": "ved-test0001", "password": PASSWORD}),
             "/dashboard/",
@@ -396,10 +394,8 @@ class FoundationTests(TestCase):
             403,
         )
         self.assertEqual(
-            self.auth(self.editor_user)
-            .post("/editor/availability/", {"status": "available", "approved": "true"})
-            .status_code,
-            403,
+            self.auth(self.editor_user).post("/editor/availability/", {"status": "available"}).status_code,
+            405,
         )
 
     def test_admin_approval_audited(self):
@@ -928,7 +924,6 @@ class FoundationTests(TestCase):
             "editors",
             "admins",
             "editor_proficiency",
-            "editor_availability",
             "project_complexity",
             "editor_assignments",
             "assignment_queue",

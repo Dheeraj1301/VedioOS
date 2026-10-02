@@ -101,6 +101,7 @@ urlpatterns = [
     path("admin/pricing/policy/", commerce.catalog_edit, {"kind": "policy"}, name="policy_edit"),
     path("admin/<str:page>/", ops.admin_page),
     path("api/projects/<uuid:project_id>/", views.project_api),
+    path("api/editor/availability/", ops.editor_availability_api, name="editor_availability_api"),
     path("api/projects/<uuid:project_id>/uploads/", views.request_upload),
     path("api/files/<uuid:file_id>/complete/", views.complete_upload),
     path("api/files/<uuid:file_id>/download/", views.request_download),

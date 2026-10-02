@@ -20,7 +20,7 @@ This is a development evidence map, not a production launch claim. **Verified** 
 | 14 | AI complexity classification | Open | Admin can assess complexity manually; no AI provider, evaluation or failure path (D08). [Phase 4](PHASE_4.md). |
 | 15 | Intelligent editor assignment | Partial | Deterministic proficiency/capacity/availability matching and admin override pass tests; AI input and production policy remain open (D07–D09). [Phase 4](PHASE_4.md). |
 | 16 | Round-robin assignment | Verified in development | Persistent per-proficiency pointer and PostgreSQL concurrency checks; policy remains disabled until selected. [Phase 4](PHASE_4.md). |
-| 17 | Editor availability tracking | Verified | Editors update status; assignment checks eligibility under lock. [Phase 4](PHASE_4.md). |
+| 17 | Editor availability tracking | Verified | Status is derived from active project assignments, updates without manual controls, and assignment checks the same workload under lock. [Phase 4](PHASE_4.md). |
 | 18 | Editor file upload | Verified locally | Private verified draft/final uploads linked to versions; [Phase 5](PHASE_5.md). Production media decisions remain D02. |
 | 19 | Client review | Verified in development | Client sees submitted versions and explicit review actions under snapshotted terms; [Phase 5](PHASE_5.md). |
 | 20 | Revision requests | Verified in development | Version-targeted instructions and backend allowance checks; production excess/reopening policy remains D11. [Phase 5](PHASE_5.md). |

@@ -28,7 +28,7 @@ Additional infrastructure tables hold upload policy, login throttling, and Djang
 6. POST mutations require CSRF. Logout deletes the database session. Private routes return `Cache-Control: no-store` and indexing restrictions.
 7. Login/signup attempt counts are persisted per hashed direct client IP with a local 30-attempt / 15-minute limit. Proxy-aware distributed throttling, password recovery, MFA, and email verification remain production hardening work.
 
-An unapproved editor may log in and change availability. This grants no project access or assignment eligibility. Manual fixture assignments exist only in tests; no unpaid-work assignment endpoint is exposed.
+An unapproved editor may log in and view their derived availability. This grants no project access or assignment eligibility. Availability is calculated from current assignments on non-terminal projects and cannot be manually changed. Manual fixture assignments exist only in tests; no unpaid-work assignment endpoint is exposed.
 
 ## File API contract
 
@@ -58,7 +58,7 @@ The local technical defaults are 15-minute upload permission and 60-second downl
 
 ## Implemented versus deferred
 
-Working: client/editor registration, login/logout, role-scoped dashboards and project data, admin editor review, availability changes, client project drafts, original upload/download, audit events, and empty payment history.
+Working: client/editor registration, login/logout, role-scoped dashboards and project data, admin editor review, derived availability, client project drafts, original upload/download, audit events, and empty payment history.
 
 Schema/skeleton only: checkout/payment confirmation, plan editing/pricing, consultation scheduling, AI classification, assignment/round-robin processing, client revision/approval workflows, version publishing, packages, coin credit/redemption, operational notifications, and analytics. No payment-success or coin-credit simulation is exposed as a working business feature.
 

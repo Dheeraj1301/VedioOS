@@ -1,1 +1,24 @@
-{% extends 'workspace.html' %}{% block workspace_content %}<div class="page-heading"><div><p class="eyebrow">Your editing studio</p><h1>Set your availability.</h1><p class="muted">Let the team know when you are ready for work.</p></div></div><section class="panel form-panel"><form method="post" class="form-stack">{% csrf_token %}{{ form.as_div }}<button class="button" type="submit">Save availability ↗</button></form></section>{% endblock %}
+{% extends 'workspace.html' %}
+{% block workspace_content %}
+<div class="page-heading">
+  <div>
+    <p class="eyebrow">Your editing studio</p>
+    <h1>Your availability.</h1>
+    <p class="muted">Your availability is calculated automatically based on your active projects.</p>
+  </div>
+</div>
+<section class="panel availability-panel">
+  <p class="eyebrow">Current status</p>
+  <p
+    class="availability-badge is-{{ availability.status }}"
+    data-availability-status
+    data-availability-endpoint="{% url 'editor_availability_api' %}"
+    role="status"
+    aria-live="polite"
+  >{{ availability.icon }} {{ availability.summary }}</p>
+  <p class="muted availability-explanation">
+    Assigned, editing, review, and revision projects count as active. Completed and cancelled projects do not.
+  </p>
+  <p class="availability-refresh-note">This status refreshes automatically while this page is open.</p>
+</section>
+{% endblock %}

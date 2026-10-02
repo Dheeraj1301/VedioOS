@@ -24,7 +24,7 @@ Landing-page scope includes hero, how it works, services, plans, custom orders, 
 | Earnings | No internal editor data | Own wallet | Manage under permissions |
 | AI classification/internal notes | No | Only information needed for assigned work | View and override |
 
-Editor signup collects name, email, phone, credentials, experience, tools, portfolio, samples, expertise, and availability. Admin review determines approval and Beginner/Intermediate/Advanced proficiency. Self-declared proficiency MUST NOT grant assignment eligibility. Admins may revise proficiency with an audit trail.
+Editor onboarding collects name, email, phone, credentials, experience, tools, portfolio, samples, and expertise. Availability is not a user-controlled input. Admin review determines approval and Beginner/Intermediate/Advanced proficiency. Self-declared proficiency MUST NOT grant assignment eligibility. Admins may revise proficiency with an audit trail.
 
 All protected operations MUST enforce backend role and project authorization, including metadata, messages, notifications, previews, download links, and uploads. Role creation and elevation must be privileged. Initially support two individually authenticated managers, not a shared password.
 
@@ -81,7 +81,7 @@ AI outputs Beginner, Intermediate, or Advanced complexity from requirements, ref
 
 Beginner work includes basic cuts, transitions, trimming, text, music sync, and minor adjustments. Intermediate includes detailed synchronization, graphics, moderate grading, and multiple effects. Advanced includes cinematic storytelling, complex effects/motion graphics, advanced grading, and demanding combinations. Criteria are configurable.
 
-Only approved editors meeting configured proficiency, availability, and capacity rules are eligible. Maintain availability values Available, Busy, Offline, On Leave, and Temporarily Unavailable, plus visible active-project counts and configurable capacities.
+Only approved editors meeting configured proficiency and capacity rules are eligible. Availability is derived from current assignments: an editor with zero non-terminal assigned projects is **Available**; an editor with one or more is **Unavailable**. Completed and cancelled projects do not consume availability. Editors and administrators can view the active-project count, but neither can manually override the derived status.
 
 Round-robin MUST use durable, separate state per proficiency group. Selection, capacity reservation, assignment, and pointer advancement must be atomic or equivalently protected against concurrent workers. Finishing a project, logging in, or restarting the server MUST NOT reset the pointer.
 

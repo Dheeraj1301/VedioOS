@@ -12,7 +12,7 @@ from django.test.utils import override_settings
 from django.urls import reverse
 
 from core.models import Project, User
-from operations.models import Admin, Editor, EditorAvailability, EditorCoins
+from operations.models import Admin, Editor, EditorCoins
 
 
 def run_cloud_checks(write):
@@ -109,7 +109,6 @@ def run_cloud_checks(write):
                 previous_work="",
                 expertise="",
             )
-            EditorAvailability.objects.create(editor=editor_record, status="offline")
             EditorCoins.objects.create(editor=editor_record)
             editor = Browser()
             require(

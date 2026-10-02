@@ -52,10 +52,23 @@ def operational_analytics():
         total=Count("id"),
         approved_active=Count("id", filter=Q(approved=True, user__is_active=True)),
         awaiting_approval=Count("id", filter=Q(approved=False)),
-        available=Count(
-            "id",
-            filter=Q(approved=True, user__is_active=True, availability__status="available"),
-        ),
+    )
+    editor_counts["available"] = (
+        Editor.objects.filter(approved=True, user__is_active=True)
+        .annotate(
+            active_count=Count(
+                "assignments",
+                filter=Q(assignments__ended_at__isnull=True)
+                & ~Q(
+                    assignments__project__status__in=[
+                        Project.Status.COMPLETED,
+                        Project.Status.CANCELLED,
+                    ]
+                ),
+            )
+        )
+        .filter(active_count=0)
+        .count()
     )
     return {
         "generated_at": timezone.now(),

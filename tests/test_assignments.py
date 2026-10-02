@@ -11,13 +11,13 @@ from core.models import File, Order
 from core.permissions import visible_projects
 from operations.assignments import (
     assign_next,
-    change_availability,
     classify,
     configure_editor,
     manual_assign,
     process_queue,
     save_policy,
 )
+from operations.availability import availability_state
 from operations.models import (
     AssignmentPolicy,
     AssignmentQueue,
@@ -102,15 +102,22 @@ class AssignmentTests(TestCase):
         self.assertEqual(assign_next(self.queue().id).editor_id, self.editors[0].id)
 
     def test_skip_and_wait_policy_and_durable_retry(self):
-        change_availability(self.editors[0].user, "busy")
+        occupied = self.queue()
+        EditorAssignment.objects.create(
+            project=occupied, editor=self.editors[0], assigned_by=self.admin
+        )
+        occupied.status = "editor_assigned"
+        occupied.save(update_fields=["status", "updated_at"])
         project = self.queue()
         AssignmentPolicy.objects.filter(pk=1).update(busy_strategy="wait")
         self.assertIsNone(assign_next(project.id))
         queue = AssignmentQueue.objects.get(project=project)
-        self.assertIn("Editor 1", queue.blocked_reason)
+        self.assertIn(self.editors[0].user.name, queue.blocked_reason)
         self.assertEqual(RoundRobinState.objects.get(proficiency_id="beginner").sequence, 0)
         AssignmentPolicy.objects.filter(pk=1).update(busy_strategy="skip")
-        self.assertEqual(assign_next(project.id).editor_id, self.editors[1].id)
+        assigned = assign_next(project.id)
+        self.assertIsNotNone(assigned)
+        self.assertNotEqual(assigned.editor_id, self.editors[0].id)
         queue.refresh_from_db()
         self.assertEqual(queue.status, "assigned")
         self.assertEqual(queue.attempts, 2)
@@ -132,12 +139,14 @@ class AssignmentTests(TestCase):
         editor.user.save()
         self.assertIsNone(assign_next(project.id))
 
-    def test_retries_and_availability_changes_preserve_pointer(self):
+    def test_project_lifecycle_drives_availability_without_resetting_pointer(self):
         project = self.queue()
         first = assign_next(project.id)
         self.assertEqual(assign_next(project.id).id, first.id)
-        change_availability(self.editors[0].user, "offline")
-        change_availability(self.editors[0].user, "available")
+        self.assertEqual(availability_state(self.editors[0])["status"], "unavailable")
+        project.status = "completed"
+        project.save(update_fields=["status", "updated_at"])
+        self.assertEqual(availability_state(self.editors[0])["status"], "available")
         self.assertEqual(RoundRobinState.objects.get(proficiency_id="beginner").sequence, 1)
         self.assertEqual(EditorAssignment.objects.filter(project=project).count(), 1)
 
@@ -201,7 +210,6 @@ class AssignmentTests(TestCase):
                 approved=False,
                 proficiency="beginner",
                 capacity=1,
-                status="available",
                 reason="Revoke",
             )
         with self.assertRaises(ValidationError):
@@ -244,8 +252,40 @@ class AssignmentTests(TestCase):
         self.assertContains(
             self.client.get(f"/admin/editors/{self.editors[0].id}/operations/"), "Maximum concurrent"
         )
+        self.assertNotContains(
+            self.client.get(f"/admin/editors/{self.editors[0].id}/operations/"),
+            "Availability</label>",
+        )
         self.assertEqual(process_queue(self.admin), (1, 0))
         self.assertTrue(AuditLog.objects.filter(action="project.assigned", target_id=project.id).exists())
         self.assertTrue(
             AuditLog.objects.filter(action="project.complexity_reviewed", target_id=project.id).exists()
         )
+
+    def test_availability_page_and_api_are_read_only_and_derived(self):
+        editor = self.editors[0]
+        self.client.force_login(editor.user)
+        page = self.client.get("/editor/availability/")
+        self.assertContains(page, "Your availability.")
+        self.assertContains(page, "✅ Available — no active projects")
+        self.assertNotContains(page, "<select")
+        self.assertNotContains(page, "Save availability")
+        self.assertEqual(self.client.post("/editor/availability/", {"status": "available"}).status_code, 405)
+
+        first = self.queue()
+        second = self.queue()
+        EditorAssignment.objects.create(project=first, editor=editor, assigned_by=self.admin)
+        EditorAssignment.objects.create(project=second, editor=editor, assigned_by=self.admin)
+        state = self.client.get("/api/editor/availability/").json()
+        self.assertEqual(state["status"], "unavailable")
+        self.assertEqual(state["active_count"], 2)
+        self.assertEqual(state["summary"], "Unavailable — 2 active projects")
+
+        first.status = "completed"
+        first.save(update_fields=["status", "updated_at"])
+        self.assertEqual(self.client.get("/api/editor/availability/").json()["active_count"], 1)
+        second.status = "cancelled"
+        second.save(update_fields=["status", "updated_at"])
+        final_state = self.client.get("/api/editor/availability/").json()
+        self.assertEqual(final_state["status"], "available")
+        self.assertEqual(final_state["active_count"], 0)

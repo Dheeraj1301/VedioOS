@@ -16,7 +16,6 @@ from operations.models import (
     AuditLog,
     CoinTransaction,
     Editor,
-    EditorAvailability,
     EditorCoins,
     RedemptionRequest,
 )
@@ -84,7 +83,6 @@ class Command(BaseCommand):
                 RedemptionRequest.objects.filter(wallet=wallet).delete()
                 AuditLog.objects.filter(actor_id__in=user_ids).delete()
                 EditorCoins.objects.filter(editor__in=editors).delete()
-                EditorAvailability.objects.filter(editor__in=editors).delete()
                 Editor.objects.filter(pk__in=[e.pk for e in editors]).delete()
                 Client.objects.filter(pk=buyer.pk).delete()
                 User.objects.filter(pk__in=user_ids).delete()

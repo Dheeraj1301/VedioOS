@@ -37,7 +37,7 @@ Hamsa's Client + Core Platform work and Dheeraj's Admin + Editor Operations work
 - Ruff checks and formatting applied to authored Python.
 - agent-browser independently loaded the landing and registration pages, inspected navigation, and reported no browser errors during the initial visual check.
 
-The browser walkthrough covers landing → client signup → dashboard → project draft → direct upload → original download → logout/login → editor application → availability → editor login → admin login → proficiency approval. Security tests also cover former-editor access after assignment ends. Only synthetic data was used.
+The browser walkthrough covers landing → client signup → dashboard → project draft → direct upload → original download → logout/login → editor application → derived availability → editor login → admin login → proficiency approval. Security tests also cover former-editor access after assignment ends. Only synthetic data was used.
 
 ### Local evidence files
 

@@ -2,21 +2,22 @@ from datetime import datetime
 from datetime import timezone as datetime_timezone
 
 from django.contrib import messages
-from django.core.exceptions import PermissionDenied, ValidationError
+from django.core.exceptions import ValidationError
 from django.db.models import Exists, OuterRef
+from django.http import HttpResponseNotAllowed, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
-from django.views.decorators.http import require_POST
+from django.views.decorators.http import require_GET, require_POST
 
 from core.payment_history import PAYMENT_STATUSES, payment_page
 from core.permissions import role_required, visible_projects
 
 from .analytics import operational_analytics
-from .assignments import approve_proficiency, change_availability, editor_roster, open_workload
+from .assignments import approve_proficiency, editor_roster, open_workload
+from .availability import availability_state
 from .calls import complete_call, schedule_call
 from .clients import CLIENT_STATES, client_page
 from .features import feature_controls
-from .forms import AvailabilityForm
 from .models import CallRequest, Editor, EditorAssignment, EditorProficiency, SupportRequest
 from .orders import ORDER_PAYMENT_STATES, PROJECT_WORKFLOW_STATES, order_page
 from .projects import PROJECT_QUEUES, project_page
@@ -31,13 +32,16 @@ def editor_register(request):
 
 @role_required("editor")
 def editor_dashboard(request):
+    editor = request.user.editor_profile
+    active_count = open_workload(editor)
     return render(
         request,
         "operations/editor_dashboard.html",
         {
             "title": "Assigned projects",
-            "editor": request.user.editor_profile,
-            "active_count": open_workload(request.user.editor_profile),
+            "editor": editor,
+            "active_count": active_count,
+            "availability": availability_state(editor),
             "projects": visible_projects(request.user),
         },
     )
@@ -73,17 +77,13 @@ def editor_page(request, page):
             request, "projects.html", {"title": "Project details", "projects": visible_projects(request.user)}
         )
     if page == "availability":
-        form = AvailabilityForm(request.POST or None, instance=editor.availability)
-        if request.method == "POST":
-            if set(request.POST) - {"csrfmiddlewaretoken", "status"}:
-                raise PermissionDenied
-            if form.is_valid():
-                change_availability(request.user, form.cleaned_data["status"])
-                messages.success(
-                    request, "Availability updated. Approval is still required before assignment."
-                )
-                return redirect("/editor/availability/")
-        return render(request, "operations/availability.html", {"title": "Availability", "form": form})
+        if request.method != "GET":
+            return HttpResponseNotAllowed(["GET"])
+        return render(
+            request,
+            "operations/availability.html",
+            {"title": "Availability", "availability": availability_state(editor)},
+        )
     titles = {
         "revisions": (
             "Revisions",
@@ -96,6 +96,12 @@ def editor_page(request, page):
         raise Http404
     title, description = titles[page]
     return render(request, "operations/skeleton.html", {"title": title, "description": description})
+
+
+@require_GET
+@role_required("editor")
+def editor_availability_api(request):
+    return JsonResponse(availability_state(request.user.editor_profile))
 
 
 @role_required("admin")

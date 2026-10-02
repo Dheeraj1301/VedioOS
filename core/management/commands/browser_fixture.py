@@ -9,7 +9,7 @@ from django.core.management.base import BaseCommand, CommandError
 from django.utils import timezone
 
 from core.models import Client, User
-from operations.models import Admin, Editor, EditorAvailability, EditorCoins
+from operations.models import Admin, Editor, EditorCoins
 
 
 class Command(BaseCommand):
@@ -45,7 +45,6 @@ class Command(BaseCommand):
             previous_work="https://example.com/reel",
             expertise="Color and storytelling",
         )
-        EditorAvailability.objects.create(editor=editor, status="available")
         EditorCoins.objects.create(editor=editor)
         destination = settings.BASE_DIR / ".runtime" / "browser-fixture.json"
         destination.write_text(

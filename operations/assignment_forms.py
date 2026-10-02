@@ -1,6 +1,6 @@
 from django import forms
 
-from .models import AssignmentPolicy, Editor, EditorAvailability, EditorProficiency
+from .models import AssignmentPolicy, Editor, EditorProficiency
 
 
 class AssignmentPolicyForm(forms.ModelForm):
@@ -16,6 +16,7 @@ class AssignmentPolicyForm(forms.ModelForm):
             "roster_order",
             "queue_order",
         ]
+        labels = {"busy_strategy": "Unavailable editor strategy"}
 
     def clean(self):
         data = super().clean()
@@ -39,7 +40,6 @@ class EditorOperationsForm(forms.Form):
         required=False,
         help_text="Maximum concurrent open projects. Leave blank to prevent new assignments.",
     )
-    status = forms.ChoiceField(choices=EditorAvailability.Status.choices, label="Availability")
     reason = forms.CharField(max_length=1000, widget=forms.Textarea(attrs={"rows": 2}))
 
     def clean(self):

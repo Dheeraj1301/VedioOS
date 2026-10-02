@@ -17,7 +17,6 @@ from operations.models import (
     AuditLog,
     Editor,
     EditorAssignment,
-    EditorAvailability,
     ProjectComplexity,
 )
 from tests.assignment_fixtures import POLICY_VALUES, create_people, enable_test_policy, paid_project
@@ -100,7 +99,6 @@ class Command(BaseCommand):
                 Payment.objects.filter(order__project_id__in=project_ids).delete()
                 Order.objects.filter(project_id__in=project_ids).delete()
                 Project.objects.filter(id__in=project_ids).delete()
-                EditorAvailability.objects.filter(editor_id__in=editor_ids).delete()
                 Editor.objects.filter(id__in=editor_ids).delete()
                 Client.objects.filter(id=client.id).delete()
                 User.objects.filter(id__in=user_ids).delete()

@@ -53,7 +53,6 @@ def account_reconciliation_report():
             | Q(client_profile__isnull=False, admin_profile__isnull=False)
             | Q(editor_profile__isnull=False, admin_profile__isnull=False)
         ).count(),
-        "editors_missing_availability": Editor.objects.filter(availability__isnull=True).count(),
         "editors_missing_wallet": Editor.objects.filter(wallet__isnull=True).count(),
         "approved_editors_missing_review": Editor.objects.filter(approved=True).filter(
             Q(proficiency__isnull=True) | Q(approved_by__isnull=True)

@@ -10,7 +10,7 @@ from django.utils import timezone
 
 from core.account_reconciliation import account_reconciliation_report
 from core.models import Client, User
-from operations.models import Admin, Editor, EditorAvailability, EditorCoins
+from operations.models import Admin, Editor, EditorCoins
 
 PASSWORD = "Synthetic-Account-72!Leaf"
 
@@ -33,7 +33,6 @@ class AccountReconciliationTests(TestCase):
             previous_work="",
             expertise="",
         )
-        EditorAvailability.objects.create(editor=editor)
         EditorCoins.objects.create(editor=editor)
         admin_user = User.objects.create_user(
             "account-admin@example.test", PASSWORD, name="Admin", role="admin"

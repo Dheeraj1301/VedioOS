@@ -74,24 +74,6 @@ class Admin(Record):
         db_table = "admins"
 
 
-class EditorAvailability(models.Model):
-    class Status(models.TextChoices):
-        AVAILABLE = "available", "Available"
-        BUSY = "busy", "Busy"
-        OFFLINE = "offline", "Offline"
-        LEAVE = "on_leave", "On leave"
-        UNAVAILABLE = "temporarily_unavailable", "Temporarily unavailable"
-
-    editor = models.OneToOneField(
-        Editor, on_delete=models.PROTECT, related_name="availability", primary_key=True
-    )
-    status = models.CharField(max_length=30, choices=Status.choices, default=Status.OFFLINE)
-    updated_at = models.DateTimeField(auto_now=True)
-
-    class Meta:
-        db_table = "editor_availability"
-
-
 class ProjectComplexity(Record):
     project = models.OneToOneField(Project, on_delete=models.PROTECT)
     proficiency = models.ForeignKey(EditorProficiency, null=True, on_delete=models.PROTECT)

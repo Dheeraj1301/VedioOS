@@ -15,13 +15,13 @@ from core.models import Order, Project
 from core.views import audit
 
 from .assignment_forms import AssignmentPolicyForm
+from .availability import active_project_count
 from .calls import notify
 from .models import (
     AssignmentPolicy,
     AssignmentQueue,
     Editor,
     EditorAssignment,
-    EditorAvailability,
     EditorProficiency,
     ProjectComplexity,
     RoundRobinState,
@@ -68,17 +68,11 @@ def paid_project(project_id):
 
 
 def open_workload(editor):
-    if hasattr(editor, "active_count"):
-        return editor.active_count
-    return (
-        EditorAssignment.objects.filter(editor=editor, ended_at__isnull=True)
-        .exclude(project__status__in=TERMINAL)
-        .count()
-    )
+    return active_project_count(editor)
 
 
 def editor_roster():
-    return Editor.objects.select_related("user", "proficiency", "availability").annotate(
+    return Editor.objects.select_related("user", "proficiency").annotate(
         active_count=Count(
             "assignments",
             filter=Q(assignments__ended_at__isnull=True) & ~Q(assignments__project__status__in=TERMINAL),
@@ -91,9 +85,8 @@ def eligibility(editor, proficiency):
         return "Editor is not approved or the account is inactive."
     if editor.proficiency_id != proficiency:
         return "Editor proficiency does not match the project. Review complexity before changing levels."
-    availability = getattr(editor, "availability", None)
-    if not availability or availability.status != "available":
-        return "Editor is not available."
+    if open_workload(editor) > 0:
+        return "Editor is unavailable while assigned to an active project."
     if not editor.workload_capacity:
         return "Editor capacity has not been configured."
     if open_workload(editor) >= editor.workload_capacity:
@@ -119,12 +112,12 @@ def save_policy(user, data):
 
 
 @transaction.atomic
-def configure_editor(user, editor_id, *, approved, proficiency, capacity, status, reason):
+def configure_editor(user, editor_id, *, approved, proficiency, capacity, reason):
     admin_only(user)
     locked_policy()
     editor = Editor.objects.select_for_update().get(pk=editor_id)
-    if not reason.strip() or status not in EditorAvailability.Status.values:
-        raise ValidationError("Provide a reason and a valid availability status.")
+    if not reason.strip():
+        raise ValidationError("Provide a reason for this eligibility change.")
     if capacity is not None and (type(capacity) is not int or not 1 <= capacity <= 1000):
         raise ValidationError("Capacity must be a positive whole number.")
     if approved and not EditorProficiency.objects.filter(pk=proficiency).exists():
@@ -142,7 +135,6 @@ def configure_editor(user, editor_id, *, approved, proficiency, capacity, status
     editor.approved, editor.proficiency_id, editor.workload_capacity = approved, proficiency, capacity
     editor.approved_by = user if approved else None
     editor.save(update_fields=["approved", "proficiency", "workload_capacity", "approved_by", "updated_at"])
-    EditorAvailability.objects.update_or_create(editor=editor, defaults={"status": status})
     audit(
         user,
         "editor.operations_updated",
@@ -152,24 +144,10 @@ def configure_editor(user, editor_id, *, approved, proficiency, capacity, status
             "approved": approved,
             "proficiency": proficiency,
             "capacity": capacity,
-            "availability": status,
             "reason": reason,
         },
     )
     return editor
-
-
-@transaction.atomic
-def change_availability(user, status):
-    if user.role != "editor" or not user.is_active:
-        raise PermissionDenied
-    locked_policy()
-    if status not in EditorAvailability.Status.values:
-        raise ValidationError("Invalid availability.")
-    editor = Editor.objects.select_for_update().get(user=user)
-    EditorAvailability.objects.update_or_create(editor=editor, defaults={"status": status})
-    audit(user, "editor.availability_changed", editor.id, {"status": status})
-
 
 @transaction.atomic
 def approve_proficiency(user, editor_id, level):

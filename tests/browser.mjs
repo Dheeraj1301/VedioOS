@@ -82,9 +82,9 @@ try {
   assert.equal((await context.request.get(`${base}/api/areas/admin/`)).status(), 403);
   await page.screenshot({path: '.runtime/screenshots/editor-desktop.png', fullPage: true});
   await page.goto(`${base}/editor/availability/`);
-  await page.getByLabel('Status').selectOption('on_leave');
-  await page.getByRole('button', {name: 'Save availability'}).click();
-  await page.getByText('Availability updated.', {exact: false}).waitFor();
+  await page.getByRole('heading', {name: 'Your availability.'}).waitFor();
+  await page.getByText('Available — no active projects', {exact: false}).waitFor();
+  assert.equal(await page.locator('select').count(), 0);
   await logout();
   await login(fixture.editor.login_id, fixture.password);
   await logout();

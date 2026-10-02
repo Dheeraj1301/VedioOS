@@ -21,7 +21,7 @@ Status: in progress, operations and project communication slices verified on 202
 
 ## Lifecycle audit inventory
 
-The implemented first-version lifecycle records these state-changing actions: client/editor registration; quote creation and acceptance; payment start, confirmation and failure; file reservation, completion and authorized download; editor approval, proficiency, availability and operating settings; project complexity, assignment and reassignment; initial editing and revision starts; version submission, revision request and final acceptance; consultation request, schedule and completion; project messages; notification reads; overdue alerts; earning release; and redemption request/outcome. Raw message bodies, signed file URLs and secrets are excluded from the admin timeline.
+The implemented first-version lifecycle records these state-changing actions: client/editor registration; quote creation and acceptance; payment start, confirmation and failure; file reservation, completion and authorized download; editor approval, proficiency and operating settings; project complexity, assignment and reassignment; initial editing and revision starts; version submission, revision request and final acceptance; consultation request, schedule and completion; project messages; notification reads; overdue alerts; earning release; and redemption request/outcome. Availability is derived from assignment/project state and has no separate mutation event. Raw message bodies, signed file URLs and secrets are excluded from the admin timeline.
 
 ## Verification
 

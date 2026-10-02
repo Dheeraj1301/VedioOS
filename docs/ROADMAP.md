@@ -51,7 +51,7 @@ The first-version scope is all 28 priorities in original brief section 34, cover
 
 **2026-09-16: allocation milestone implemented and verified.** [Evidence](PHASE_4.md): capacity administration, admin complexity review, manual/reassignment, paid queues, persistent round robin, skip/wait and real PostgreSQL concurrency. Shared allocation remains off until policies are configured. AI classification is not integrated, so the full Phase 4 production gate remains open.
 
-- Implement proficiency/availability/capacity administration, active counts, AI classification and admin overrides.
+- Implement proficiency/capacity administration, derived availability and active counts, AI classification and admin overrides.
 - Implement durable paid-project queues and separate round-robin pointers per level.
 - Implement configured wait/skip behavior, manual assignment/reassignment, and deadline visibility.
 
