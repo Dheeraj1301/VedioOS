@@ -33,6 +33,8 @@ def visible_projects(user):
         return Project.objects.filter(client__user=user)
     if user.role == "editor":
         return Project.objects.filter(
+            order__payment_status="confirmed",
+            payment_completed_at__isnull=False,
             assignments__editor__user=user,
             assignments__ended_at__isnull=True,
             assignments__editor__approved=True,

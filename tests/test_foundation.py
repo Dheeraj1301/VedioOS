@@ -368,13 +368,16 @@ class FoundationTests(TestCase):
         self.editor.proficiency_id = "beginner"
         self.editor.approved_by = self.admin
         self.editor.save()
-        self.project.payment_completed_at = timezone.now()
-        self.project.status = "editor_assigned"
-        self.project.save()
         assignment = EditorAssignment.objects.create(
             project=self.project, editor=self.editor, assigned_by=self.admin
         )
         browser = self.auth(self.editor_user)
+        self.assertEqual(browser.get(f"/editor/projects/{self.project.id}/").status_code, 404)
+
+        self.project.payment_completed_at = timezone.now()
+        self.project.status = "editor_assigned"
+        self.project.save()
+        Order.objects.filter(project=self.project).update(payment_status="confirmed")
         self.assertEqual(browser.get(f"/editor/projects/{self.project.id}/").status_code, 200)
         assignment.ended_at = timezone.now()
         assignment.save()

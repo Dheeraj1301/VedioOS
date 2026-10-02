@@ -146,7 +146,7 @@ class DeliveryTests(TestCase):
             transition(self.editor, self.project.pk, "start")
         order.payment_status = "pending"
         order.save()
-        with self.assertRaises(ValidationError):
+        with self.assertRaises(Http404):
             transition(self.editor, self.project.pk, "start")
 
     def test_cross_role_and_unassigned_denied(self):
