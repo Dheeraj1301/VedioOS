@@ -7,20 +7,13 @@
       <p class="preserve-lines">{{ version.note }}</p>
       <button class="text-button download-button" data-file-id="{{ version.file_id }}">Download version {{ version.number }} ↓</button>
     </div></article>
-  {% empty %}<p>No submitted versions yet. Editor uploads stay private until submitted.</p>{% endfor %}
+  {% empty %}<p>No deliverable versions have been uploaded yet.</p>{% endfor %}
   {% if review_enabled and request.user.role == 'editor' %}
     {% if project.status == 'editor_assigned' or project.status == 'revision_requested' %}
       <form method="post" action="{% url 'delivery_action' project.id %}">{% csrf_token %}<input type="hidden" name="action" value="start"><button class="button">Start editing / revision</button></form>
     {% endif %}
-    {% if project.status == 'editing' or project.status == 'revision_in_progress' %}
-      <h3>Submit a version</h3><p>Upload your edited file, then submit it here for client review.</p>
-      <form method="post" action="{% url 'delivery_action' project.id %}">{% csrf_token %}
-        <input type="hidden" name="action" value="submit"><input type="hidden" name="version_id" value="{{ latest_version.id }}">
-        <label for="submission-file">Verified upload</label><select id="submission-file" name="file_id" required><option value="">Choose a file</option>{% for file in submission_files %}<option value="{{ file.id }}">{{ file.filename }}</option>{% endfor %}</select>
-        <label for="submission-note">Note to client</label><textarea id="submission-note" name="note" maxlength="5000" rows="3"></textarea>
-        <label><input type="checkbox" name="final" value="yes"> Mark as final candidate (client acceptance still required)</label>
-        <button class="button">Submit for review</button>
-      </form>
+    {% if project.status == 'editing' or project.status == 'revision_in_progress' or project.status == 'awaiting_review' %}
+      <h3>Upload a deliverable</h3><p>Each verified draft or final upload is saved as the next version and becomes available to the client immediately.</p>
     {% endif %}
   {% endif %}
   {% if review_enabled and request.user.role == 'client' and project.status == 'awaiting_review' %}

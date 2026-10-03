@@ -61,9 +61,10 @@ document.querySelectorAll('.upload-form').forEach(uploadForm => {
         announce(status, `Uploading ${file.name}…`);
         await uploadOriginal(result.upload, file, progress);
         announce(status, `Verifying ${file.name}…`);
-        await postJSON(`/api/files/${result.file_id}/complete/`);
+        const completed = await postJSON(`/api/files/${result.file_id}/complete/`);
+        if (completed.available_to_client) announce(status, `${file.name} saved as version ${completed.version} and shared with the client.`);
       }
-      announce(status, 'Originals uploaded and verified.');
+      announce(status, category === 'draft' || category === 'final' ? 'Deliverables uploaded, verified, and shared with the client.' : 'Originals uploaded and verified.');
       window.location.reload();
     } catch (error) { announce(status, error.message, true); }
     finally { button.disabled = false; }

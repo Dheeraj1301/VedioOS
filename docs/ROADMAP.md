@@ -67,6 +67,8 @@ The first-version scope is all 28 priorities in original brief section 34, cover
 
 **Gate:** one real test project passes from paid assignment through draft → revision → revised version → client acceptance → final download. Another accepts the first draft. Prior versions survive and retain integrity. Editor submission alone cannot complete a project. Revision policy and access controls are enforced.
 
+**2026-10-03: immediate deliverable availability verified.** A successfully verified editor draft/final upload is atomically recorded as the next immutable project version and becomes downloadable by the owning client without administrator action. Multiple uploads retain filenames, categories, timestamps and version order; rejected or disallowed completions create no client-visible entry. Existing private signed-download and project-access checks remain in force.
+
 ## Phase 6 — Earnings and payout administration
 
 **Development flow verified 2026-09-17; production activation and database-level ledger immutability remain open.** See [Phase 6 evidence](PHASE_6.md). The connected project's coin settings remain disabled.

@@ -1,4 +1,6 @@
+import base64
 import uuid
+from datetime import timedelta
 from unittest.mock import patch
 
 from django.core.exceptions import PermissionDenied, ValidationError
@@ -168,6 +170,109 @@ class DeliveryTests(TestCase):
         self.assertEqual(self.client.post(path).status_code, 200)
         self.client.logout()
         self.assertEqual(self.client.post(path).status_code, 401)
+
+    @patch("core.views.inspect_object")
+    def test_completed_editor_upload_is_immediately_versioned_for_client(self, inspect):
+        transition(self.editor, self.project.pk, "start")
+        pending = File.objects.create(
+            project=self.project,
+            uploader=self.editor,
+            filename="client-cut.mov",
+            object_key=f"synthetic/{uuid.uuid4()}",
+            content_type="video/quicktime",
+            size_bytes=32,
+            sha256="b" * 64,
+            category="draft",
+            state="pending",
+            expires_at=timezone.now() + timedelta(minutes=5),
+        )
+        inspect.return_value = {
+            "ContentLength": 32,
+            "ContentType": "video/quicktime",
+            "ChecksumSHA256": base64.b64encode(bytes.fromhex("b" * 64)).decode(),
+            "VersionId": "stored-version",
+        }
+
+        self.client.force_login(self.editor)
+        response = self.client.post(f"/api/files/{pending.pk}/complete/")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["version"], 1)
+        self.assertTrue(response.json()["available_to_client"])
+
+        pending.refresh_from_db()
+        version = pending.projectversion
+        self.assertEqual(version.number, 1)
+        self.assertEqual(version.assignment.editor.user, self.editor)
+        self.assertEqual(self.project.versions.count(), 1)
+
+        second = File.objects.create(
+            project=self.project,
+            uploader=self.editor,
+            filename="final-cut.mkv",
+            object_key=f"synthetic/{uuid.uuid4()}",
+            content_type="video/x-matroska",
+            size_bytes=32,
+            sha256="d" * 64,
+            category="final",
+            state="pending",
+            expires_at=timezone.now() + timedelta(minutes=5),
+        )
+        inspect.return_value = {
+            "ContentLength": 32,
+            "ContentType": "video/x-matroska",
+            "ChecksumSHA256": base64.b64encode(bytes.fromhex("d" * 64)).decode(),
+            "VersionId": "stored-version-2",
+        }
+        response = self.client.post(f"/api/files/{second.pk}/complete/")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["version"], 2)
+        self.assertTrue(second.projectversion.is_final)
+
+        self.client.force_login(self.buyer.user)
+        page = self.client.get(f"/client/projects/{self.project.pk}/")
+        self.assertContains(page, "client-cut.mov")
+        self.assertContains(page, "Download version 1")
+        self.assertContains(page, "final-cut.mkv")
+        self.assertContains(page, "Download version 2")
+
+        self.client.force_login(self.admin)
+        files = self.client.get(f"/api/projects/{self.project.pk}/").json()["files"]
+        self.assertTrue({"client-cut.mov", "final-cut.mkv"}.issubset(
+            {item["filename"] for item in files}
+        ))
+
+    @patch("core.views.inspect_object")
+    def test_failed_automatic_submission_does_not_create_ready_client_entry(self, inspect):
+        pending = File.objects.create(
+            project=self.project,
+            uploader=self.editor,
+            filename="too-early.mp4",
+            object_key=f"synthetic/{uuid.uuid4()}",
+            content_type="video/mp4",
+            size_bytes=32,
+            sha256="c" * 64,
+            category="draft",
+            state="pending",
+            expires_at=timezone.now() + timedelta(minutes=5),
+        )
+        inspect.return_value = {
+            "ContentLength": 32,
+            "ContentType": "video/mp4",
+            "ChecksumSHA256": base64.b64encode(bytes.fromhex("c" * 64)).decode(),
+            "VersionId": "stored-version",
+        }
+
+        self.client.force_login(self.editor)
+        response = self.client.post(f"/api/files/{pending.pk}/complete/")
+        self.assertEqual(response.status_code, 409)
+        pending.refresh_from_db()
+        self.assertEqual(pending.state, "pending")
+        self.assertFalse(ProjectVersion.objects.filter(file=pending).exists())
+
+        self.client.force_login(self.buyer.user)
+        self.assertNotContains(
+            self.client.get(f"/client/projects/{self.project.pk}/"), "too-early.mp4"
+        )
 
     def test_submission_replay_and_unverified_file(self):
         version = self.submit()

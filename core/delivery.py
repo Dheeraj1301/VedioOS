@@ -34,7 +34,17 @@ def review_terms(project):
 
 
 @transaction.atomic
-def transition(user, project_id, action, *, file_id=None, version_id=None, note="", final=False):
+def transition(
+    user,
+    project_id,
+    action,
+    *,
+    file_id=None,
+    version_id=None,
+    note="",
+    final=False,
+    use_latest=False,
+):
     if not user.is_active:
         raise PermissionDenied
     locked_policy()
@@ -102,9 +112,9 @@ def transition(user, project_id, action, *, file_id=None, version_id=None, note=
             if existing.note != note.strip() or existing.is_final != final:
                 raise ValidationError("This file has already been submitted with different details.")
             return existing
-        if project.status not in {"editing", "revision_in_progress"}:
+        if project.status not in {"editing", "revision_in_progress", "awaiting_review"}:
             raise ValidationError("Start editing or the requested revision before submitting.")
-        if str(latest.pk if latest else "") != str(version_id or ""):
+        if not use_latest and str(latest.pk if latest else "") != str(version_id or ""):
             raise ValidationError("The version history changed. Reload the project.")
         if len(note.strip()) > 5000:
             raise ValidationError("Notes must be 5,000 characters or fewer.")

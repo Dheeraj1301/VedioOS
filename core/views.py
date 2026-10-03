@@ -11,7 +11,7 @@ from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import login, logout
 from django.core import signing
-from django.core.exceptions import PermissionDenied
+from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import IntegrityError, transaction
 from django.db.models import F, Q
 from django.http import JsonResponse
@@ -668,18 +668,38 @@ def complete_upload(request, file_id):
         return JsonResponse(
             {"error": "Storage integrity verification failed. File was not accepted."}, status=409
         )
-    with transaction.atomic():
-        updated = File.objects.filter(pk=file.pk, state="pending").update(
-            state="ready", storage_version=metadata["VersionId"], completed_at=timezone.now()
-        )
-        if updated:
-            audit(
-                request.user,
-                "file.upload_completed",
-                file.id,
-                {"bytes": file.size_bytes, "sha256": file.sha256},
+    try:
+        with transaction.atomic():
+            updated = File.objects.filter(pk=file.pk, state="pending").update(
+                state="ready", storage_version=metadata["VersionId"], completed_at=timezone.now()
             )
-    return JsonResponse({"file_id": str(file.id), "state": "ready"})
+            if updated:
+                audit(
+                    request.user,
+                    "file.upload_completed",
+                    file.id,
+                    {"bytes": file.size_bytes, "sha256": file.sha256},
+                )
+            version = None
+            if request.user.role == "editor" and file.category in ["draft", "final"]:
+                from .delivery import transition
+
+                transition(
+                    request.user,
+                    project.pk,
+                    "submit",
+                    file_id=file.pk,
+                    final=file.category == "final",
+                    use_latest=True,
+                )
+                version = file.projectversion
+    except ValidationError as exc:
+        return JsonResponse({"error": exc.messages[0]}, status=409)
+    response = {"file_id": str(file.id), "state": "ready"}
+    if version:
+        response["version"] = version.number
+        response["available_to_client"] = True
+    return JsonResponse(response)
 
 
 @require_POST

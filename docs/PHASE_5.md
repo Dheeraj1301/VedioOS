@@ -5,8 +5,8 @@ Implemented and verified on 2026-09-17 against the original brief's editor work,
 ## Workflow
 
 1. An approved current editor starts a verified paid assignment.
-2. The editor uploads an edited file through private direct storage. Clients cannot list or download unsubmitted outputs.
-3. The editor submits a verified upload with a client-visible note and optional final-candidate flag. Each submission has an immutable file reference, sequence number and assignment attribution.
+2. After starting editing or a requested revision, the editor uploads an edited file through private direct storage.
+3. Successful storage verification atomically submits the upload as the next client-visible version. Draft/final category, immutable file reference, sequence number and assignment attribution are retained; no administrator action is required.
 4. The client downloads the submitted version and either requests changes with timestamps/notes or explicitly accepts that version.
 5. A revision request consumes one allowance under the selected rule. The editor starts the revision and submits a new object/version. Earlier versions remain downloadable.
 6. Acceptance completes the project, releases its active-workload capacity and records exactly one acceptance. The first draft can be accepted without another upload. A final-candidate flag alone never completes a project.
@@ -23,7 +23,7 @@ Acceptance records `pending_policy` earnings status and the submitted assignment
 
 ## Security and transactions
 
-All actions recheck role, project membership, payment, state and saved terms on the server. The shared allocation policy lock precedes order and project locks so completion, capacity and reassignment serialize consistently. Network storage operations occur outside these transactions. Unique acceptance project/version relationships plus locked transitions prevent repeated or competing requests from double-completing work. Repeated identical submission/revision requests reuse their existing record; conflicting details fail.
+All actions recheck role, project membership, payment, state and saved terms on the server. The shared allocation policy lock precedes order and project locks so completion, capacity and reassignment serialize consistently. Network storage operations occur outside these transactions. Marking an editor output ready and creating its client-visible version share one database transaction, so failed verification or submission cannot expose a partial entry. Unique acceptance project/version relationships plus locked transitions prevent repeated or competing requests from double-completing work. Repeated identical submission/revision requests reuse their existing record; conflicting details fail.
 
 Downloads retain exact storage-version selection and temporary access URLs. No transcoding, replacement or public URLs were added. Review uses original downloads; embedded codec playback/derived previews are not implemented. Previously issued links expire under the existing 60-second access contract.
 
@@ -50,3 +50,5 @@ Browser verification requires running private local S3 and installed Edge. Unit/
 `reconcile_delivery` provides a separate read-only connected-environment check. It verifies contiguous version numbers, ready private output objects, submission assignment/uploader attribution, revision ownership and allowance snapshots, requested/addressed state, latest-version acceptance, client ownership and accepted agreement terms. It emits aggregate counts only and is included in the consolidated release evidence.
 
 On 2026-09-26 the connected reconciliation passed with zero submitted versions, revision requests or acceptances. The command changed no project, file or review record and did not access media bytes.
+
+On 2026-10-03 editor deliverable completion was tightened so each verified draft/final upload is immediately versioned and visible to the owning client, the current editor and administrators. Regression coverage verifies multiple ordered versions, original filenames, client/admin visibility, and rollback when automatic submission is not allowed. Historical versions remain immutable; replacement or deletion is intentionally not offered because the product rules require preserved version history.
