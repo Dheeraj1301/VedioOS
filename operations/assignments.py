@@ -9,6 +9,7 @@ from django.conf import settings
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import transaction
 from django.db.models import Count, Q
+from django.db.models.functions import Lower
 from django.utils import timezone
 
 from core.models import Order, Project
@@ -71,13 +72,33 @@ def open_workload(editor):
     return active_project_count(editor)
 
 
-def editor_roster():
-    return Editor.objects.select_related("user", "proficiency").annotate(
+EDITOR_SORTS = {
+    "newest": ("-created_at", "-id"),
+    "oldest": ("created_at", "id"),
+    "name_asc": (Lower("user__name").asc(), "login_id"),
+    "name_desc": (Lower("user__name").desc(), "-login_id"),
+    "id_asc": ("login_id", "id"),
+    "id_desc": ("-login_id", "-id"),
+}
+
+
+def editor_roster(search="", sort=None):
+    search = search.strip()[:200]
+    editors = Editor.objects.select_related("user", "proficiency").annotate(
         active_count=Count(
             "assignments",
             filter=Q(assignments__ended_at__isnull=True) & ~Q(assignments__project__status__in=TERMINAL),
         )
     )
+    if search:
+        editors = editors.filter(
+            Q(user__name__icontains=search)
+            | Q(user__email__icontains=search)
+            | Q(login_id__icontains=search)
+        )
+    if sort:
+        editors = editors.order_by(*EDITOR_SORTS.get(sort, EDITOR_SORTS["newest"]))
+    return editors
 
 
 def eligibility(editor, proficiency):

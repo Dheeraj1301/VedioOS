@@ -98,6 +98,8 @@ The first-version scope is all 28 priorities in original brief section 34, cover
 
 **2026-09-19: automated accessibility baseline verified.** Project workflows now provide keyboard skip navigation, live progress/error announcements, distinct download names and retryable rejected uploads. A manual assistive-technology audit remains before launch; see [Phase 7 evidence](PHASE_7.md).
 
+**2026-10-03: editor-roster search and sorting verified.** Admin Editors now supports case-insensitive partial name, email and editor-ID search with a 250 ms debounced URL-backed query, six mutually exclusive sort choices, combined search/sort state, reset controls and a dedicated no-match state. Existing approval, capacity and assignment operations remain unchanged.
+
 - Finish client/editor/admin status dashboards, unassigned/active/review/revision/completed queues, and deadline alerts.
 - Add durable role-scoped event notifications and retry handling.
 - Complete audit coverage and first-version project communication; support consultation request tracking without requiring built-in video calling.

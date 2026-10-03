@@ -1,6 +1,7 @@
 import hashlib
 import json
 import re
+from datetime import timedelta
 from io import StringIO
 from unittest.mock import patch
 
@@ -356,6 +357,68 @@ class FoundationTests(TestCase):
             for label, url in NAV[user.role]:
                 with self.subTest(label=label):
                     self.assertEqual(browser.get(url).status_code, 200)
+
+    def test_admin_editor_search_and_sort(self):
+        john_user = User.objects.create_user(
+            "johnny@example.test", PASSWORD, name="Johnny Rivera", role="editor"
+        )
+        john = Editor.objects.create(
+            user=john_user,
+            login_id="VED-ZZZ0000001",
+            phone="1111111111",
+            experience="Editing",
+            tools="Resolve",
+            portfolio="https://example.com/john",
+            previous_work="Reels",
+            expertise="Color",
+        )
+        priya_user = User.objects.create_user(
+            "priya@example.test", PASSWORD, name="Priya Shah", role="editor"
+        )
+        priya = Editor.objects.create(
+            user=priya_user,
+            login_id="VED-AAA0000001",
+            phone="2222222222",
+            experience="Editing",
+            tools="Premiere",
+            portfolio="https://example.com/priya",
+            previous_work="Shorts",
+            expertise="Motion",
+        )
+        Editor.objects.filter(pk=john.pk).update(created_at=timezone.now() - timedelta(days=2))
+        browser = self.auth(self.admin)
+
+        for query in ["jOh", "JOHNNY@EXAMPLE", "zzz000"]:
+            with self.subTest(query=query):
+                response = browser.get("/admin/editors/", {"q": query})
+                self.assertContains(response, "Johnny Rivera")
+                self.assertNotContains(response, "Priya Shah")
+
+        empty = browser.get("/admin/editors/", {"q": "no-such-editor"})
+        self.assertContains(empty, "No editors found.")
+
+        combined = browser.get("/admin/editors/", {"q": "example.test", "sort": "id_asc"})
+        content = combined.content.decode()
+        self.assertLess(content.index(priya.login_id), content.index(john.login_id))
+        self.assertContains(combined, 'value="id_asc" checked')
+        self.assertContains(combined, "Non-default sort active")
+
+        newest = browser.get("/admin/editors/").content.decode()
+        self.assertLess(newest.index("Priya Shah"), newest.index("Johnny Rivera"))
+
+    def test_admin_editor_search_controls_render(self):
+        response = self.auth(self.admin).get("/admin/editors/")
+        self.assertContains(response, "Search name, email, or editor ID")
+        for label in [
+            "Newest to Oldest",
+            "Oldest to Newest",
+            "Alphabetical (A → Z)",
+            "Alphabetical (Z → A)",
+            "Editor ID (Ascending)",
+            "Editor ID (Descending)",
+            "Clear / Reset",
+        ]:
+            self.assertContains(response, label)
 
     def test_cross_project_and_unassigned_editor_denied(self):
         for user in [self.other, self.editor_user]:

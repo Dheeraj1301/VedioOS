@@ -13,7 +13,7 @@ from core.payment_history import PAYMENT_STATUSES, payment_page
 from core.permissions import role_required, visible_projects
 
 from .analytics import operational_analytics
-from .assignments import approve_proficiency, editor_roster, open_workload
+from .assignments import EDITOR_SORTS, approve_proficiency, editor_roster, open_workload
 from .availability import availability_state
 from .calls import complete_call, schedule_call
 from .clients import CLIENT_STATES, client_page
@@ -201,13 +201,29 @@ def admin_page(request, page):
             },
         )
     if page == "editors":
+        editor_search = request.GET.get("q", "").strip()[:200]
+        editor_sort = request.GET.get("sort", "newest")
+        if editor_sort not in EDITOR_SORTS:
+            editor_sort = "newest"
+        editors = editor_roster(editor_search, editor_sort)
         return render(
             request,
             "operations/editors.html",
             {
                 "title": "Editors",
-                "editors": editor_roster(),
+                "editors": editors,
                 "levels": EditorProficiency.objects.all(),
+                "editor_search": editor_search,
+                "editor_sort": editor_sort,
+                "editor_sorts": [
+                    ("newest", "Newest to Oldest"),
+                    ("oldest", "Oldest to Newest"),
+                    ("name_asc", "Alphabetical (A → Z)"),
+                    ("name_desc", "Alphabetical (Z → A)"),
+                    ("id_asc", "Editor ID (Ascending)"),
+                    ("id_desc", "Editor ID (Descending)"),
+                ],
+                "default_editor_sort": next(iter(EDITOR_SORTS)),
             },
         )
     if page == "clients":

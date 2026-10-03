@@ -1,7 +1,26 @@
 {% extends 'workspace.html' %}
 {% block workspace_content %}
 <div class="page-heading"><div><p class="eyebrow">The people behind the edits</p><h1>Editors</h1><p class="muted">Review administrator-issued editor accounts and set the approved proficiency level.</p></div></div>
-<section class="panel"><ul class="data-list">
+<section class="panel">
+<form class="editor-roster-controls" method="get" action="/admin/editors/" data-editor-search-form>
+  <div class="editor-search-wrap">
+    <label class="visually-hidden" for="editor-search">Search editors</label>
+    <input id="editor-search" type="search" name="q" value="{{ editor_search }}" placeholder="Search name, email, or editor ID" autocomplete="off" data-editor-search>
+  </div>
+  <input type="hidden" name="sort" value="{{ editor_sort }}" data-editor-sort>
+  <details class="editor-filter" data-editor-filter>
+    <summary class="filter-button">Filter{% if editor_sort != default_editor_sort %}<span class="filter-active-dot" aria-label="Non-default sort active"></span>{% endif %}</summary>
+    <div class="filter-popover" role="group" aria-label="Sort editors">
+      {% for value,label in editor_sorts %}
+        <label><input type="radio" name="sort_choice" value="{{ value }}" {% if editor_sort == value %}checked{% endif %} data-editor-sort-choice><span>{{ label }}</span></label>
+      {% endfor %}
+      <a href="/admin/editors/" class="filter-reset">Clear / Reset</a>
+    </div>
+  </details>
+  {% if editor_search %}<a href="?sort={{ editor_sort|urlencode }}" class="search-clear" aria-label="Clear editor search">Clear search ×</a>{% endif %}
+</form>
+<p class="editor-results-summary" aria-live="polite">{% if editor_search %}Showing matches for “{{ editor_search }}”.{% else %}Showing all editors.{% endif %}</p>
+<ul class="data-list">
 {% for editor in editors %}
   <li>
     <h3>{{ editor.user.name }} <span class="badge">{% if editor.approved %}{{ editor.proficiency.get_level_display }}{% else %}Awaiting review{% endif %}</span></h3>
@@ -17,7 +36,7 @@
     <form class="approval-form" action="/admin/editors/{{ editor.id }}/approve/" method="post">{% csrf_token %}<label for="level-{{ editor.id }}">Admin proficiency decision</label><select id="level-{{ editor.id }}" name="proficiency" required><option value="">Select level</option>{% for level in levels %}<option value="{{ level.pk }}">{{ level.get_level_display }}</option>{% endfor %}</select><button class="button" type="submit">Approve level</button></form>
   </li>
 {% empty %}
-  <li class="empty-state"><h3>No editor accounts yet.</h3><p>Administrator-issued editor accounts will appear here for review.</p></li>
+  <li class="empty-state"><h3>{% if editor_search %}No editors found.{% else %}No editor accounts yet.{% endif %}</h3><p>{% if editor_search %}Try another name, email, or editor ID.{% else %}Administrator-issued editor accounts will appear here for review.{% endif %}</p></li>
 {% endfor %}
 </ul></section>
 {% endblock %}

@@ -82,6 +82,23 @@ document.querySelectorAll('.download-button').forEach(button => button.addEventL
   finally {button.disabled = false;}
 }));
 
+const editorSearchForm = document.querySelector('[data-editor-search-form]');
+if (editorSearchForm) {
+  const editorSearch = editorSearchForm.querySelector('[data-editor-search]');
+  const editorSort = editorSearchForm.querySelector('[data-editor-sort]');
+  let editorSearchTimer;
+  editorSearch.addEventListener('input', () => {
+    window.clearTimeout(editorSearchTimer);
+    editorSearchTimer = window.setTimeout(() => editorSearchForm.submit(), 250);
+  });
+  editorSearchForm.querySelectorAll('[data-editor-sort-choice]').forEach(choice => {
+    choice.addEventListener('change', () => {
+      editorSort.value = choice.value;
+      editorSearchForm.submit();
+    });
+  });
+}
+
 const newOrderForm = document.querySelector('[data-new-order-form]');
 if (newOrderForm) {
   const customFields = newOrderForm.querySelector('[data-custom-fields]');
