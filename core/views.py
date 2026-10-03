@@ -684,6 +684,8 @@ def complete_upload(request, file_id):
             if request.user.role == "editor" and file.category in ["draft", "final"]:
                 from .delivery import transition
 
+                if project.status in ["editor_assigned", "revision_requested"]:
+                    transition(request.user, project.pk, "start")
                 transition(
                     request.user,
                     project.pk,

@@ -173,7 +173,6 @@ class DeliveryTests(TestCase):
 
     @patch("core.views.inspect_object")
     def test_completed_editor_upload_is_immediately_versioned_for_client(self, inspect):
-        transition(self.editor, self.project.pk, "start")
         pending = File.objects.create(
             project=self.project,
             uploader=self.editor,
@@ -204,6 +203,8 @@ class DeliveryTests(TestCase):
         self.assertEqual(version.number, 1)
         self.assertEqual(version.assignment.editor.user, self.editor)
         self.assertEqual(self.project.versions.count(), 1)
+        self.project.refresh_from_db()
+        self.assertEqual(self.project.status, "awaiting_review")
 
         second = File.objects.create(
             project=self.project,
@@ -243,6 +244,8 @@ class DeliveryTests(TestCase):
 
     @patch("core.views.inspect_object")
     def test_failed_automatic_submission_does_not_create_ready_client_entry(self, inspect):
+        self.project.order.terms_snapshot = {}
+        self.project.order.save(update_fields=["terms_snapshot", "updated_at"])
         pending = File.objects.create(
             project=self.project,
             uploader=self.editor,

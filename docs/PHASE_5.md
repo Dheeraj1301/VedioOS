@@ -4,8 +4,8 @@ Implemented and verified on 2026-09-17 against the original brief's editor work,
 
 ## Workflow
 
-1. An approved current editor starts a verified paid assignment.
-2. After starting editing or a requested revision, the editor uploads an edited file through private direct storage.
+1. An approved current editor starts a verified paid assignment explicitly, or the first successfully verified deliverable starts it automatically.
+2. The editor uploads an edited file through private direct storage.
 3. Successful storage verification atomically submits the upload as the next client-visible version. Draft/final category, immutable file reference, sequence number and assignment attribution are retained; no administrator action is required.
 4. The client downloads the submitted version and either requests changes with timestamps/notes or explicitly accepts that version.
 5. A revision request consumes one allowance under the selected rule. The editor starts the revision and submits a new object/version. Earlier versions remain downloadable.
