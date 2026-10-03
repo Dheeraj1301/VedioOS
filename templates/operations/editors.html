@@ -7,6 +7,7 @@
     <label class="visually-hidden" for="editor-search">Search editors</label>
     <input id="editor-search" type="search" name="q" value="{{ editor_search }}" placeholder="Search name, email, or editor ID" autocomplete="off" data-editor-search>
   </div>
+  <button class="button small" type="submit">Search</button>
   <input type="hidden" name="sort" value="{{ editor_sort }}" data-editor-sort>
   <details class="editor-filter" data-editor-filter>
     <summary class="filter-button">Filter{% if editor_sort != default_editor_sort %}<span class="filter-active-dot" aria-label="Non-default sort active"></span>{% endif %}</summary>

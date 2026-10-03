@@ -409,6 +409,7 @@ class FoundationTests(TestCase):
     def test_admin_editor_search_controls_render(self):
         response = self.auth(self.admin).get("/admin/editors/")
         self.assertContains(response, "Search name, email, or editor ID")
+        self.assertContains(response, '<button class="button small" type="submit">Search</button>')
         for label in [
             "Newest to Oldest",
             "Oldest to Newest",
