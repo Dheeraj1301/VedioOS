@@ -26,16 +26,7 @@
 <ul class="data-list">
 {% for editor in editors %}
   <li>
-    <h3>{{ editor.user.name }} <span class="badge">{% if editor.approved %}{{ editor.proficiency.get_level_display }}{% else %}Awaiting review{% endif %}</span></h3>
-    <p>Editor ID: <strong>{{ editor.login_id }}</strong> · {{ editor.user.email }} · {{ editor.phone }}</p>
-    <p><strong>Experience:</strong> {{ editor.experience }}</p>
-    <p><strong>Tools:</strong> {{ editor.tools }}</p>
-    <p><strong>Expertise:</strong> {{ editor.expertise }}</p>
-    <p><strong>Previous work:</strong> {{ editor.previous_work }}</p>
-    <p><strong>Active projects:</strong> {{ editor.active_count }} / {{ editor.workload_capacity|default_if_none:"Not configured" }}</p>
-    <p><a class="text-link" href="{% url 'editor_operations' editor.id %}">Manage capacity & eligibility →</a></p>
-    <p><strong>Availability:</strong> <span class="availability-badge compact {% if editor.active_count %}is-unavailable{% else %}is-available{% endif %}">{% if editor.active_count %}🔴 Unavailable — {{ editor.active_count }} active project{{ editor.active_count|pluralize }}{% else %}✅ Available{% endif %}</span></p>
-    <p><a href="{{ editor.portfolio }}" target="_blank" rel="noopener noreferrer">View portfolio ↗</a></p>
+    <h3><a class="text-link" href="{% url 'editor_detail' editor.id %}">{{ editor.user.name }}</a> <span class="badge">{% if editor.approved %}{{ editor.proficiency.get_level_display }}{% else %}Awaiting review{% endif %}</span></h3>
     <form class="approval-form" action="/admin/editors/{{ editor.id }}/approve/" method="post">{% csrf_token %}<label for="level-{{ editor.id }}">Admin proficiency decision</label><select id="level-{{ editor.id }}" name="proficiency" required><option value="">Select level</option>{% for level in levels %}<option value="{{ level.pk }}">{{ level.get_level_display }}</option>{% endfor %}</select><button class="button" type="submit">Approve level</button></form>
   </li>
 {% empty %}

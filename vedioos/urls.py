@@ -77,6 +77,7 @@ urlpatterns = [
     path("admin/assignments/policy/", assignments.assignment_policy, name="assignment_policy"),
     path("admin/assignments/process/", assignments.run_queue, name="run_assignment_queue"),
     path("admin/assignments/<uuid:project_id>/", assignments.assignment_detail, name="assignment_detail"),
+    path("admin/editors/<uuid:editor_id>/", assignments.editor_detail, name="editor_detail"),
     path(
         "admin/editors/<uuid:editor_id>/operations/", assignments.editor_operations, name="editor_operations"
     ),

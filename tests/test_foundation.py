@@ -11,6 +11,7 @@ from django.db import IntegrityError, connection, transaction
 from django.test import Client as Browser
 from django.test import TestCase, override_settings
 from django.utils import timezone
+from django.utils.html import strip_tags
 
 from core.models import (
     Client,
@@ -375,7 +376,7 @@ class FoundationTests(TestCase):
         priya_user = User.objects.create_user(
             "priya@example.test", PASSWORD, name="Priya Shah", role="editor"
         )
-        priya = Editor.objects.create(
+        Editor.objects.create(
             user=priya_user,
             login_id="VED-AAA0000001",
             phone="2222222222",
@@ -399,7 +400,7 @@ class FoundationTests(TestCase):
 
         combined = browser.get("/admin/editors/", {"q": "example.test", "sort": "id_asc"})
         content = combined.content.decode()
-        self.assertLess(content.index(priya.login_id), content.index(john.login_id))
+        self.assertLess(content.index("Priya Shah"), content.index("Johnny Rivera"))
         self.assertContains(combined, 'value="id_asc" checked')
         self.assertContains(combined, "Non-default sort active")
 
@@ -420,6 +421,52 @@ class FoundationTests(TestCase):
             "Clear / Reset",
         ]:
             self.assertContains(response, label)
+
+    def test_admin_editor_list_is_minimal_and_detail_retains_profile(self):
+        browser = self.auth(self.admin)
+        response = browser.get("/admin/editors/", {"q": self.editor.login_id})
+        content = response.content.decode()
+        editor_cards = content.split('<ul class="data-list">', 1)[1].split("</ul>", 1)[0]
+        visible_text = strip_tags(editor_cards)
+        self.assertContains(response, f'href="/admin/editors/{self.editor.id}/"')
+        self.assertContains(response, "Editor")
+        self.assertContains(response, "Awaiting review")
+        self.assertContains(response, "Admin proficiency decision")
+        self.assertContains(response, "Select level")
+        self.assertContains(response, "Approve level")
+        for hidden_value in [
+            self.editor.login_id,
+            self.editor_user.email,
+            self.editor.phone,
+            self.editor.experience,
+            self.editor.tools,
+            self.editor.expertise,
+            self.editor.previous_work,
+            "Active projects",
+            "Availability",
+            "View portfolio",
+            "Manage capacity & eligibility",
+        ]:
+            self.assertNotIn(hidden_value, visible_text)
+
+        detail = browser.get(f"/admin/editors/{self.editor.id}/")
+        self.assertEqual(detail.status_code, 200)
+        for detail_value in [
+            self.editor.login_id,
+            self.editor_user.email,
+            self.editor.phone,
+            self.editor.experience,
+            self.editor.tools,
+            self.editor.expertise,
+            self.editor.previous_work,
+            "Active projects",
+            "Availability",
+            "View portfolio",
+            "Manage capacity & eligibility",
+        ]:
+            self.assertContains(detail, detail_value)
+
+        self.assertEqual(self.auth(self.owner).get(f"/admin/editors/{self.editor.id}/").status_code, 403)
 
     def test_cross_project_and_unassigned_editor_denied(self):
         for user in [self.other, self.editor_user]:

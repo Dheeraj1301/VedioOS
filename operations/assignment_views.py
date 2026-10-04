@@ -20,6 +20,7 @@ from .assignments import (
     process_queue,
     save_policy,
 )
+from .availability import availability_state
 from .models import (
     AssignmentPolicy,
     AssignmentQueue,
@@ -77,6 +78,24 @@ def assignment_policy(request):
             "title": "Assignment policy",
             "form": form,
             "description": "Choose operating rules explicitly. Automatic allocation runs when you process the queue or run the worker command; it does not start a background service.",
+        },
+    )
+
+
+@role_required("admin")
+def editor_detail(request, editor_id):
+    editor = get_object_or_404(
+        Editor.objects.select_related("user", "proficiency", "approved_by"), pk=editor_id
+    )
+    availability = availability_state(editor)
+    return render(
+        request,
+        "assignments/editor_detail.html",
+        {
+            "title": editor.user.name,
+            "editor": editor,
+            "availability": availability,
+            "active_count": availability["active_count"],
         },
     )
 
