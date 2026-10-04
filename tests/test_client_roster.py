@@ -1,6 +1,7 @@
 from django.test import Client as Browser
 from django.test import TestCase
 from django.utils import timezone
+from django.utils.html import strip_tags
 
 from core.models import Client, Order, Project, User
 from operations.clients import client_page
@@ -84,5 +85,50 @@ class ClientRosterTests(TestCase):
         response = admin.get("/admin/clients/", {"q": "Active", "state": "active"})
         self.assertContains(response, "Client operations")
         self.assertContains(response, "Active Client")
-        self.assertContains(response, "Confirmed orders")
+        self.assertContains(response, "active-client@example.test")
+        self.assertContains(response, f'href="/admin/clients/{self.active.id}/"')
+        visible_cards = strip_tags(
+            response.content.decode().split('<ul class="data-list">', 1)[1].split("</ul>", 1)[0]
+        )
+        for hidden_value in [
+            "Joined",
+            "Projects",
+            "Open work",
+            "Completed",
+            "Confirmed orders",
+            "Open support",
+        ]:
+            self.assertNotIn(hidden_value, visible_cards)
         self.assertNotContains(response, "Awaiting Client")
+
+        for state in ("all", "active", "awaiting_verification", "inactive"):
+            with self.subTest(state=state):
+                filtered = admin.get("/admin/clients/", {"state": state})
+                self.assertEqual(filtered.status_code, 200)
+                self.assertContains(filtered, "Showing:")
+
+    def test_admin_client_detail_retains_metadata_removed_from_roster(self):
+        admin = Browser()
+        admin.force_login(self.admin)
+        response = admin.get(f"/admin/clients/{self.active.id}/")
+        self.assertEqual(response.status_code, 200)
+        for detail_value in [
+            "Active Client",
+            "active-client@example.test",
+            "Joined:",
+            "Projects:",
+            "Open work:",
+            "Completed:",
+            "Confirmed orders:",
+            "Open support:",
+            "Open work",
+            "Completed work",
+            "Open support",
+            str(self.active.id),
+        ]:
+            self.assertContains(response, detail_value)
+
+        self.assertEqual(Browser().get(f"/admin/clients/{self.active.id}/").status_code, 302)
+        client_browser = Browser()
+        client_browser.force_login(self.active_user)
+        self.assertEqual(client_browser.get(f"/admin/clients/{self.active.id}/").status_code, 403)

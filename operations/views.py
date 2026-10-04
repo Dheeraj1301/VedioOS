@@ -17,7 +17,7 @@ from .analytics import operational_analytics
 from .assignments import EDITOR_SORTS, approve_proficiency, editor_roster, open_workload
 from .availability import availability_state
 from .calls import complete_call, schedule_call
-from .clients import CLIENT_STATES, client_page
+from .clients import CLIENT_STATES, client_page, client_record
 from .features import feature_controls
 from .models import CallRequest, Editor, EditorAssignment, EditorProficiency, SupportRequest
 from .orders import ORDER_PAYMENT_STATES, PROJECT_WORKFLOW_STATES, order_page
@@ -46,6 +46,21 @@ def admin_order_detail(request, order_id):
             "project": order.project,
             "payments": order.payments.order_by("-created_at"),
             "payment_attempt_count": order.payments.count(),
+        },
+    )
+
+
+@role_required("admin")
+def admin_client_detail(request, client_id):
+    client = client_record(client_id)
+    return render(
+        request,
+        "operations/client_detail.html",
+        {
+            "title": client.user.name,
+            "client_profile": client,
+            "projects": client.projects.select_related("order").order_by("-created_at"),
+            "support_requests": client.support_requests.order_by("-created_at"),
         },
     )
 

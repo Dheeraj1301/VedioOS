@@ -5,6 +5,7 @@ from datetime import datetime
 
 from django.db.models import Count, Max, Q
 from django.http import Http404
+from django.shortcuts import get_object_or_404
 from django.utils import timezone
 
 from core.models import Client, Project
@@ -24,13 +25,8 @@ OPEN_PROJECT_STATES = tuple(
 OPEN_SUPPORT_STATES = (SupportRequest.Status.OPEN, SupportRequest.Status.IN_PROGRESS)
 
 
-def client_page(before=None, state="all", search="", size=50):
-    """Return a stable, annotated client page plus normalized filters."""
-    search = search.strip() if isinstance(search, str) else ""
-    if len(search) > 120:
-        raise Http404("Invalid client search.")
-
-    clients = (
+def client_roster():
+    return (
         Client.objects.select_related("user")
         .annotate(
             project_count=Count("projects", distinct=True),
@@ -52,8 +48,20 @@ def client_page(before=None, state="all", search="", size=50):
             ),
             last_project_at=Max("projects__created_at"),
         )
-        .order_by("-created_at", "-id")
     )
+
+
+def client_record(client_id):
+    return get_object_or_404(client_roster(), pk=client_id)
+
+
+def client_page(before=None, state="all", search="", size=50):
+    """Return a stable, annotated client page plus normalized filters."""
+    search = search.strip() if isinstance(search, str) else ""
+    if len(search) > 120:
+        raise Http404("Invalid client search.")
+
+    clients = client_roster().order_by("-created_at", "-id")
     if search:
         clients = clients.filter(Q(user__name__icontains=search) | Q(user__email__icontains=search))
 
