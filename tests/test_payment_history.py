@@ -1,5 +1,6 @@
 from django.test import Client as Browser
 from django.test import TestCase
+from django.utils.html import strip_tags
 
 from core.models import Client, Order, Payment, Project, User
 from operations.models import Admin
@@ -82,6 +83,52 @@ class PaymentHistoryTests(TestCase):
         self.assertTrue(
             any(payment.provider_reference == "other-payment" for payment in response.context["payments"])
         )
+
+    def test_admin_ledger_rows_show_only_essential_payment_fields(self):
+        browser = self.browser(self.admin)
+        records = {}
+        for status in ("pending", "confirmed", "failed", "refunded"):
+            records[status] = Payment.objects.create(
+                order=self.order,
+                provider=f"hidden-method-{status}",
+                provider_reference=f"hidden-reference-{status}",
+                amount_minor=4321,
+                currency="INR",
+                status=status,
+            )
+
+        for status, payment in records.items():
+            with self.subTest(status=status):
+                response = browser.get("/admin/payments/", {"status": status})
+                visible_text = strip_tags(response.content.decode())
+                self.assertContains(response, "Ledger project")
+                self.assertContains(response, status)
+                if status == "confirmed":
+                    self.assertContains(response, "View receipt")
+                self.assertContains(response, "Order")
+                self.assertNotIn("ledger-owner@example.test", visible_text)
+                self.assertNotIn("INR 43.21", visible_text)
+                self.assertNotIn(f"hidden-method-{status}", visible_text)
+                self.assertNotIn(f"hidden-reference-{status}", visible_text)
+                self.assertNotIn(str(payment.id), visible_text)
+
+        all_response = browser.get("/admin/payments/", {"status": "all"})
+        all_text = strip_tags(all_response.content.decode())
+        for status, payment in records.items():
+            self.assertNotIn(f"hidden-method-{status}", all_text)
+            self.assertNotIn(f"hidden-reference-{status}", all_text)
+            self.assertNotIn(str(payment.id), all_text)
+
+    def test_order_detail_retains_payment_metadata_removed_from_ledger(self):
+        payment = Payment.objects.get(provider_reference="other-payment")
+        response = self.browser(self.admin).get(f"/orders/{payment.order.project_id}/")
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Other")
+        self.assertContains(response, "ledger-other@example.test")
+        self.assertContains(response, "INR 9.99")
+        self.assertContains(response, "synthetic")
+        self.assertContains(response, "other-payment")
+        self.assertContains(response, str(payment.id))
 
     def test_invalid_cursor_is_rejected(self):
         self.assertEqual(
