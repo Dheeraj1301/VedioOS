@@ -127,6 +127,13 @@ class OrderRosterTests(TestCase):
         ]:
             self.assertContains(response, detail_value)
 
+        project_url = f"/admin/projects/{self.paid.project_id}/"
+        self.assertContains(response, f'href="{project_url}"')
+        project_response = admin.get(project_url)
+        self.assertEqual(project_response.status_code, 200)
+        self.assertContains(project_response, "Project details")
+        self.assertContains(project_response, "Paid editing order")
+
         self.assertEqual(Browser().get(f"/admin/orders/{self.paid.id}/").status_code, 302)
         client = Browser()
         client.force_login(self.client_user)

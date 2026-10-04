@@ -110,6 +110,18 @@ Verification required:
 Supersedes:
 ```
 
+## 2026-10-04 — Admin project access through orders
+
+Status: approved
+
+Owner / source of explicit decision: Hamsa, admin dashboard change request.
+
+Decision: remove the standalone Projects entry and Project Operations list from the admin dashboard. Keep the existing protected project-detail route unchanged because the admin Order detail page uses it for the **Open project** flow. Administrators access project details through Orders rather than a separate project roster.
+
+Affected requirements and files: supersedes only the standalone admin Projects navigation/list portion of Day 1 D3; project authorization, detail content, Orders behavior, assignment operations, and client/editor project access remain unchanged.
+
+Verification required: the admin sidebar omits Projects, `/admin/projects/` returns not found for an authenticated admin, and Order detail plus `/admin/projects/<project-id>/` continue to render for an authorized admin.
+
 Only mark a business choice approved when supported by an explicit owner decision. Contributors can document routine technical choices within authorized scope, identifying them as implementation decisions. A proposal is not a production default.
 
 ## 2026-09-17 — Earnings implementation (D10 remains open)

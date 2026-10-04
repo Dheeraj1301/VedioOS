@@ -21,7 +21,6 @@ from .clients import CLIENT_STATES, client_page, client_record
 from .features import feature_controls
 from .models import CallRequest, Editor, EditorAssignment, EditorProficiency, SupportRequest
 from .orders import ORDER_PAYMENT_STATES, PROJECT_WORKFLOW_STATES, order_page
-from .projects import PROJECT_QUEUES, project_page
 
 
 def editor_register(request):
@@ -201,25 +200,6 @@ def admin_page(request, page):
             request,
             "operations/analytics.html",
             {"title": "Analytics", **operational_analytics()},
-        )
-    if page == "projects":
-        projects, older_cursor, queue, project_search = project_page(
-            request.user,
-            request.GET.get("before"),
-            request.GET.get("queue", "all"),
-            request.GET.get("q", ""),
-        )
-        return render(
-            request,
-            "operations/projects.html",
-            {
-                "title": "Projects",
-                "projects": projects,
-                "older_project_cursor": older_cursor,
-                "admin_queue": queue,
-                "project_search": project_search,
-                "project_queues": PROJECT_QUEUES,
-            },
         )
     if page == "calls":
         return render(

@@ -3,7 +3,6 @@ from datetime import timedelta
 from django.test import Client as Browser
 from django.test import TestCase
 from django.utils import timezone
-from django.utils.html import strip_tags
 
 from core.models import Client, Order, Project, User
 from operations.models import Admin, Editor, EditorAssignment
@@ -78,27 +77,14 @@ class ProjectRosterTests(TestCase):
         admin.force_login(self.admin)
         self.assertEqual(admin.get("/admin/projects/", {"before": "invalid"}).status_code, 404)
 
-    def test_admin_page_is_role_protected_and_renders_operations(self):
+    def test_admin_project_list_is_removed_but_order_project_detail_remains(self):
         self.assertEqual(Browser().get("/admin/projects/").status_code, 302)
         client = Browser()
         client.force_login(self.client_user)
         self.assertEqual(client.get("/admin/projects/").status_code, 403)
         admin = Browser()
         admin.force_login(self.admin)
-        response = admin.get("/admin/projects/", {"queue": "overdue"})
-        visible_text = strip_tags(response.content.decode())
-        self.assertContains(response, "Project operations")
-        self.assertContains(response, "Overdue unassigned project")
-        self.assertContains(response, "Awaiting editor assignment")
-        self.assertContains(response, "Confirmed")
-        self.assertNotIn("Project Client", visible_text)
-        self.assertNotIn("project-client@example.test", visible_text)
-        self.assertNotIn(str(self.overdue.id), visible_text)
-        self.assertNotIn("Current editor", visible_text)
-        self.assertNotIn("Ready files", visible_text)
-        self.assertNotIn("Open revisions", visible_text)
-        self.assertNotIn("Deadline", visible_text)
-        self.assertNotContains(response, "Assigned editing project")
+        self.assertEqual(admin.get("/admin/projects/", {"queue": "overdue"}).status_code, 404)
 
         detail = admin.get(f"/admin/projects/{self.overdue.id}/")
         self.assertContains(detail, "Project details")
@@ -109,3 +95,8 @@ class ProjectRosterTests(TestCase):
         self.assertContains(detail, "Ready files")
         self.assertContains(detail, "Open revisions")
         self.assertContains(detail, "Deadline")
+
+    def test_admin_sidebar_does_not_include_projects(self):
+        from core.context import NAV
+
+        self.assertNotIn(("Projects", "/admin/projects/"), NAV["admin"])

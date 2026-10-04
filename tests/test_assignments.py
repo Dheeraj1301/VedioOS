@@ -60,7 +60,6 @@ class AssignmentTests(TestCase):
         self.assertFalse(Notification.objects.filter(project__in=[future, unpaid]).exists())
         self.client.force_login(self.admin)
         self.assertContains(self.client.get("/admin/"), "Past recorded deadline")
-        self.assertContains(self.client.get("/admin/projects/?queue=unassigned"), overdue.title)
 
     def test_unpaid_and_forged_payment_state_rejected(self):
         project = paid_project(self.client_profile, paid=False)
