@@ -462,9 +462,9 @@ class FoundationTests(TestCase):
             "Active projects",
             "Availability",
             "View portfolio",
-            "Manage capacity & eligibility",
         ]:
             self.assertContains(detail, detail_value)
+        self.assertNotContains(detail, "Manage capacity &amp; eligibility")
 
         self.assertEqual(self.auth(self.owner).get(f"/admin/editors/{self.editor.id}/").status_code, 403)
 
