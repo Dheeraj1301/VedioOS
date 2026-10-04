@@ -512,6 +512,10 @@ def project_detail(request, project_id, area):
             "current_assignment": project.assignments.filter(ended_at__isnull=True)
             .select_related("editor__user")
             .first(),
+            "ready_file_count": project.files.filter(state="ready").count(),
+            "open_revision_count": project.revisions.filter(
+                status__in=["requested", "in_progress"]
+            ).count(),
         },
     )
 
