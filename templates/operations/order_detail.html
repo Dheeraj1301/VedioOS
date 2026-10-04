@@ -1,0 +1,9 @@
+{% extends 'workspace.html' %}{% load money %}{% block workspace_content %}
+<div class="page-heading"><div><p class="eyebrow">Admin / Order</p><h1>{{ project.title }}</h1><p class="muted">Order {{ order.id }}</p></div><div><span class="badge">{{ order.get_payment_status_display }}</span> <span class="badge">{{ project.get_status_display }}</span></div></div>
+<div class="project-columns"><div>
+  <section class="panel detail-panel"><h2>Order details</h2><p><strong>Order ID:</strong> {{ order.id }}</p><p><strong>Client:</strong> {{ project.client.user.name }} · {{ project.client.user.email }}</p><p><strong>Created:</strong> {{ order.created_at|date:"M j, Y H:i" }} UTC</p><p><strong>Order type:</strong> {{ order.get_kind_display }}</p><p><strong>Plan:</strong> {{ order.plan.name|default:"Not selected" }}</p><p><strong>Order total:</strong> {{ order.total_minor|money:order.currency }}</p><p><strong>Payment attempts:</strong> {{ payment_attempt_count }}</p><p><strong>Paid at:</strong> {% if project.payment_completed_at %}{{ project.payment_completed_at|date:"M j, Y H:i" }} UTC{% else %}Not paid{% endif %}</p><p><a class="text-link" href="{% url 'admin_project' project.id %}">Open project →</a></p></section>
+  {% if order.terms_snapshot %}{% with snapshot=order.terms_snapshot %}{% include 'commerce/breakdown.html' %}{% endwith %}{% endif %}
+</div><aside>
+  <section class="panel detail-panel"><h2>Payment attempts</h2>{% for payment in payments %}<div class="file-row"><div><strong>{{ payment.amount_minor|money:payment.currency }}</strong><p>{{ payment.get_status_display|default:payment.status }} · {{ payment.created_at|date:"M j, Y H:i" }} UTC</p><p>{{ payment.provider }} · {{ payment.provider_reference }}</p></div>{% if payment.status == 'confirmed' %}<a class="text-link" href="{% url 'payment_receipt' payment.id %}">View receipt</a>{% endif %}</div>{% empty %}<p>No payment attempts recorded.</p>{% endfor %}</section>
+</aside></div>
+{% endblock %}

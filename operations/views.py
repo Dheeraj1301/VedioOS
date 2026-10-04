@@ -9,6 +9,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.views.decorators.http import require_GET, require_POST
 
+from core.models import Order
 from core.payment_history import PAYMENT_STATUSES, payment_page
 from core.permissions import role_required, visible_projects
 
@@ -28,6 +29,25 @@ def editor_register(request):
         return redirect("dashboard")
     messages.info(request, "Editor accounts are issued by an administrator. Sign in with your editor ID.")
     return redirect("login")
+
+
+@role_required("admin")
+def admin_order_detail(request, order_id):
+    order = get_object_or_404(
+        Order.objects.select_related("project__client__user", "plan").prefetch_related("payments"),
+        pk=order_id,
+    )
+    return render(
+        request,
+        "operations/order_detail.html",
+        {
+            "title": order.project.title,
+            "order": order,
+            "project": order.project,
+            "payments": order.payments.order_by("-created_at"),
+            "payment_attempt_count": order.payments.count(),
+        },
+    )
 
 
 @role_required("editor")

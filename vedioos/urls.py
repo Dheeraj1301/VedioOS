@@ -73,6 +73,7 @@ urlpatterns = [
         name="support_status",
     ),
     path("admin/calls/<uuid:call_id>/action/", ops.call_action, name="call_action"),
+    path("admin/orders/<uuid:order_id>/", ops.admin_order_detail, name="admin_order_detail"),
     path("admin/assignments/", assignments.assignments, name="assignments"),
     path("admin/assignments/policy/", assignments.assignment_policy, name="assignment_policy"),
     path("admin/assignments/process/", assignments.run_queue, name="run_assignment_queue"),

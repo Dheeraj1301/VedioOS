@@ -1,5 +1,6 @@
 from django.test import Client as Browser
 from django.test import TestCase
+from django.utils.html import strip_tags
 
 from core.models import Client, Order, Payment, Project, User
 from operations.models import Admin
@@ -81,5 +82,52 @@ class OrderRosterTests(TestCase):
         )
         self.assertContains(response, "Order operations")
         self.assertContains(response, "Paid editing order")
-        self.assertContains(response, "Payment attempts")
+        self.assertContains(response, "INR 120.00")
+        self.assertContains(response, "Confirmed")
+        self.assertContains(response, "Editing in progress")
+        visible_cards = strip_tags(
+            response.content.decode().split('<ul class="data-list">', 1)[1].split("</ul>", 1)[0]
+        )
+        for hidden_value in [
+            "Order Client",
+            "order-client@example.test",
+            "Created",
+            "Payment attempts",
+            "Paid at",
+            "Open project",
+            str(self.paid.id),
+        ]:
+            self.assertNotIn(hidden_value, visible_cards)
         self.assertNotContains(response, "Order state 1")
+
+        for payment_status in ("pending", "confirmed", "failed", "refunded", "all"):
+            with self.subTest(payment_status=payment_status):
+                filtered = admin.get("/admin/orders/", {"payment": payment_status})
+                self.assertEqual(filtered.status_code, 200)
+                self.assertContains(filtered, "Order total")
+
+    def test_admin_order_detail_retains_metadata_removed_from_roster(self):
+        admin = Browser()
+        admin.force_login(self.admin)
+        response = admin.get(f"/admin/orders/{self.paid.id}/")
+        self.assertEqual(response.status_code, 200)
+        for detail_value in [
+            "Paid editing order",
+            "Order Client",
+            "order-client@example.test",
+            "Created:",
+            "Order type:",
+            "Plan:",
+            "INR 120.00",
+            "Payment attempts:",
+            "Paid at:",
+            "Open project",
+            str(self.paid.id),
+            "order-roster-confirmed",
+        ]:
+            self.assertContains(response, detail_value)
+
+        self.assertEqual(Browser().get(f"/admin/orders/{self.paid.id}/").status_code, 302)
+        client = Browser()
+        client.force_login(self.client_user)
+        self.assertEqual(client.get(f"/admin/orders/{self.paid.id}/").status_code, 403)
