@@ -248,7 +248,9 @@ class AssignmentTests(TestCase):
         project = self.queue()
         self.client.force_login(self.admin)
         self.assertContains(self.client.get("/admin/assignments/?status=waiting"), project.title)
-        self.assertContains(self.client.get(f"/admin/assignments/{project.id}/"), "Review complexity")
+        assignment_detail = self.client.get(f"/admin/assignments/{project.id}/")
+        self.assertContains(assignment_detail, "Review complexity")
+        self.assertNotContains(assignment_detail, "View brief &amp; files")
         self.assertContains(
             self.client.get(f"/admin/editors/{self.editors[0].id}/operations/"), "Maximum concurrent"
         )
