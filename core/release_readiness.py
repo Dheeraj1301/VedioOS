@@ -34,6 +34,8 @@ def current_release_config():
         "database_options": database.get("OPTIONS", {}),
         "storage_endpoint": settings.S3_ENDPOINT_URL,
         "storage_bucket": settings.S3_BUCKET,
+        "supabase_auth_url": settings.SUPABASE_AUTH_URL,
+        "supabase_auth_key_configured": bool(settings.SUPABASE_AUTH_PUBLISHABLE_KEY),
         "email_backend": settings.EMAIL_BACKEND,
         "default_from_email": settings.DEFAULT_FROM_EMAIL,
         "payment_mode": settings.PAYMENT_MODE,
@@ -95,10 +97,10 @@ def release_findings(config, policies):
         block("storage_tls", "Private object storage must use HTTPS.")
     if not config["storage_bucket"]:
         block("storage_bucket", "A private production storage bucket is required.")
-    if config["email_backend"] in DEVELOPMENT_EMAIL_BACKENDS:
-        block("email_backend", "Use a production email backend for account verification.")
-    if "localhost" in config["default_from_email"].lower():
-        block("sender_domain", "DEFAULT_FROM_EMAIL must use an approved sending domain.")
+    if not str(config["supabase_auth_url"]).lower().startswith("https://") or not config[
+        "supabase_auth_key_configured"
+    ]:
+        block("supabase_auth", "Configure the selected Supabase Auth project and publishable key.")
     if config["payment_mode"] == "sandbox":
         block("payment_sandbox", "The development payment sandbox cannot run in production.")
     if config["payout_mode"] == "sandbox":
@@ -111,6 +113,8 @@ def release_findings(config, policies):
         block("uploads_disabled", "A validated upload policy must be enabled.")
     if config["notification_email_enabled"] and config["email_backend"] in DEVELOPMENT_EMAIL_BACKENDS:
         block("notification_email_backend", "External notifications require a production email backend.")
+    if config["notification_email_enabled"] and "localhost" in config["default_from_email"].lower():
+        block("notification_sender_domain", "External notifications require an approved sender domain.")
     if config["payment_mode"] == "disabled":
         warn("payments_disabled", "Real checkout is unavailable in this release configuration.")
     if config["payout_mode"] == "disabled":

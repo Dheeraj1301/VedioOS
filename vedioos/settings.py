@@ -9,6 +9,12 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 load_dotenv(BASE_DIR / ".env")
 DEBUG = os.getenv("DEBUG", "false").lower() == "true"
 SUPABASE_PROJECT_REF = os.getenv("SUPABASE_PROJECT_REF", "")
+SUPABASE_AUTH_URL = os.getenv(
+    "SUPABASE_AUTH_URL",
+    f"https://{SUPABASE_PROJECT_REF}.supabase.co" if SUPABASE_PROJECT_REF else "",
+)
+SUPABASE_AUTH_PUBLISHABLE_KEY = os.getenv("SUPABASE_AUTH_PUBLISHABLE_KEY", "")
+SUPABASE_AUTH_TIMEOUT_SECONDS = int(os.getenv("SUPABASE_AUTH_TIMEOUT_SECONDS", "10"))
 SHARED_PREVIEW_REQUIRED = os.getenv("SHARED_PREVIEW_REQUIRED", "false").lower() == "true"
 SECRET_KEY = os.getenv("SECRET_KEY", "")
 if not SECRET_KEY:
@@ -96,6 +102,15 @@ if SHARED_PREVIEW_REQUIRED:
         )
     if os.getenv("DATABASE_SCHEMA", "vedioos") != "vedioos":
         raise ImproperlyConfigured("Shared previews must use the private vedioos schema.")
+    parsed_auth_url = urlparse(SUPABASE_AUTH_URL)
+    if (
+        parsed_auth_url.scheme != "https"
+        or parsed_auth_url.hostname != f"{SUPABASE_PROJECT_REF}.supabase.co"
+        or not SUPABASE_AUTH_PUBLISHABLE_KEY
+    ):
+        raise ImproperlyConfigured(
+            "SHARED_PREVIEW_REQUIRED needs the selected project's Supabase Auth URL and publishable key."
+        )
 AUTH_USER_MODEL = "core.User"
 AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
@@ -125,10 +140,6 @@ STATIC_ROOT = BASE_DIR / "staticfiles"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 EMAIL_BACKEND = os.getenv("EMAIL_BACKEND", "django.core.mail.backends.console.EmailBackend")
 DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL", "VedioOS <no-reply@localhost>")
-EMAIL_VERIFICATION_MAX_AGE = int(os.getenv("EMAIL_VERIFICATION_MAX_AGE", "86400"))
-EMAIL_OTP_MAX_AGE_SECONDS = int(os.getenv("EMAIL_OTP_MAX_AGE_SECONDS", "600"))
-EMAIL_OTP_RESEND_SECONDS = int(os.getenv("EMAIL_OTP_RESEND_SECONDS", "60"))
-EMAIL_OTP_MAX_ATTEMPTS = int(os.getenv("EMAIL_OTP_MAX_ATTEMPTS", "5"))
 EMAIL_HOST = os.getenv("EMAIL_HOST", "")
 EMAIL_PORT = int(os.getenv("EMAIL_PORT", "587"))
 EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER", "")

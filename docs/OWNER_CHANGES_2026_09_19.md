@@ -13,7 +13,7 @@ Status: requested interface changes are implemented. Production commercial activ
 - Raw/source uploads and inspiration-video uploads use distinct private controls and retain distinct file categories.
 - Music preference removes the duplicate “already have a song” option and adds a combined provide-a-song plus editor-suggestions option.
 - The new-edit screen warns clients to upload only content they may share and to omit passwords/unrelated personal documents.
-- New client accounts remain inactive until a six digit email OTP is consumed. The 2026-09-27 revision stores only hashed, expiring challenges in Supabase, replaces codes on resend, limits attempts, and keeps resend responses non-enumerating. Delivery uses a replaceable email backend.
+- New client accounts remain inactive until a six digit email OTP is consumed. The original 2026-09-27 implementation stored hashed challenges in the private application schema. The 2026-10-06 owner change delegates new client OTP generation, delivery and validation to Supabase Auth while preserving the existing VedioOS user/profile, session, role and editor-ID behavior. Resend responses remain non-enumerating.
 - The new-edit screen presents three administrator-configured plan slots and a fourth custom option. Unpublished slots are clearly unavailable.
 - Custom briefs persist colour grading, quality enhancement, four reel-duration bands, wording yes/no and conditional font direction. Font-inspiration uploads use a separate private category and require that choice on the saved project.
 - Active monthly creator packages appear in a separate section; sales remain closed until D13 terms are approved.

@@ -146,6 +146,20 @@ Affected requirements and files: client creative-brief UI and `ProjectForm`. Mus
 
 Verification required: both labels are absent, forged values remain false on a new project, Save and Proceed still creates the draft, and no migration is generated.
 
+## 2026-10-06 — Supabase Auth owns client email OTP verification
+
+Status: approved
+
+Owner / source of explicit decision: Hamsa, request to use Supabase as the email authenticator while keeping all other application behavior unchanged.
+
+Decision: delegate new client email OTP generation, delivery, resend throttling and validation to the selected Supabase Auth project. Keep the existing private VedioOS user/profile records, passwords, Django application sessions, role authorization, editor-ID login and administrator login unchanged. Activate a matching inactive client only after Supabase Auth verifies the submitted code and returns the same normalized email. Do not persist returned Supabase access or refresh tokens. Retain the old challenge table without new writes; dropping it is outside this change.
+
+Rationale: use the requested hosted verification service without redesigning every protected relation or changing established editor/admin authentication. Supabase Auth is an external verification boundary, not the source of application roles or project authorization.
+
+Affected requirements and files: client registration, resend and verification endpoints; Supabase Auth project/template configuration; `core.email_verification`; environment settings and verification tests. No database migration or rewrite of existing users is required.
+
+Verification required: mocked request/response and failure-path tests, client activation only for a matching verified email, no local challenge creation, unchanged login/logout and role isolation, hosted OTP template containing `{{ .Token }}`, custom SMTP delivery test, and live inbox confirmation.
+
 Only mark a business choice approved when supported by an explicit owner decision. Contributors can document routine technical choices within authorized scope, identifying them as implementation decisions. A proposal is not a production default.
 
 ## 2026-09-17 — Earnings implementation (D10 remains open)

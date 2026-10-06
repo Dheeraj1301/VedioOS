@@ -10,7 +10,6 @@ from botocore.exceptions import BotoCoreError, ClientError
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import login, logout
-from django.core import signing
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import IntegrityError, transaction
 from django.db.models import F, Q
@@ -21,9 +20,9 @@ from django.views.decorators.http import require_GET, require_POST
 
 from .email_verification import (
     VerificationCooldown,
+    VerificationServiceUnavailable,
     check_verification_code,
     send_verification_email,
-    verification_payload,
 )
 from .forms import LoginForm, ProjectForm, RegistrationForm
 from .models import (
@@ -96,7 +95,7 @@ def register(request):
                     audit(user, "client.registered", user.pk)
                 request.session["verification_email"] = user.email
                 try:
-                    send_verification_email(user)
+                    send_verification_email(user.email)
                 except Exception:
                     messages.error(
                         request,
@@ -152,7 +151,7 @@ def resend_verification(request):
     ).first()
     if user:
         try:
-            send_verification_email(user)
+            send_verification_email(user.email)
         except VerificationCooldown:
             pass
         except Exception:
@@ -183,23 +182,34 @@ def verify_email_otp(request):
         messages.error(request, "Enter the six digit code from your email.")
         return redirect("verification_pending")
 
+    user = User.objects.filter(
+        email__iexact=email,
+        role="client",
+        is_active=False,
+        email_verified_at__isnull=True,
+    ).first()
+    try:
+        result = check_verification_code(email, code) if user else "invalid"
+    except VerificationServiceUnavailable:
+        messages.error(request, "Email verification is temporarily unavailable. Try again shortly.")
+        return redirect("verification_pending")
+
     with transaction.atomic():
         user = (
             User.objects.select_for_update()
-            .filter(
-                email__iexact=email,
-                role="client",
-                is_active=False,
-                email_verified_at__isnull=True,
-            )
+            .filter(pk=user.pk, is_active=False, email_verified_at__isnull=True)
             .first()
+            if user
+            else None
         )
-        result = check_verification_code(user, code) if user else "invalid"
         if result == "verified":
-            user.email_verified_at = timezone.now()
-            user.is_active = True
-            user.save(update_fields=["email_verified_at", "is_active"])
-            audit(user, "client.email_verified", user.pk, {"method": "email_otp"})
+            if user is None:
+                result = "invalid"
+            else:
+                user.email_verified_at = timezone.now()
+                user.is_active = True
+                user.save(update_fields=["email_verified_at", "is_active"])
+                audit(user, "client.email_verified", user.pk, {"method": "supabase_email_otp"})
 
     if result != "verified":
         detail = {
@@ -209,38 +219,6 @@ def verify_email_otp(request):
         messages.error(request, detail)
         return redirect("verification_pending")
 
-    login(request, user)
-    request.session.pop("verification_email", None)
-    messages.success(request, "Email verified. Your client workspace is ready.")
-    return redirect("client_dashboard")
-
-
-@require_GET
-def verify_email(request, token):
-    try:
-        payload = verification_payload(token)
-        user_id, email = payload["user_id"], payload["email"]
-    except (signing.BadSignature, signing.SignatureExpired, KeyError, TypeError):
-        return render(
-            request,
-            "error.html",
-            {
-                "title": "Verification link unavailable",
-                "error_code": 400,
-                "message": "This verification link is invalid or has expired.",
-                "detail": "Request a new link using the email address from your client registration.",
-            },
-            status=400,
-        )
-    with transaction.atomic():
-        user = get_object_or_404(User.objects.select_for_update(), pk=user_id, role="client")
-        if user.email.lower() != str(email).lower():
-            raise PermissionDenied
-        if user.email_verified_at is None:
-            user.email_verified_at = timezone.now()
-            user.is_active = True
-            user.save(update_fields=["email_verified_at", "is_active"])
-            audit(user, "client.email_verified", user.pk)
     login(request, user)
     request.session.pop("verification_email", None)
     messages.success(request, "Email verified. Your client workspace is ready.")

@@ -123,6 +123,8 @@ The first-version scope is all 28 priorities in original brief section 34, cover
 
 **2026-09-27: shared Supabase preview binding and client email OTP verified.** Team previews can require the selected project/private schema at startup and verify it with a secret-safe command. Six digit challenges persist as hashes in Supabase and the connected rollback test covers registration, activation, login and authorization. Migration `core.0008` is live with 47 protected tables. Real inbox delivery remains gated on D12's SMTP provider and verified sender decision.
 
+**2026-10-06: client email OTP delegated to Supabase Auth.** Supabase Auth now owns generation, delivery, resend throttling and validation of the client email OTP. VedioOS retains its private application identity/profile and existing session/role behavior, activating the local client only after the returned Auth user email matches. The old challenge table remains dormant and no schema migration is required. Hosted Auth email-template and custom-SMTP configuration remain required for reliable inbox delivery.
+
 - Verify complete client → payment → assignment → editor → revision/acceptance → final download → earnings flow in the intended environment.
 - Check authorization for every role and project resource, original-file integrity, concurrency, event replay, and large-file interruption/recovery.
 - Verify required settings, real integration credentials, backups/restore, monitoring, reconciliation, support ownership, and deployment/recovery instructions.

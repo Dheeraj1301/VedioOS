@@ -1,15 +1,13 @@
 import hashlib
 import json
-import re
 from datetime import timedelta
 from io import StringIO
 from unittest.mock import patch
 
-from django.core import mail
 from django.core.management import call_command
 from django.db import IntegrityError, connection, transaction
 from django.test import Client as Browser
-from django.test import TestCase, override_settings
+from django.test import TestCase
 from django.utils import timezone
 from django.utils.html import strip_tags
 
@@ -114,13 +112,18 @@ class FoundationTests(TestCase):
         self.assertNotContains(response, "Good references make great edits")
         self.assertNotContains(browser.get("/client/"), notice)
 
-    @override_settings(EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend")
     def test_client_registration_verification_login_logout(self):
         browser = Browser()
-        response = browser.post(
-            "/register/",
-            {"name": "New Client", "email": "NEW@example.test", "password1": PASSWORD, "password2": PASSWORD},
-        )
+        with patch("core.views.send_verification_email") as send_code:
+            response = browser.post(
+                "/register/",
+                {
+                    "name": "New Client",
+                    "email": "NEW@example.test",
+                    "password1": PASSWORD,
+                    "password2": PASSWORD,
+                },
+            )
         self.assertRedirects(response, "/verify-email/")
         user = User.objects.get(email="new@example.test")
         self.assertEqual(user.role, "client")
@@ -128,20 +131,21 @@ class FoundationTests(TestCase):
         self.assertFalse(user.is_active)
         self.assertIsNone(user.email_verified_at)
         self.assertTrue(Client.objects.filter(user=user).exists())
-        self.assertEqual(len(mail.outbox), 1)
+        send_code.assert_called_once_with("new@example.test")
         blocked_login = browser.post(
             "/login/", {"username": "NEW@example.test", "password": PASSWORD}
         )
         self.assertEqual(blocked_login.status_code, 200)
         self.assertFalse(browser.session.get("_auth_user_id"))
-        code = re.search(r"\b\d{6}\b", mail.outbox[0].body).group()
-        self.assertRedirects(
-            browser.post(
-                "/verify-email/code/",
-                {"email": "NEW@example.test", "code": code},
-            ),
-            "/client/",
-        )
+        with patch("core.views.check_verification_code", return_value="verified") as verify_code:
+            self.assertRedirects(
+                browser.post(
+                    "/verify-email/code/",
+                    {"email": "NEW@example.test", "code": "123456"},
+                ),
+                "/client/",
+            )
+        verify_code.assert_called_once_with("new@example.test", "123456")
         user.refresh_from_db()
         self.assertTrue(user.is_active)
         self.assertIsNotNone(user.email_verified_at)
@@ -158,47 +162,46 @@ class FoundationTests(TestCase):
         )
         self.assertEqual(browser.get("/client/").status_code, 200)
 
-    @override_settings(EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend")
     def test_verification_resend_is_generic_and_invalid_tokens_are_rejected(self):
         browser = Browser()
-        self.assertRedirects(
-            browser.post("/verify-email/resend/", {"email": "missing@example.test"}),
-            "/verify-email/",
-        )
-        self.assertEqual(len(mail.outbox), 0)
+        with patch("core.views.send_verification_email") as send_code:
+            self.assertRedirects(
+                browser.post("/verify-email/resend/", {"email": "missing@example.test"}),
+                "/verify-email/",
+            )
+        send_code.assert_not_called()
         response = browser.get("/verify-email/not-a-valid-token/")
-        self.assertEqual(response.status_code, 400)
-        self.assertNotContains(response, "not-a-valid-token", status_code=400)
+        self.assertEqual(response.status_code, 404)
 
-    @override_settings(
-        EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend",
-        EMAIL_OTP_RESEND_SECONDS=0,
-    )
-    def test_resend_replaces_code_and_wrong_codes_are_limited(self):
+    def test_resend_and_code_verification_are_delegated_to_supabase(self):
         user = User.objects.create_user(
             "otp@example.test", PASSWORD, name="OTP Client", is_active=False
         )
         Client.objects.create(user=user)
-        from core.email_verification import send_verification_email
-
-        send_verification_email(user)
-        first_code = re.search(r"\b\d{6}\b", mail.outbox[-1].body).group()
-        self.assertRedirects(
-            Browser().post("/verify-email/resend/", {"email": user.email}),
-            "/verify-email/",
-        )
-        second_code = re.search(r"\b\d{6}\b", mail.outbox[-1].body).group()
-        self.assertNotEqual(first_code, second_code)
+        with patch("core.views.send_verification_email") as send_code:
+            self.assertRedirects(
+                Browser().post("/verify-email/resend/", {"email": user.email}),
+                "/verify-email/",
+            )
+        send_code.assert_called_once_with(user.email)
         browser = Browser()
-        self.assertRedirects(
-            browser.post("/verify-email/code/", {"email": user.email, "code": first_code}),
-            "/verify-email/",
-        )
-        self.assertFalse(browser.session.get("_auth_user_id"))
-        self.assertRedirects(
-            browser.post("/verify-email/code/", {"email": user.email, "code": second_code}),
-            "/client/",
-        )
+        with patch(
+            "core.views.check_verification_code", side_effect=["invalid", "verified"]
+        ) as verify_code:
+            self.assertRedirects(
+                browser.post(
+                    "/verify-email/code/", {"email": user.email, "code": "111111"}
+                ),
+                "/verify-email/",
+            )
+            self.assertFalse(browser.session.get("_auth_user_id"))
+            self.assertRedirects(
+                browser.post(
+                    "/verify-email/code/", {"email": user.email, "code": "222222"}
+                ),
+                "/client/",
+            )
+        self.assertEqual(verify_code.call_count, 2)
         self.assertFalse(EmailVerificationChallenge.objects.filter(user=user).exists())
 
     def editor_data(self):

@@ -1,14 +1,12 @@
 """Exercise current auth and project permissions in one rolled-back transaction."""
 
-import re
 import secrets
 import uuid
+from unittest.mock import patch
 
-from django.core import mail
 from django.core.management.base import BaseCommand, CommandError
 from django.db import connection, transaction
 from django.test import Client as Browser
-from django.test.utils import override_settings
 from django.urls import reverse
 
 from core.models import Project, User
@@ -25,7 +23,10 @@ def run_cloud_checks(write):
             raise CommandError(f"Failed: {label}")
         write(f"PASS: {label}")
 
-    with override_settings(EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend"):
+    with (
+        patch("core.views.send_verification_email"),
+        patch("core.views.check_verification_code", return_value="verified"),
+    ):
         with transaction.atomic():
             client = Browser()
             email = f"verification-client-{prefix}@example.test"
@@ -52,9 +53,8 @@ def run_cloud_checks(write):
                 blocked_login.status_code == 200 and not client.session.get("_auth_user_id"),
                 "unverified client login is rejected",
             )
-            code = re.search(r"\b\d{6}\b", mail.outbox[-1].body).group()
             verification = client.post(
-                reverse("verify_email_otp"), {"email": email, "code": code}
+                reverse("verify_email_otp"), {"email": email, "code": "123456"}
             )
             require(
                 verification.status_code == 302 and verification.url == reverse("client_dashboard"),
