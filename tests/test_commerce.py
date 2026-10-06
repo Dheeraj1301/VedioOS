@@ -9,7 +9,7 @@ from django.core.exceptions import ValidationError
 from django.test import TestCase, override_settings
 from django.utils import timezone
 
-from core.commerce import accept_quote, create_quote
+from core.commerce import accept_quote, create_quote, custom_estimate_result
 from core.commerce_forms import PackageForm, PlanForm, PolicyForm
 from core.models import (
     Client,
@@ -22,6 +22,7 @@ from core.models import (
     PaymentEvent,
     Plan,
     Project,
+    QuotationFeature,
     User,
 )
 from core.money import format_money
@@ -175,6 +176,109 @@ class CommerceTests(TestCase):
             content_type="application/json",
         )
         self.assertEqual(response.status_code, 400)
+
+    def enable_weighted_engine(self):
+        CommercePolicy.objects.filter(pk=1).update(
+            quotation_engine_enabled=True,
+            quotation_point_minor=100,
+            quotation_min_minor=5000,
+            quotation_max_minor=50000,
+        )
+        self.policy.refresh_from_db()
+
+    def test_weighted_engine_uses_approved_scores_and_returns_a_breakdown(self):
+        self.enable_weighted_engine()
+        selection = {
+            "colour_grading": True,
+            "quality_enhancement": True,
+            "reel_duration": "20_30",
+            "wants_wording": True,
+            "wording_direction": "editor_choice",
+            "song_choice": "suggest",
+            "overlays": True,
+            "beat_sync": True,
+        }
+        first = custom_estimate_result(selection)
+        second = custom_estimate_result(selection)
+        self.assertEqual(first["total_minor"], 12380)
+        self.assertEqual(first["total_minor"], second["total_minor"])
+        self.assertEqual(first["quotation"]["model"], "weighted_heuristic_v1")
+        self.assertEqual(first["quotation"]["total_complexity_score"], "23.8")
+        self.assertEqual(len(first["quotation"]["features"]), 7)
+        self.assertEqual(sum(item["amount_minor"] for item in first["items"]), 12380)
+        self.client.force_login(self.user)
+        response = self.client.post(
+            "/api/quote/", json.dumps(selection), content_type="application/json"
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["total_minor"], 12380)
+        self.assertEqual(response.json()["model"], "weighted_heuristic_v1")
+        self.assertEqual(len(response.json()["breakdown"]), 8)
+
+    def test_saved_weighted_snapshot_survives_later_pricing_changes(self):
+        self.enable_weighted_engine()
+        browser = self.client
+        browser.force_login(self.user)
+        response = browser.post(
+            "/client/new-order/?new=1",
+            {
+                "title": "Weighted snapshot",
+                "order_choice": "custom",
+                "colour_grading": "on",
+                "quality_enhancement": "on",
+                "overlays": "on",
+                "beat_sync": "on",
+                "reel_duration": "20_30",
+                "wants_wording": "on",
+                "wording_direction": "editor_choice",
+                "song_choice": "suggest",
+            },
+        )
+        project = Project.objects.get(title="Weighted snapshot")
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(project.quotation_snapshot["total_minor"], 12380)
+        CommercePolicy.objects.filter(pk=1).update(quotation_point_minor=999)
+        QuotationFeature.objects.filter(code="colour_grading").update(time_score=1)
+        quote = create_quote(self.user, project.id, "custom")
+        self.assertEqual(quote.total_minor, 12380)
+        self.assertEqual(quote.snapshot["quotation"]["weights"]["time"], 40)
+        self.assertEqual(quote.snapshot["quotation"]["inputs"]["overlays"], True)
+
+    def test_admin_can_manage_weighted_policy_and_feature_scores(self):
+        invalid_values = {
+            field: getattr(self.policy, field) for field in PolicyForm.Meta.fields
+        }
+        invalid_values.update(
+            {
+                "quotation_engine_enabled": True,
+                "quotation_time_weight": 50,
+                "quotation_importance_weight": 20,
+                "quotation_complexity_weight": 40,
+                "quotation_point_minor": 100,
+                "quotation_min_minor": 5000,
+                "quotation_max_minor": 50000,
+            }
+        )
+        invalid = PolicyForm(invalid_values, instance=self.policy, values_are_minor=True)
+        self.assertFalse(invalid.is_valid())
+        self.assertIn("must total 100%", invalid.errors["quotation_complexity_weight"][0])
+        self.client.force_login(self.admin)
+        pricing = self.client.get("/admin/pricing/")
+        self.assertContains(pricing, "Weighted quotation engine")
+        self.assertContains(pricing, "Beat sync")
+        response = self.client.post(
+            "/admin/pricing/quotation-features/beat_sync/",
+            {
+                "time_score": 5,
+                "importance_score": 5,
+                "complexity_score": 4,
+                "multiplier": "1.250",
+            },
+        )
+        self.assertRedirects(response, "/admin/pricing/")
+        feature = QuotationFeature.objects.get(code="beat_sync")
+        self.assertEqual(feature.complexity_score, 4)
+        self.assertEqual(str(feature.multiplier), "1.250")
 
     def test_quote_and_accepted_terms_survive_catalog_edits(self):
         quote = self.quote()

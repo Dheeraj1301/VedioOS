@@ -1,7 +1,14 @@
 from django import forms
 from django.utils.html import format_html
 
-from .models import CommercePolicy, CustomService, InfluencerPackage, Plan, Project
+from .models import (
+    CommercePolicy,
+    CustomService,
+    InfluencerPackage,
+    Plan,
+    Project,
+    QuotationFeature,
+)
 from .money import (
     CURRENCY_CHOICES,
     currency_exponent,
@@ -248,7 +255,15 @@ class PackageForm(MajorUnitPriceFormMixin, forms.ModelForm):
 
 class PolicyForm(MajorUnitPriceFormMixin, forms.ModelForm):
     custom_base_minor = major_unit_field("Custom base price")
-    money_field_labels = {"custom_base_minor": "Custom base price"}
+    quotation_point_minor = major_unit_field("Price per complexity point")
+    quotation_min_minor = major_unit_field("Minimum estimated price")
+    quotation_max_minor = major_unit_field("Maximum estimated price")
+    money_field_labels = {
+        "custom_base_minor": "Custom base price",
+        "quotation_point_minor": "Price per complexity point",
+        "quotation_min_minor": "Minimum estimated price",
+        "quotation_max_minor": "Maximum estimated price",
+    }
     currency = forms.ChoiceField(choices=CURRENCIES, required=False)
 
     class Meta:
@@ -260,6 +275,13 @@ class PolicyForm(MajorUnitPriceFormMixin, forms.ModelForm):
             "custom_delivery_hours",
             "custom_duration_limit_seconds",
             "custom_priority",
+            "quotation_engine_enabled",
+            "quotation_time_weight",
+            "quotation_importance_weight",
+            "quotation_complexity_weight",
+            "quotation_point_minor",
+            "quotation_min_minor",
+            "quotation_max_minor",
             "terms",
             "delivery_terms",
             "refund_terms",
@@ -273,6 +295,7 @@ class PolicyForm(MajorUnitPriceFormMixin, forms.ModelForm):
         }
         help_texts = {
             "quotes_enabled": "Allow clients to request quotes. Real checkout requires a separate provider integration.",
+            "quotation_engine_enabled": "Use the seven-feature weighted model for new custom estimates. Existing saved snapshots remain unchanged.",
             "tax_terms": "Describe applicable taxes and whether the displayed total includes them.",
             "delivery_terms": "Specify clock start, milestone, working/calendar hours and pause rules.",
         }
@@ -298,7 +321,48 @@ class PolicyForm(MajorUnitPriceFormMixin, forms.ModelForm):
             for field in ["custom_delivery_hours", "custom_duration_limit_seconds"]:
                 if data.get(field) == 0:
                     self.add_error(field, "Must be greater than zero.")
+        weights = [
+            data.get("quotation_time_weight"),
+            data.get("quotation_importance_weight"),
+            data.get("quotation_complexity_weight"),
+        ]
+        if all(value is not None for value in weights) and sum(weights) != 100:
+            self.add_error(
+                "quotation_complexity_weight", "Time, importance and complexity weights must total 100%."
+            )
+        if data.get("quotation_engine_enabled"):
+            for field in [
+                "custom_base_minor",
+                "quotation_point_minor",
+                "quotation_min_minor",
+                "quotation_max_minor",
+            ]:
+                if data.get(field) is None:
+                    self.add_error(field, "Required before enabling the weighted quotation engine.")
+            if data.get("quotation_point_minor") is not None and data["quotation_point_minor"] <= 0:
+                self.add_error("quotation_point_minor", "Enter an amount greater than zero.")
+            if data.get("quotation_max_minor") is not None and data["quotation_max_minor"] <= 0:
+                self.add_error("quotation_max_minor", "Enter an amount greater than zero.")
+            minimum = data.get("quotation_min_minor")
+            maximum = data.get("quotation_max_minor")
+            if minimum is not None and maximum is not None and minimum > maximum:
+                self.add_error("quotation_max_minor", "Maximum price must be at least the minimum price.")
         return data
+
+
+class QuotationFeatureForm(forms.ModelForm):
+    class Meta:
+        model = QuotationFeature
+        fields = ["time_score", "importance_score", "complexity_score", "multiplier"]
+        help_texts = {
+            "multiplier": "Adjust this feature without changing the global price per complexity point.",
+        }
+
+    def clean_multiplier(self):
+        value = self.cleaned_data["multiplier"]
+        if value <= 0:
+            raise forms.ValidationError("Enter a multiplier greater than zero.")
+        return value
 
 
 class QuoteSelectionForm(forms.Form):
@@ -350,6 +414,11 @@ class CustomEstimateForm(forms.Form):
     quality_enhancement = forms.BooleanField(required=False)
     reel_duration = forms.ChoiceField(choices=Project.ReelDuration.choices)
     wants_wording = forms.BooleanField(required=False)
+    song_choice = forms.ChoiceField(
+        choices=Project._meta.get_field("song_choice").choices, required=False
+    )
+    overlays = forms.BooleanField(required=False)
+    beat_sync = forms.BooleanField(required=False)
     wording_direction = forms.ChoiceField(
         choices=[("", "Choose direction"), *Project.WordingDirection.choices], required=False
     )
@@ -360,4 +429,6 @@ class CustomEstimateForm(forms.Form):
             self.add_error("wording_direction", "Choose how the editor should handle wording.")
         if not data.get("wants_wording"):
             data["wording_direction"] = ""
+        if not data.get("song_choice"):
+            data["song_choice"] = "suggest"
         return data

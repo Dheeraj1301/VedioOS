@@ -160,6 +160,20 @@ Affected requirements and files: client registration, resend and verification en
 
 Verification required: mocked request/response and failure-path tests, client activation only for a matching verified email, no local challenge creation, unchanged login/logout and role isolation, hosted OTP template containing `{{ .Token }}`, custom SMTP delivery test, and live inbox confirmation.
 
+## 2026-10-06 — Weighted custom quotation model
+
+Status: approved scoring model; production price mapping remains unconfigured under D04
+
+Owner / source of explicit decision: Hamsa, custom quotation-engine request and supplied seven-row score table.
+
+Decision: support a deterministic server-side custom quotation model using Time 40%, Importance 20% and Editor Complexity 40%. Seed the approved feature scores: Colour grading 4/4/4, Quality enhancement 3/4/3, Duration 1/5/2, Font option 2/3/2, Song option 3/4/3, Overlays 4/4/4 and Beat sync 5/5/5. Add Overlays and Beat sync to the custom brief; the previously removed consultation choices remain excluded. Administrators may adjust the three weights, each feature's scores and multiplier, the existing custom base, price per complexity point, minimum, maximum and currency. The weights must total 100%.
+
+The weighted engine stays disabled until the admin supplies approved base/per-point/min/max amounts. Until then the existing catalog-backed custom estimate remains the fallback. This records no production prices and does not resolve D04. A server-generated estimate snapshot is stored with each newly saved custom brief and is reused when its quote is created, so later score/weight/price changes do not rewrite that submitted estimate. The API and accepted quote identify the current implementation as `weighted_heuristic_v1`; no ML model is claimed because no approved historical effort/price dataset or evaluation threshold exists.
+
+Affected requirements and files: original brief sections 4, 6, 8 and 33; Phase 3 custom estimates, admin pricing, project brief persistence and quote snapshots.
+
+Verification required: all seven scores are seeded without prices, admin validation enforces score/weight/bound rules, client changes call the authenticated server endpoint, the same inputs/config return the same total, forged prices/fields are rejected, Overlays and Beat sync persist, and a saved snapshot survives later configuration changes.
+
 Only mark a business choice approved when supported by an explicit owner decision. Contributors can document routine technical choices within authorized scope, identifying them as implementation decisions. A proposal is not a production default.
 
 ## 2026-09-17 — Earnings implementation (D10 remains open)

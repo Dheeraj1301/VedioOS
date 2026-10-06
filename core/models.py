@@ -1,6 +1,7 @@
 import uuid
 
 from django.contrib.auth.models import AbstractUser, BaseUserManager
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.db.models.functions import Lower
 
@@ -173,6 +174,8 @@ class Project(Record):
     selected_services = models.JSONField(default=list)
     colour_grading = models.BooleanField(default=False)
     quality_enhancement = models.BooleanField(default=False)
+    overlays = models.BooleanField(default=False)
+    beat_sync = models.BooleanField(default=False)
     reel_duration = models.CharField(max_length=20, choices=ReelDuration.choices, blank=True)
     wants_wording = models.BooleanField(default=False)
     wording_direction = models.CharField(
@@ -195,6 +198,7 @@ class Project(Record):
     status = models.CharField(max_length=30, choices=Status.choices, default=Status.PENDING)
     payment_completed_at = models.DateTimeField(null=True, blank=True)
     expected_delivery_at = models.DateTimeField(null=True, blank=True)
+    quotation_snapshot = models.JSONField(default=dict, blank=True)
 
     class Meta:
         db_table = "projects"
@@ -365,6 +369,13 @@ class CommercePolicy(models.Model):
     custom_delivery_hours = models.PositiveIntegerField(null=True, blank=True)
     custom_duration_limit_seconds = models.PositiveIntegerField(null=True, blank=True)
     custom_priority = models.PositiveSmallIntegerField(null=True, blank=True)
+    quotation_engine_enabled = models.BooleanField(default=False)
+    quotation_time_weight = models.PositiveSmallIntegerField(default=40)
+    quotation_importance_weight = models.PositiveSmallIntegerField(default=20)
+    quotation_complexity_weight = models.PositiveSmallIntegerField(default=40)
+    quotation_point_minor = models.PositiveBigIntegerField(null=True, blank=True)
+    quotation_min_minor = models.PositiveBigIntegerField(null=True, blank=True)
+    quotation_max_minor = models.PositiveBigIntegerField(null=True, blank=True)
     terms = models.TextField(blank=True, max_length=12000)
     delivery_terms = models.TextField(blank=True, max_length=4000)
     refund_terms = models.TextField(blank=True, max_length=4000)
@@ -381,6 +392,39 @@ class CommercePolicy(models.Model):
     class Meta:
         db_table = "commerce_policy"
         constraints = [models.CheckConstraint(condition=models.Q(id=1), name="one_commerce_policy")]
+
+
+class QuotationFeature(models.Model):
+    class Code(models.TextChoices):
+        COLOUR_GRADING = "colour_grading", "Colour grading"
+        QUALITY_ENHANCEMENT = "quality_enhancement", "Quality enhancement"
+        DURATION = "duration", "Reel duration"
+        FONT_OPTION = "font_option", "Font option"
+        SONG_OPTION = "song_option", "Song option"
+        OVERLAYS = "overlays", "Overlays"
+        BEAT_SYNC = "beat_sync", "Beat sync"
+
+    code = models.CharField(max_length=32, choices=Code.choices, unique=True)
+    time_score = models.PositiveSmallIntegerField(
+        validators=[MinValueValidator(1), MaxValueValidator(5)]
+    )
+    importance_score = models.PositiveSmallIntegerField(
+        validators=[MinValueValidator(1), MaxValueValidator(5)]
+    )
+    complexity_score = models.PositiveSmallIntegerField(
+        validators=[MinValueValidator(1), MaxValueValidator(5)]
+    )
+    multiplier = models.DecimalField(
+        max_digits=6,
+        decimal_places=3,
+        default=1,
+        validators=[MinValueValidator(0.001), MaxValueValidator(100)],
+    )
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = "quotation_features"
+        ordering = ["code"]
 
 
 class OrderQuote(Record):

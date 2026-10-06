@@ -6,16 +6,25 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 
-from .commerce import accept_quote, check_policy, create_quote, custom_estimate
+from .commerce import accept_quote, check_policy, create_quote, custom_estimate_result
 from .commerce_forms import (
     CustomEstimateForm,
     PackageForm,
     PlanForm,
     PolicyForm,
+    QuotationFeatureForm,
     QuoteSelectionForm,
     ServiceForm,
 )
-from .models import CommercePolicy, CustomService, InfluencerPackage, OrderQuote, Payment, Plan
+from .models import (
+    CommercePolicy,
+    CustomService,
+    InfluencerPackage,
+    OrderQuote,
+    Payment,
+    Plan,
+    QuotationFeature,
+)
 from .payments import apply_sandbox_event, sandbox_enabled, start_checkout
 from .permissions import project_for, role_required
 from .templatetags.money import money
@@ -33,6 +42,7 @@ def pricing(request):
                 (slot, Plan.objects.filter(slot=slot).first() or Plan(slot=slot)) for slot in range(1, 4)
             ],
             "services": CustomService.objects.order_by("name"),
+            "quotation_features": QuotationFeature.objects.order_by("code"),
             "packages": InfluencerPackage.objects.order_by("name"),
             "policy": CommercePolicy.objects.filter(pk=1).first() or CommercePolicy(),
         },
@@ -40,7 +50,7 @@ def pricing(request):
 
 
 @role_required("admin")
-def catalog_edit(request, kind, slot=None, item_id=None):
+def catalog_edit(request, kind, slot=None, item_id=None, feature_code=None):
     if kind == "plan":
         if slot not in [1, 2, 3]:
             raise PermissionDenied
@@ -52,6 +62,9 @@ def catalog_edit(request, kind, slot=None, item_id=None):
     elif kind == "package":
         instance = get_object_or_404(InfluencerPackage, pk=item_id) if item_id else InfluencerPackage()
         form_class, title = PackageForm, "Monthly creator package draft"
+    elif kind == "quotation_feature":
+        instance = get_object_or_404(QuotationFeature, code=feature_code)
+        form_class, title = QuotationFeatureForm, instance.get_code_display()
     else:
         instance = CommercePolicy.objects.filter(pk=1).first() or CommercePolicy(pk=1)
         form_class, title = PolicyForm, "Commercial terms & custom pricing"
@@ -147,6 +160,9 @@ def estimate_custom(request):
         "reel_duration",
         "wants_wording",
         "wording_direction",
+        "song_choice",
+        "overlays",
+        "beat_sync",
     }
     try:
         import json
@@ -163,9 +179,12 @@ def estimate_custom(request):
             status=400,
         )
     try:
-        policy, _, items, total = custom_estimate(form.cleaned_data)
+        result = custom_estimate_result(form.cleaned_data)
     except ValidationError as exc:
         return JsonResponse({"error": " ".join(exc.messages)}, status=409)
+    policy = result["policy"]
+    items = result["items"]
+    total = result["total_minor"]
     return JsonResponse(
         {
             "currency": policy.currency,
@@ -175,6 +194,11 @@ def estimate_custom(request):
                 {**item, "display_amount": money(item["amount_minor"], policy.currency)}
                 for item in items
             ],
+            "breakdown": [
+                {**item, "display_amount": money(item["amount_minor"], policy.currency)}
+                for item in result["breakdown"]
+            ],
+            "model": result["quotation"].get("model"),
         }
     )
 

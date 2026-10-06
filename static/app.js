@@ -164,21 +164,26 @@ if (newOrderForm) {
     const requestNumber = ++estimateRequest;
     const duration = newOrderForm.querySelector('#id_reel_duration').value;
     if (!duration) {
-      announce(estimate, 'Price estimate: choose a duration to calculate the configured amount.');
+      announce(estimate, 'Estimated price: choose a duration to calculate the configured amount.');
       return;
     }
     announce(estimate, 'Calculating the configured price…');
     try {
-      const result = await postJSON('/api/custom-estimate/', {
+      const result = await postJSON('/api/quote/', {
         colour_grading: newOrderForm.querySelector('#id_colour_grading').checked,
         quality_enhancement: newOrderForm.querySelector('#id_quality_enhancement').checked,
         reel_duration: duration,
         wants_wording: wordingCheckbox.checked,
         wording_direction: wordingCheckbox.checked ? newOrderForm.querySelector('#id_wording_direction').value : '',
+        song_choice: songChoice.value,
+        overlays: newOrderForm.querySelector('#id_overlays').checked,
+        beat_sync: newOrderForm.querySelector('#id_beat_sync').checked,
       });
       if (requestNumber !== estimateRequest) return;
-      const breakdown = result.items.map(item => `${item.name}: ${item.display_amount}`).join(' · ');
-      announce(estimate, `Configured estimate: ${result.display_total}. ${breakdown}`);
+      const breakdown = (result.breakdown || result.items)
+        .map(item => `${item.name}: ${item.display_amount}`)
+        .join(' · ');
+      announce(estimate, `Estimated price: ${result.display_total}. ${breakdown}. Final pricing is confirmed before payment.`);
     } catch (error) {
       if (requestNumber === estimateRequest) announce(estimate, `Estimate unavailable: ${error.message}`);
     }

@@ -41,6 +41,8 @@ The first-version scope is all 28 priorities in original brief section 34, cover
 
 **2026-09-16: configuration, quotes and signed sandbox implemented and verified.** [Evidence and remaining blockers](PHASE_3.md). Production payment gate remains open pending D03–D06; no real checkout is enabled.
 
+**2026-10-06: weighted custom quotation slice implemented.** Seven owner-scored brief features, admin-managed weights/multipliers/bounds, authenticated live estimates and submission-time quote snapshots are implemented. Production activation remains off until D04 supplies the base/per-point/min/max amounts; ML remains deferred pending an approved historical dataset and evaluation rule.
+
 - Implement admin management of three plans and custom services with validated configuration.
 - Build plan/custom selection, backend price calculation, term snapshots, payment adapter, verified payment events, invoices/history foundations, and unique paid projects.
 - Show paid/unpaid queues in the presenter dashboard. Persist delivery timestamps under decided rules.

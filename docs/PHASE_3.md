@@ -1,5 +1,17 @@
 # Phase 3 — Catalog, quotes and payment foundation
 
+## 2026-10-06 weighted custom quotation engine
+
+Custom briefs now include Overlays and Beat sync alongside colour grading, quality enhancement, duration, font/wording and music preference. Authenticated `POST /api/quote/` requests are validated by the backend and return a live deterministic estimate plus contributor breakdown; the legacy `/api/custom-estimate/` route remains compatible. No browser-supplied price is accepted.
+
+The admin pricing workspace exposes Time / Importance / Complexity weights, price per complexity point, minimum/maximum bounds, currency, and editable 1–5 scores plus a multiplier for each of the seven features. Migration `core.0012` seeds only the owner-approved scores and neutral multipliers; it seeds no prices and leaves the engine disabled. Once enabled with complete price configuration, the calculation is `base + Σ(weighted feature score × feature multiplier × price per point)`, clamped to the configured bounds. Weight percentages must total 100.
+
+Saving a configured custom brief stores its inputs, weights, feature scores, multipliers, contributor amounts, bounds and computed total in `Project.quotation_snapshot`. Quote creation reuses that server-owned snapshot, so subsequent configuration changes affect new submissions only. The implementation reports `weighted_heuristic_v1`; ML prediction remains deferred because there is no approved historical training target, minimum dataset or confidence threshold.
+
+Request fields are `colour_grading`, `quality_enhancement`, `reel_duration`, `wants_wording`, `wording_direction`, `song_choice`, `overlays` and `beat_sync`. The response contains `currency`, `total_minor`, `display_total`, `items`, `breakdown` and `model`. The endpoint requires an authenticated client session and CSRF protection.
+
+Migration `core.0012` was applied to Supabase project `lmwvoniiykmfzuxigzqf` on 2026-10-06. Post-migration verification found all seven configured score rows, an unchanged project count, RLS enabled on `vedioos.quotation_features`, ownership by `vedioos_app`, and no browser-role grants. The pre-change aggregate export is retained in ignored `.runtime/pre-quotation-engine-20261006.json`.
+
 Implemented on 2026-09-16. Requirements: original brief sections 7–9 and product rules sections 4–7.
 
 ## 2026-10-06 admin price-entry update

@@ -43,6 +43,7 @@ urlpatterns = [
     path("client/support/create/", support_views.create_support, name="create_support"),
     path("client/projects/<uuid:project_id>/quote/", commerce.quote_page, name="quote_select"),
     path("api/custom-estimate/", commerce.estimate_custom, name="estimate_custom"),
+    path("api/quote/", commerce.estimate_custom, name="api_quote"),
     path(
         "client/projects/<uuid:project_id>/quotes/<uuid:quote_id>/",
         commerce.quote_review,
@@ -101,6 +102,12 @@ urlpatterns = [
         name="package_edit",
     ),
     path("admin/pricing/policy/", commerce.catalog_edit, {"kind": "policy"}, name="policy_edit"),
+    path(
+        "admin/pricing/quotation-features/<str:feature_code>/",
+        commerce.catalog_edit,
+        {"kind": "quotation_feature"},
+        name="quotation_feature_edit",
+    ),
     path("admin/<str:page>/", ops.admin_page),
     path("api/projects/<uuid:project_id>/", views.project_api),
     path("api/editor/availability/", ops.editor_availability_api, name="editor_availability_api"),

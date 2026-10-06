@@ -569,6 +569,8 @@ class FoundationTests(TestCase):
                 "order_choice": "custom",
                 "colour_grading": "on",
                 "quality_enhancement": "on",
+                "overlays": "on",
+                "beat_sync": "on",
                 "reel_duration": "60_plus",
                 "wants_wording": "on",
                 "wording_direction": "font_inspiration",
@@ -579,6 +581,8 @@ class FoundationTests(TestCase):
         project = Project.objects.get(title="Wording reel")
         self.assertTrue(project.colour_grading)
         self.assertTrue(project.quality_enhancement)
+        self.assertTrue(project.overlays)
+        self.assertTrue(project.beat_sync)
         self.assertEqual(project.reel_duration, "60_plus")
         self.assertEqual(project.wording_direction, "font_inspiration")
         self.assertEqual(project.order.kind, "custom")
@@ -589,6 +593,8 @@ class FoundationTests(TestCase):
         response = self.auth(self.owner).get("/client/new-order/")
         self.assertEqual(response.status_code, 200)
         for label in ["Plan 1", "Plan 2", "Plan 3", "Customize my edit"]:
+            self.assertContains(response, label)
+        for label in ["Colour grading", "Quality enhancement", "Add overlays", "Beat sync"]:
             self.assertContains(response, label)
 
     def test_custom_fields_render_hidden_until_custom_is_selected(self):

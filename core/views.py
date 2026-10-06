@@ -341,6 +341,19 @@ def _project_form(request, project=None, *, create_new=False):
     if request.method == "POST" and form.is_valid():
         with transaction.atomic():
             saved_project = form.save(commit=False)
+            selected_plan = form.cleaned_data.get("selected_plan")
+            if selected_plan:
+                saved_project.quotation_snapshot = {}
+            else:
+                try:
+                    from .commerce import saved_custom_estimate_snapshot
+
+                    saved_project.quotation_snapshot = saved_custom_estimate_snapshot(
+                        form.cleaned_data, lock=True
+                    )
+                except ValidationError:
+                    # Draft creation remains available while commercial configuration is incomplete.
+                    saved_project.quotation_snapshot = {}
             existing_order = None
             if not is_new:
                 locked_project = Project.objects.select_for_update().get(
@@ -356,7 +369,6 @@ def _project_form(request, project=None, *, create_new=False):
             if is_new:
                 saved_project.client = request.user.client_profile
             saved_project.save()
-            selected_plan = form.cleaned_data.get("selected_plan")
             pricing_period = (
                 form.cleaned_data["pricing_period"]
                 if selected_plan
