@@ -588,6 +588,19 @@ class FoundationTests(TestCase):
         for label in ["Plan 1", "Plan 2", "Plan 3", "Customize my edit"]:
             self.assertContains(response, label)
 
+    def test_custom_fields_render_hidden_until_custom_is_selected(self):
+        browser = self.auth(self.owner)
+        blank = browser.get("/client/new-order/?new=1")
+        self.assertContains(blank, "data-custom-fields hidden", html=False)
+
+        custom = browser.post(
+            "/client/new-order/?new=1",
+            {"order_choice": "custom", "song_choice": "suggest"},
+        )
+        self.assertEqual(custom.status_code, 200)
+        self.assertContains(custom, "data-custom-fields", html=False)
+        self.assertNotContains(custom, "data-custom-fields hidden", html=False)
+
     def test_new_order_shows_clip_and_inspiration_uploads_with_bottom_save_action(self):
         response = self.auth(self.owner).get("/client/new-order/")
         self.assertContains(response, "Other Instructions")
