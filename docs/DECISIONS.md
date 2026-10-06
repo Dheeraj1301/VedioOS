@@ -122,6 +122,18 @@ Affected requirements and files: supersedes only the standalone admin Projects n
 
 Verification required: the admin sidebar omits Projects, `/admin/projects/` returns not found for an authenticated admin, and Order detail plus `/admin/projects/<project-id>/` continue to render for an authorized admin.
 
+## 2026-10-06 — Human-readable admin price entry
+
+Status: approved
+
+Owner / source of explicit decision: Hamsa, admin pricing change request.
+
+Decision: retain the existing multi-currency selector and integer minor-unit persistence, but present prices to administrators as actual currency amounts. Convert at the validated form boundary using the selected currency exponent; reject negative, non-numeric and over-precision values. Display monetary values with the selected currency symbol and exponent throughout the application. Existing stored values and accepted commercial snapshots are not rewritten.
+
+Affected requirements and files: original brief configurability and pricing administration; Phase 3 catalog forms and shared money formatting. This changes no checkout, quote calculation, payment verification, client pricing-period toggle or database schema.
+
+Verification required: INR/USD two-decimal and JPY whole-unit round trips, legacy-value rendering, invalid precision and negative input rejection, unchanged server-owned quote/payment minor-unit totals, and browser confirmation of the currency selector and dynamic symbol.
+
 Only mark a business choice approved when supported by an explicit owner decision. Contributors can document routine technical choices within authorized scope, identifying them as implementation decisions. A proposal is not a production default.
 
 ## 2026-09-17 — Earnings implementation (D10 remains open)

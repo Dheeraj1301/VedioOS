@@ -62,7 +62,7 @@ def check_policy(policy):
     if not policy or not policy.quotes_enabled:
         raise ValidationError("Pricing is being prepared. You can save your brief and upload files now.")
     values = {field: getattr(policy, field) for field in PolicyForm.Meta.fields}
-    if not PolicyForm(values, instance=policy).is_valid():
+    if not PolicyForm(values, instance=policy, values_are_minor=True).is_valid():
         raise ValidationError("Commercial terms are incomplete. Please contact the team.")
 
 
@@ -79,7 +79,11 @@ def validate_catalog(item, form_class, currency):
     values = {field: getattr(item, field) for field in form_class.Meta.fields}
     if isinstance(item, Plan):
         values["features"] = "\n".join(item.features)
-    if not item.active or item.currency != currency or not form_class(values, instance=item).is_valid():
+    if (
+        not item.active
+        or item.currency != currency
+        or not form_class(values, instance=item, values_are_minor=True).is_valid()
+    ):
         raise ValidationError("The selected item is unavailable or incomplete. Please choose again.")
 
 

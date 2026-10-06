@@ -82,7 +82,7 @@ class OrderRosterTests(TestCase):
         )
         self.assertContains(response, "Order operations")
         self.assertContains(response, "Paid editing order")
-        self.assertContains(response, "INR 120.00")
+        self.assertContains(response, "₹120.00")
         self.assertContains(response, "Confirmed")
         self.assertContains(response, "Editing in progress")
         visible_cards = strip_tags(
@@ -118,7 +118,7 @@ class OrderRosterTests(TestCase):
             "Created:",
             "Order type:",
             "Plan:",
-            "INR 120.00",
+            "₹120.00",
             "Payment attempts:",
             "Paid at:",
             "Open project",

@@ -2,13 +2,17 @@
 
 Implemented on 2026-09-16. Requirements: original brief sections 7–9 and product rules sections 4–7.
 
+## 2026-10-06 admin price-entry update
+
+Administrators now enter catalog prices as ordinary currency amounts instead of integer minor units. The currency selector remains authoritative: two-decimal currencies accept at most two decimal places, while JPY and KRW accept whole amounts only. Admin forms convert validated values to the existing integer minor-unit columns before saving, and existing stored values are converted back to major units when edited. Plans, monthly/yearly plan prices, custom services, creator-package drafts and the custom base all use the same boundary. Quotes, accepted snapshots, orders and payments continue using unchanged integer minor units internally. Shared display formatting now uses the selected currency symbol and exponent. No schema or stored-data migration was required.
+
 ## 2026-09-24 custom-estimate extension
 
 The new-order customization controls now request a live server-authoritative estimate. Administrators map at most one priced custom service to each supported customization code; the backend adds the configured custom base, rejects missing/inactive/wrong-currency mappings, returns an itemized display, and resolves the mappings again when creating the quote. Browser totals are never accepted. Migration `core.0007` adds the nullable unique mapping code without inserting production prices. The isolated suite passes 108 tests with 10 optional integrations skipped. Production activation remains blocked on approved D03–D06 commercial terms and provider settings.
 
 ## What works
 
-- Admin → Plans / Pricing: three plan slots, features, prices in integer minor units, currency, revision/duration/delivery allowances, priority, publishing, custom services, and commercial terms.
+- Admin → Plans / Pricing: three plan slots, features, human-readable currency amounts, currency, revision/duration/delivery allowances, priority, publishing, custom services, and commercial terms. The server converts prices to integer minor units before persistence.
 - Each fixed plan may also hold optional monthly and yearly amounts. The new-order selector persists the chosen pricing period and the quote snapshot uses its matching server-owned amount; missing combinations remain unavailable. This is distinct from recurring creator packages and does not define renewal or allowance policy.
 - Publishing validates required plan fields. Enabling quotes requires service, delivery, refund and tax terms. No commercial defaults or sample prices are seeded into the connected database.
 - Client → Project → Choose package / quote: select an active plan or custom base plus selected services. The server calculates the total and rejects submitted prices. Unavailable/mixed-currency items cannot be quoted.

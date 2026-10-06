@@ -33,21 +33,32 @@ try {
   assert.equal(await page.locator('.catalog-grid article').count(), 3);
   await page.getByRole('link', {name: 'Edit commercial terms'}).click();
   await page.locator('#id_currency').selectOption('INR');
-  for (const [key,value] of Object.entries({custom_base_minor:'10000',custom_revision_limit:'2',custom_delivery_hours:'24',custom_duration_limit_seconds:'60',custom_priority:'1',terms:'TEST service agreement',delivery_terms:'TEST timing pending owner decision',refund_terms:'TEST refund policy',tax_terms:'TEST taxes included'})) {
+  assert.equal(await page.locator('label[for="id_custom_base_minor"]').innerText(), 'Custom base price (₹)');
+  assert.equal(await page.locator('#id_custom_base_minor').getAttribute('step'), '0.01');
+  for (const [key,value] of Object.entries({custom_base_minor:'100.00',custom_revision_limit:'2',custom_delivery_hours:'24',custom_duration_limit_seconds:'60',custom_priority:'1',terms:'TEST service agreement',delivery_terms:'TEST timing pending owner decision',refund_terms:'TEST refund policy',tax_terms:'TEST taxes included'})) {
     await page.locator(`#id_${key}`).fill(value);
   }
   await page.locator('#id_quotes_enabled').check();
   await save();
   await page.getByRole('link', {name: 'Configure plan 1'}).click();
-  for (const [key,value] of Object.entries({name:'Synthetic starter',price_minor:'25000',features:'Cuts\nCaptions',revision_limit:'2',delivery_hours:'24',duration_limit_seconds:'60',priority:'1'})) {
+  for (const [key,value] of Object.entries({name:'Synthetic starter',price_minor:'250.00',features:'Cuts\nCaptions',revision_limit:'2',delivery_hours:'24',duration_limit_seconds:'60',priority:'1'})) {
     await page.locator(`#id_${key}`).fill(value);
   }
   await page.locator('#id_currency').selectOption('INR');
+  assert.equal(await page.locator('label[for="id_price_minor"]').innerText(), 'Plan price (₹)');
+  assert.equal(await page.locator('[data-currency-symbol]').first().innerText(), '₹');
+  await page.locator('#id_currency').selectOption('JPY');
+  assert.equal(await page.locator('label[for="id_price_minor"]').innerText(), 'Plan price (¥)');
+  assert.equal(await page.locator('#id_price_minor').getAttribute('step'), '1');
+  await page.locator('#id_currency').selectOption('USD');
+  assert.equal(await page.locator('label[for="id_price_minor"]').innerText(), 'Plan price ($)');
+  await page.locator('#id_currency').selectOption('INR');
+  await page.screenshot({path:'.runtime/screenshots/admin-plan-price-input.png',fullPage:true});
   await page.locator('#id_active').check();
   await save();
   await page.getByRole('link', {name: 'Add service'}).click();
   await page.locator('#id_name').fill('Synthetic captions');
-  await page.locator('#id_price_minor').fill('1500');
+  await page.locator('#id_price_minor').fill('15.00');
   await page.locator('#id_currency').selectOption('INR');
   await page.locator('#id_active').check();
   await save();
@@ -60,7 +71,7 @@ try {
   await page.locator('#id_scope_confirmed').check();
   await page.getByRole('button', {name:'Calculate my quote'}).click();
   await page.getByRole('heading', {name:'Your quote.'}).waitFor();
-  assert.match(await page.locator('main').innerText(), /INR 115\.00/);
+  assert.match(await page.locator('main').innerText(), /₹115\.00/);
   await page.setViewportSize({width:390,height:844});
   assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth <= window.innerWidth), true);
   await page.screenshot({path:'.runtime/screenshots/phase3-mobile-quote.png',fullPage:true});
@@ -68,7 +79,7 @@ try {
   await page.getByRole('button', {name:'Accept quote'}).click();
   await page.getByRole('heading', {name:'Order summary.'}).waitFor();
   await page.getByRole('button', {name:'Start / retry sandbox payment'}).click();
-  await page.getByText('sandbox · pending').waitFor();
+  await page.locator('[data-payment-reference]').first().waitFor();
   // The trusted test gateway signs the event outside the browser. No client-side success flag.
   const gateway = await fetch(`${base}/__test_gateway_fixture__/`);
   assert.equal(gateway.status, 404); // There is deliberately no payment-secret or fixture endpoint.

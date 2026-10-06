@@ -24,6 +24,7 @@ from core.models import (
     Project,
     User,
 )
+from core.money import format_money
 from core.payments import apply_sandbox_event, start_checkout
 from operations.models import AuditLog, CallRequest, Editor, EditorProficiency, Notification
 
@@ -137,7 +138,7 @@ class CommerceTests(TestCase):
         )
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()["total_minor"], 15000)
-        self.assertEqual(response.json()["display_total"], "INR 150.00")
+        self.assertEqual(response.json()["display_total"], "₹150.00")
         self.project.colour_grading = True
         self.project.reel_duration = "30_50"
         self.project.save(update_fields=["colour_grading", "reel_duration", "updated_at"])
@@ -420,6 +421,62 @@ class CommerceTests(TestCase):
         self.assertEqual(self.client.post("/admin/pricing/plans/2/", data).status_code, 302)
         self.assertEqual(Plan.objects.get(slot=2).features, ["Cuts", "Captions"])
 
+    def test_admin_enters_major_currency_amounts_and_legacy_values_round_trip(self):
+        self.client.force_login(self.admin)
+        legacy_page = self.client.get("/admin/pricing/plans/1/")
+        self.assertContains(legacy_page, "Plan price (₹)")
+        self.assertContains(legacy_page, 'value="250.00"', html=False)
+        self.assertNotContains(legacy_page, "minor units")
+        self.assertNotContains(legacy_page, "tokens")
+
+        inr_form = PlanForm(
+            {"name": "INR plan", "price_minor": "100.50", "currency": "INR"},
+            instance=Plan(slot=2),
+        )
+        self.assertTrue(inr_form.is_valid(), inr_form.errors)
+        inr_plan = inr_form.save()
+        self.assertEqual(inr_plan.price_minor, 10050)
+        rendered = PlanForm(instance=inr_plan).as_div()
+        self.assertIn("Plan price (₹)", rendered)
+        self.assertIn('value="100.50"', rendered)
+
+        usd_form = PlanForm(
+            {"name": "USD plan", "price_minor": "100.50", "currency": "USD"},
+            instance=Plan(slot=3),
+        )
+        self.assertTrue(usd_form.is_valid(), usd_form.errors)
+        self.assertEqual(usd_form.save().price_minor, 10050)
+
+        jpy_form = PlanForm(
+            {"name": "JPY plan", "price_minor": "100", "currency": "JPY"},
+            instance=Plan(slot=2),
+        )
+        self.assertTrue(jpy_form.is_valid(), jpy_form.errors)
+        jpy_plan = jpy_form.save(commit=False)
+        self.assertEqual(jpy_plan.price_minor, 100)
+        self.assertIn('value="100"', PlanForm(instance=jpy_plan).as_div())
+
+    def test_admin_price_validation_respects_currency_precision(self):
+        cases = [
+            ("INR", "12.345", "INR supports up to 2 decimal places."),
+            ("JPY", "12.5", "JPY does not support decimals."),
+            ("USD", "not-a-number", "Enter a valid amount."),
+            ("USD", "-1", "Enter zero or a positive amount."),
+        ]
+        for currency, amount, message in cases:
+            with self.subTest(currency=currency, amount=amount):
+                form = PlanForm(
+                    {"name": "Invalid plan", "price_minor": amount, "currency": currency},
+                    instance=Plan(slot=2),
+                )
+                self.assertFalse(form.is_valid())
+                self.assertIn(message, form.errors["price_minor"])
+
+    def test_money_display_uses_currency_symbols_and_exponents(self):
+        self.assertEqual(format_money(10000, "INR"), "₹100.00")
+        self.assertEqual(format_money(150000, "USD"), "$1,500.00")
+        self.assertEqual(format_money(1500, "JPY"), "¥1,500")
+
     def test_admin_can_prepare_monthly_package_draft_without_publishing_it(self):
         self.assertFalse(
             PackageForm(
@@ -436,7 +493,7 @@ class CommerceTests(TestCase):
             "/admin/pricing/packages/new/",
             {
                 "name": "Creator four",
-                "price_minor": 50000,
+                "price_minor": "500.00",
                 "currency": "INR",
                 "video_allowance": 4,
                 "revision_limit": 2,
@@ -461,7 +518,7 @@ class CommerceTests(TestCase):
         )
         self.assertEqual(response.status_code, 302)
         review = self.client.get(response.url)
-        self.assertContains(review, "INR 115.00")
+        self.assertContains(review, "₹115.00")
         accepted = self.client.post(response.url, {"csrfmiddlewaretoken": "test", "agree": "yes"})
         self.assertEqual(accepted.status_code, 302)
         self.client.post(f"/orders/{self.project.id}/checkout/")

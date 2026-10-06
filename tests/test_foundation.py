@@ -877,9 +877,9 @@ class FoundationTests(TestCase):
         self.assertContains(form_page, "Monthly")
         self.assertContains(form_page, "Yearly")
         self.assertContains(form_page, 'value="per_reel" checked', html=False)
-        self.assertContains(form_page, 'data-price-per-reel="INR 100.00"', html=False)
-        self.assertContains(form_page, 'data-price-monthly="INR 900.00"', html=False)
-        self.assertContains(form_page, 'data-price-yearly="INR 9,000.00"', html=False)
+        self.assertContains(form_page, 'data-price-per-reel="₹100.00"', html=False)
+        self.assertContains(form_page, 'data-price-monthly="₹900.00"', html=False)
+        self.assertContains(form_page, 'data-price-yearly="₹9,000.00"', html=False)
 
         rejected = browser.post(
             "/client/new-order/?new=1",

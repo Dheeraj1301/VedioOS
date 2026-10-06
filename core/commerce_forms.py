@@ -1,36 +1,139 @@
 from django import forms
+from django.utils.html import format_html
 
 from .models import CommercePolicy, CustomService, InfluencerPackage, Plan, Project
+from .money import (
+    CURRENCY_CHOICES,
+    currency_exponent,
+    currency_symbol,
+    major_to_minor,
+    minor_to_major,
+)
 
-CURRENCIES = [
-    ("", "Choose currency"),
-    ("INR", "INR"),
-    ("USD", "USD"),
-    ("EUR", "EUR"),
-    ("GBP", "GBP"),
-    ("JPY", "JPY"),
-    ("KRW", "KRW"),
-]
+CURRENCIES = CURRENCY_CHOICES
 MAX_PRICE = 999999999999
 
 
-class CatalogForm(forms.ModelForm):
+class MoneyInput(forms.NumberInput):
+    def __init__(self, attrs=None):
+        super().__init__(attrs)
+        self.currency_symbol = ""
+
+    def render(self, name, value, attrs=None, renderer=None):
+        input_html = super().render(name, value, attrs, renderer)
+        return format_html(
+            '<span class="money-input-shell"><span class="money-input-symbol" '
+            'data-currency-symbol aria-hidden="true">{}</span>{}</span>',
+            self.currency_symbol,
+            input_html,
+        )
+
+
+def major_unit_field(label):
+    return forms.DecimalField(
+        label=label,
+        required=False,
+        max_digits=18,
+        decimal_places=None,
+        error_messages={"invalid": "Enter a valid amount."},
+        widget=MoneyInput(attrs={"inputmode": "decimal"}),
+    )
+
+
+class MajorUnitPriceFormMixin:
+    money_field_labels = {}
+
+    def __init__(self, *args, **kwargs):
+        self.values_are_minor = kwargs.pop("values_are_minor", False)
+        super().__init__(*args, **kwargs)
+        currency = ""
+        if self.is_bound:
+            currency = self.data.get(self.add_prefix("currency"), "")
+        if not currency:
+            currency = self.initial.get("currency") or getattr(self.instance, "currency", "")
+        symbol = currency_symbol(currency)
+        exponent = currency_exponent(currency)
+        for field_name, base_label in self.money_field_labels.items():
+            field = self.fields[field_name]
+            field.label = f"{base_label} ({symbol})" if symbol else base_label
+            field.widget.currency_symbol = symbol
+            field.widget.attrs.update(
+                {
+                    "data-money-input": "",
+                    "data-base-label": base_label,
+                    "step": "1" if exponent == 0 else "0.01",
+                    "min": "0",
+                }
+            )
+            if not self.is_bound:
+                stored_value = getattr(self.instance, field_name, None)
+                if stored_value is not None:
+                    self.initial[field_name] = minor_to_major(stored_value, currency)
+
+    def clean(self):
+        data = super().clean()
+        currency = data.get("currency")
+        entered_fields = [
+            field_name
+            for field_name in self.money_field_labels
+            if data.get(field_name) is not None
+        ]
+        if entered_fields and not currency:
+            self.add_error("currency", "Choose a currency before entering a price.")
+            for field_name in entered_fields:
+                data.pop(field_name, None)
+            return data
+        for field_name in entered_fields:
+            amount = data.get(field_name)
+            if amount < 0:
+                self.add_error(field_name, "Enter zero or a positive amount.")
+                continue
+            if self.values_are_minor:
+                if amount != amount.to_integral_value():
+                    self.add_error(field_name, "Stored prices must use whole minor units.")
+                    continue
+                amount_minor = int(amount)
+                if amount_minor > MAX_PRICE:
+                    self.add_error(field_name, "Amount is too large.")
+                    continue
+                data[field_name] = amount_minor
+                continue
+            try:
+                amount_minor = major_to_minor(amount, currency)
+            except ValueError as exc:
+                self.add_error(field_name, str(exc))
+                continue
+            if amount_minor > MAX_PRICE:
+                self.add_error(field_name, "Amount is too large.")
+                continue
+            data[field_name] = amount_minor
+        return data
+
+
+class CatalogForm(MajorUnitPriceFormMixin, forms.ModelForm):
     currency = forms.ChoiceField(choices=CURRENCIES, required=False)
+    money_field_labels = {"price_minor": "Price"}
 
     def clean(self):
         data = super().clean()
         price = data.get("price_minor")
-        if price is not None and price > MAX_PRICE:
-            self.add_error("price_minor", "Amount is too large.")
         if data.get("active"):
             if price is None or price <= 0:
-                self.add_error("price_minor", "An active item requires a positive price in minor units.")
+                self.add_error("price_minor", "An active item requires a positive price.")
             if not data.get("currency"):
                 self.add_error("currency", "Choose a currency before publishing.")
         return data
 
 
 class PlanForm(CatalogForm):
+    price_minor = major_unit_field("Plan price")
+    monthly_price_minor = major_unit_field("Monthly price")
+    yearly_price_minor = major_unit_field("Yearly price")
+    money_field_labels = {
+        "price_minor": "Plan price",
+        "monthly_price_minor": "Monthly price",
+        "yearly_price_minor": "Yearly price",
+    }
     features = forms.CharField(
         widget=forms.Textarea(attrs={"rows": 4}),
         required=False,
@@ -53,9 +156,6 @@ class PlanForm(CatalogForm):
             "active",
         ]
         help_texts = {
-            "price_minor": "Per-reel amount in integer minor units: 10000 means INR 100.00; 100 means JPY 100.",
-            "monthly_price_minor": "Optional monthly amount in integer minor units. Leave blank to show Coming soon.",
-            "yearly_price_minor": "Optional yearly amount in integer minor units. Leave blank to show Coming soon.",
             "active": "Publish only approved prices and terms. This does not enable real payment.",
         }
 
@@ -89,16 +189,20 @@ class PlanForm(CatalogForm):
 
 
 class ServiceForm(CatalogForm):
+    price_minor = major_unit_field("Service price")
+    money_field_labels = {"price_minor": "Service price"}
+
     class Meta:
         model = CustomService
         fields = ["name", "code", "price_minor", "currency", "active"]
         help_texts = {
             "code": "Optional stable mapping used by the live custom estimate. Each mapping can be used once.",
-            "price_minor": "Integer minor units; never enter decimal prices here.",
         }
 
 
-class PackageForm(forms.ModelForm):
+class PackageForm(MajorUnitPriceFormMixin, forms.ModelForm):
+    price_minor = major_unit_field("Package price")
+    money_field_labels = {"price_minor": "Package price"}
     currency = forms.ChoiceField(choices=CURRENCIES, required=False)
     services = forms.CharField(
         widget=forms.Textarea(attrs={"rows": 4}),
@@ -119,7 +223,6 @@ class PackageForm(forms.ModelForm):
             "services",
         ]
         help_texts = {
-            "price_minor": "Draft amount in integer minor units. Publishing and sales remain disabled.",
             "dedicated_editor": "Draft intent only; allocation behavior requires an approved policy.",
         }
 
@@ -143,7 +246,9 @@ class PackageForm(forms.ModelForm):
         return data
 
 
-class PolicyForm(forms.ModelForm):
+class PolicyForm(MajorUnitPriceFormMixin, forms.ModelForm):
+    custom_base_minor = major_unit_field("Custom base price")
+    money_field_labels = {"custom_base_minor": "Custom base price"}
     currency = forms.ChoiceField(choices=CURRENCIES, required=False)
 
     class Meta:
@@ -170,7 +275,6 @@ class PolicyForm(forms.ModelForm):
             "quotes_enabled": "Allow clients to request quotes. Real checkout requires a separate provider integration.",
             "tax_terms": "Describe applicable taxes and whether the displayed total includes them.",
             "delivery_terms": "Specify clock start, milestone, working/calendar hours and pause rules.",
-            "custom_base_minor": "Leave blank to disable custom quotes. Integer minor units.",
         }
 
     def clean(self):

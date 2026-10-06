@@ -357,3 +357,29 @@ if (newOrderForm) {
   });
   updateOrderFields();
 }
+
+const pricingCurrency = document.querySelector('#id_currency');
+const majorUnitInputs = [...document.querySelectorAll('[data-money-input]')];
+if (pricingCurrency && majorUnitInputs.length) {
+  const currencySpecs = {
+    INR: {symbol: '₹', exponent: 2},
+    USD: {symbol: '$', exponent: 2},
+    EUR: {symbol: '€', exponent: 2},
+    GBP: {symbol: '£', exponent: 2},
+    JPY: {symbol: '¥', exponent: 0},
+    KRW: {symbol: '₩', exponent: 0},
+  };
+  const updateMoneyInputs = () => {
+    const spec = currencySpecs[pricingCurrency.value] || {symbol: '', exponent: 2};
+    majorUnitInputs.forEach(input => {
+      const symbol = input.closest('.money-input-shell')?.querySelector('[data-currency-symbol]');
+      if (symbol) symbol.textContent = spec.symbol;
+      input.step = spec.exponent === 0 ? '1' : '0.01';
+      input.inputMode = spec.exponent === 0 ? 'numeric' : 'decimal';
+      const label = document.querySelector(`label[for="${CSS.escape(input.id)}"]`);
+      if (label) label.textContent = `${input.dataset.baseLabel}${spec.symbol ? ` (${spec.symbol})` : ''}`;
+    });
+  };
+  pricingCurrency.addEventListener('change', updateMoneyInputs);
+  updateMoneyInputs();
+}
