@@ -134,6 +134,18 @@ Affected requirements and files: original brief configurability and pricing admi
 
 Verification required: INR/USD two-decimal and JPY whole-unit round trips, legacy-value rendering, invalid precision and negative input rejection, unchanged server-owned quote/payment minor-unit totals, and browser confirmation of the currency selector and dynamic symbol.
 
+## 2026-10-06 — Remove consultation choices from the client brief
+
+Status: approved
+
+Owner / source of explicit decision: Hamsa, client new-order form change request.
+
+Decision: remove the “Talk to an editor before editing” and “Talk to an editor after the draft” controls from client new-order and editable-draft forms. New client submissions no longer bind or populate either preference, including when those field names are forged in a request. Retain the existing database columns and historical consultation handling so previously recorded preferences and call records are not rewritten or dropped.
+
+Affected requirements and files: client creative-brief UI and `ProjectForm`. Music preference, other instructions, uploads, save behavior and monthly-package presentation remain unchanged.
+
+Verification required: both labels are absent, forged values remain false on a new project, Save and Proceed still creates the draft, and no migration is generated.
+
 Only mark a business choice approved when supported by an explicit owner decision. Contributors can document routine technical choices within authorized scope, identifying them as implementation decisions. A proposal is not a production default.
 
 ## 2026-09-17 — Earnings implementation (D10 remains open)

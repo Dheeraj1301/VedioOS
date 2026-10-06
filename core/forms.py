@@ -124,8 +124,6 @@ class ProjectForm(forms.ModelForm):
             "reference_notes",
             "song_choice",
             "song_information",
-            "call_before",
-            "call_after",
         ]
         labels = {
             "title": "Project name",
@@ -139,8 +137,6 @@ class ProjectForm(forms.ModelForm):
             "reference_notes": "Other Instructions",
             "song_choice": "Music preference",
             "song_information": "Song Name or Link",
-            "call_before": "Talk to an editor before editing",
-            "call_after": "Talk to an editor after the draft",
         }
         widgets = {
             name: forms.Textarea(attrs={"rows": 3})

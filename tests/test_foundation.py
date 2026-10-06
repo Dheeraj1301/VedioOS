@@ -614,8 +614,28 @@ class FoundationTests(TestCase):
         self.assertContains(response, 'id="upload-inspiration"', html=False)
         self.assertContains(response, 'multiple', html=False)
         self.assertContains(response, "Save and Proceed")
+        self.assertNotContains(response, "Talk to an editor before editing")
+        self.assertNotContains(response, "Talk to an editor after the draft")
         content = response.content.decode()
         self.assertLess(content.index("Upload Your Clips"), content.index("Add Inspiration Reel/Video"))
+
+    def test_new_order_ignores_removed_consultation_fields(self):
+        browser = self.auth(self.owner)
+        response = browser.post(
+            "/client/new-order/?new=1",
+            {
+                "title": "No consultation options",
+                "order_choice": "custom",
+                "reel_duration": "30_50",
+                "song_choice": "suggest",
+                "call_before": "on",
+                "call_after": "on",
+            },
+        )
+        project = Project.objects.get(title="No consultation options")
+        self.assertRedirects(response, f"/client/projects/{project.id}/")
+        self.assertFalse(project.call_before)
+        self.assertFalse(project.call_after)
 
     def test_song_details_are_hidden_by_default_and_cleared_for_suggestions(self):
         browser = self.auth(self.owner)
