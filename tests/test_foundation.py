@@ -592,6 +592,8 @@ class FoundationTests(TestCase):
         browser = self.auth(self.owner)
         blank = browser.get("/client/new-order/?new=1")
         self.assertContains(blank, "data-custom-fields hidden", html=False)
+        self.assertContains(blank, "data-brief-fields hidden", html=False)
+        self.assertContains(blank, "custom-fields is-hidden", html=False)
 
         custom = browser.post(
             "/client/new-order/?new=1",
@@ -600,6 +602,8 @@ class FoundationTests(TestCase):
         self.assertEqual(custom.status_code, 200)
         self.assertContains(custom, "data-custom-fields", html=False)
         self.assertNotContains(custom, "data-custom-fields hidden", html=False)
+        self.assertContains(custom, "data-brief-fields", html=False)
+        self.assertNotContains(custom, "data-brief-fields hidden", html=False)
 
     def test_new_order_shows_clip_and_inspiration_uploads_with_bottom_save_action(self):
         response = self.auth(self.owner).get("/client/new-order/")

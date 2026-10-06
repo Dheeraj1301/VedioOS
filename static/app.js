@@ -102,6 +102,7 @@ if (editorSearchForm) {
 const newOrderForm = document.querySelector('[data-new-order-form]');
 if (newOrderForm) {
   const customFields = newOrderForm.querySelector('[data-custom-fields]');
+  const briefFields = newOrderForm.querySelector('[data-brief-fields]');
   const wordingDirection = newOrderForm.querySelector('[data-wording-direction]');
   const fontName = newOrderForm.querySelector('[data-font-name]');
   const fontInspiration = newOrderForm.querySelector('[data-font-inspiration]');
@@ -136,7 +137,11 @@ if (newOrderForm) {
   const updateOrderFields = () => {
     const custom = newOrderForm.querySelector('[name="order_choice"]:checked')?.value === 'custom';
     customFields.hidden = !custom;
+    customFields.classList.toggle('is-hidden', !custom);
     customFields.querySelectorAll('input, select').forEach(field => field.disabled = !custom);
+    briefFields.hidden = !custom;
+    briefFields.classList.toggle('is-hidden', !custom);
+    briefFields.querySelectorAll('input, select, textarea, button').forEach(field => field.disabled = !custom);
     const wording = custom && wordingCheckbox.checked;
     wordingDirection.hidden = !wording;
     wordingDirection.querySelectorAll('select').forEach(field => field.disabled = !wording);
