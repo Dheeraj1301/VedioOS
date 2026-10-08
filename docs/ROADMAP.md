@@ -43,6 +43,8 @@ The first-version scope is all 28 priorities in original brief section 34, cover
 
 **2026-10-06: weighted custom quotation slice implemented.** Seven owner-scored brief features, admin-managed weights/multipliers/bounds, authenticated live estimates and submission-time quote snapshots are implemented. Production activation remains off until D04 supplies the base/per-point/min/max amounts; ML remains deferred pending an approved historical dataset and evaluation rule.
 
+**2026-10-08: locked custom checkout handoff implemented.** Saving a custom brief now creates its immutable quote and redirects to a dedicated quotation/payment screen showing the saved configuration, breakdown, terms and total. The payment CTA reuses the existing transactional checkout adapter, blocks missing/invalid totals, and shows completed payments without offering a duplicate action. No real payment provider was added; the production payment gate remains open.
+
 - Implement admin management of three plans and custom services with validated configuration.
 - Build plan/custom selection, backend price calculation, term snapshots, payment adapter, verified payment events, invoices/history foundations, and unique paid projects.
 - Show paid/unpaid queues in the presenter dashboard. Persist delivery timestamps under decided rules.

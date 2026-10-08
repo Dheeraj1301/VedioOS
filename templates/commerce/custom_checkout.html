@@ -1,0 +1,31 @@
+{% extends 'workspace.html' %}{% load money %}
+{% block workspace_content %}
+<div class="page-heading"><div><p class="eyebrow">Custom quotation / Payment</p><h1>{{ project.title }}</h1><p class="muted">Quotation {{ quote.id }} · Prepared {{ quote.created_at|date:"M j, Y H:i" }} UTC</p></div><span class="badge">{{ order.get_payment_status_display }}</span></div>
+
+<section class="panel detail-panel">
+  <div class="panel-heading"><div><h2>Your customized quotation</h2><p class="muted">This is the locked quotation created when you selected Save and Proceed.</p></div><span class="badge">CUSTOM</span></div>
+  <div class="file-row"><strong>Project name</strong><span>{{ project.title }}</span></div>
+  <div class="file-row"><strong>Selected plan</strong><span>Customize my edit</span></div>
+  <h3>Selected options</h3>
+  {% if features %}<ul>{% for feature in features %}<li>{{ feature }}</li>{% endfor %}</ul>{% else %}<p class="muted">No optional editing features selected.</p>{% endif %}
+  {% if breakdown %}<h3>Quotation breakdown</h3>{% for item in breakdown %}<div class="file-row"><span>{{ item.name }}</span><strong>{{ item.amount_minor|money:snapshot.currency }}</strong></div>{% endfor %}{% endif %}
+  <div class="file-row"><h2>Total estimated price</h2><strong>{{ snapshot.total_minor|money:snapshot.currency }}</strong></div>
+</section>
+
+<section class="panel detail-panel">
+  <h2>Payment</h2>
+  {% if order.payment_status == 'confirmed' %}
+    <p><strong>Payment already completed.</strong></p><p>Payment was recorded {{ project.payment_completed_at|date:"M j, Y H:i" }} UTC.</p>
+  {% elif not valid_total %}
+    <p role="alert"><strong>Payment is blocked.</strong> This quotation has an invalid or zero total. Return to the customization form and save a valid quotation.</p>
+  {% else %}
+    {% if sandbox %}<p><strong>Development sandbox:</strong> no real money is charged.</p>{% else %}<p class="muted">The payment provider is not enabled yet. This action uses the existing checkout flow and will remain safely blocked until the provider is configured.</p>{% endif %}
+    <form method="post" class="form-stack">{% csrf_token %}
+      <label><input type="checkbox" name="agree" value="yes" required> I accept this quotation and the included commercial terms.</label>
+      <button class="button" type="submit">Make Payment <span>↗</span></button>
+    </form>
+  {% endif %}
+</section>
+
+<section class="panel detail-panel"><h2>Included terms</h2><h3>Service agreement</h3><p class="preserve-lines">{{ snapshot.terms.terms }}</p><h3>Delivery</h3><p class="preserve-lines">{{ snapshot.terms.delivery_terms }}</p><h3>Cancellation & refunds</h3><p class="preserve-lines">{{ snapshot.terms.refund_terms }}</p><h3>Taxes</h3><p class="preserve-lines">{{ snapshot.terms.tax_terms }}</p></section>
+{% endblock %}

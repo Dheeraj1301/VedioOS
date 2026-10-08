@@ -339,6 +339,8 @@ def _project_form(request, project=None, *, create_new=False):
     is_new = project is None
     form = ProjectForm(request.POST or None, instance=project)
     if request.method == "POST" and form.is_valid():
+        quote = None
+        quote_error = ""
         with transaction.atomic():
             saved_project = form.save(commit=False)
             selected_plan = form.cleaned_data.get("selected_plan")
@@ -390,8 +392,25 @@ def _project_form(request, project=None, *, create_new=False):
                     update_fields=["kind", "plan", "pricing_period", "updated_at"]
                 )
                 action = "project.brief_updated"
+            if not selected_plan and saved_project.quotation_snapshot:
+                try:
+                    from .commerce import create_quote
+
+                    quote = create_quote(request.user, saved_project.pk, "custom")
+                except ValidationError as exc:
+                    quote_error = " ".join(exc.messages)
             audit(request.user, action, saved_project.pk)
         request.session["active_project_draft_id"] = str(saved_project.pk)
+        if not selected_plan:
+            if quote:
+                messages.success(request, "Creative brief and quotation saved.")
+            else:
+                messages.error(
+                    request,
+                    quote_error
+                    or "A valid quotation could not be generated. Review the pricing configuration and try again.",
+                )
+            return redirect("custom_checkout", project_id=saved_project.pk)
         messages.success(request, "Creative brief saved. Add or review your private files below.")
         return redirect("client_project", project_id=saved_project.pk)
     slots = {plan.slot: plan for plan in Plan.objects.order_by("slot")}

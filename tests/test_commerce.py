@@ -235,14 +235,96 @@ class CommerceTests(TestCase):
             },
         )
         project = Project.objects.get(title="Weighted snapshot")
-        self.assertEqual(response.status_code, 302)
+        self.assertRedirects(
+            response,
+            f"/client/checkout/{project.id}/",
+            fetch_redirect_response=False,
+        )
         self.assertEqual(project.quotation_snapshot["total_minor"], 12380)
+        quote = project.order.quotes.get()
         CommercePolicy.objects.filter(pk=1).update(quotation_point_minor=999)
         QuotationFeature.objects.filter(code="colour_grading").update(time_score=1)
-        quote = create_quote(self.user, project.id, "custom")
         self.assertEqual(quote.total_minor, 12380)
         self.assertEqual(quote.snapshot["quotation"]["weights"]["time"], 40)
         self.assertEqual(quote.snapshot["quotation"]["inputs"]["overlays"], True)
+
+    def test_custom_checkout_displays_locked_quote_and_starts_existing_payment_flow(self):
+        self.enable_weighted_engine()
+        self.client.force_login(self.user)
+        response = self.client.post(
+            "/client/new-order/?new=1",
+            {
+                "title": "Checkout quotation",
+                "order_choice": "custom",
+                "colour_grading": "on",
+                "quality_enhancement": "on",
+                "overlays": "on",
+                "beat_sync": "on",
+                "reel_duration": "20_30",
+                "wants_wording": "on",
+                "wording_direction": "editor_choice",
+                "song_choice": "suggest",
+            },
+        )
+        project = Project.objects.get(title="Checkout quotation")
+        checkout_url = f"/client/checkout/{project.id}/"
+        self.assertRedirects(response, checkout_url, fetch_redirect_response=False)
+
+        page = self.client.get(checkout_url)
+        self.assertContains(page, "Your customized quotation")
+        self.assertContains(page, "Customize my edit")
+        self.assertContains(page, "Colour grading")
+        self.assertContains(page, "Beat sync")
+        self.assertContains(page, format_money(12380, "INR"))
+        self.assertContains(page, "Make Payment")
+
+        CommercePolicy.objects.filter(pk=1).update(quotation_point_minor=999)
+        QuotationFeature.objects.filter(code="beat_sync").update(complexity_score=1)
+        unchanged = self.client.get(checkout_url)
+        self.assertContains(unchanged, format_money(12380, "INR"))
+
+        paid = self.client.post(checkout_url, {"agree": "yes"})
+        self.assertRedirects(paid, f"/orders/{project.id}/")
+        project.order.refresh_from_db()
+        payment = project.order.payments.get()
+        self.assertEqual(project.order.total_minor, 12380)
+        self.assertEqual(project.order.currency, "INR")
+        self.assertEqual(payment.amount_minor, 12380)
+        self.assertEqual(payment.currency, "INR")
+
+        apply_sandbox_event(*self.event(payment))
+        completed = self.client.get(checkout_url)
+        self.assertContains(completed, "Payment already completed")
+        self.assertNotContains(completed, "Make Payment")
+
+        self.client.force_login(self.other)
+        self.assertEqual(self.client.get(checkout_url).status_code, 404)
+
+    def test_custom_checkout_redirects_missing_quote_and_blocks_invalid_total(self):
+        self.client.force_login(self.user)
+        missing = self.client.get(f"/client/checkout/{self.project.id}/")
+        self.assertRedirects(missing, f"/client/projects/{self.project.id}/edit/")
+
+        self.enable_weighted_engine()
+        self.client.post(
+            "/client/new-order/?new=1",
+            {
+                "title": "Invalid checkout quotation",
+                "order_choice": "custom",
+                "reel_duration": "20_30",
+                "song_choice": "suggest",
+            },
+        )
+        project = Project.objects.get(title="Invalid checkout quotation")
+        quote = project.order.quotes.get()
+        broken = {**quote.snapshot, "total_minor": 0}
+        OrderQuote.objects.filter(pk=quote.pk).update(snapshot=broken, total_minor=0)
+        checkout_url = f"/client/checkout/{project.id}/"
+        page = self.client.get(checkout_url)
+        self.assertContains(page, "Payment is blocked")
+        self.assertNotContains(page, "Make Payment")
+        self.client.post(checkout_url, {"agree": "yes"})
+        self.assertFalse(project.order.payments.exists())
 
     def test_admin_can_manage_weighted_policy_and_feature_scores(self):
         invalid_values = {

@@ -229,6 +229,81 @@ def quote_review(request, project_id, quote_id):
     )
 
 
+@role_required("client")
+def custom_checkout(request, project_id):
+    project = project_for(request.user, project_id)
+    order = project.order
+    if order.kind != "custom":
+        return redirect("client_project", project_id=project.id)
+
+    if order.payment_status == "confirmed":
+        snapshot = order.terms_snapshot
+        quote = order.quotes.filter(pk=snapshot.get("quote_id")).first() if snapshot else None
+    else:
+        quote = order.quotes.first()
+        snapshot = quote.snapshot if quote else None
+
+    if not snapshot or not quote:
+        messages.error(
+            request,
+            "Complete the customization form and save it to generate your quotation before payment.",
+        )
+        return redirect("edit_project", project_id=project.id)
+
+    total = snapshot.get("total_minor")
+    currency = snapshot.get("currency")
+    valid_total = (
+        type(total) is int
+        and total > 0
+        and total == quote.total_minor
+        and isinstance(currency, str)
+        and currency == quote.currency
+    )
+    if request.method == "POST":
+        if set(request.POST) - {"csrfmiddlewaretoken", "agree"}:
+            raise PermissionDenied
+        if order.payment_status == "confirmed":
+            messages.info(request, "Payment has already been completed for this project.")
+        elif not valid_total:
+            messages.error(request, "This quotation has an invalid total and cannot be paid.")
+        elif request.POST.get("agree") != "yes":
+            messages.error(request, "Accept the displayed quotation and terms before payment.")
+        else:
+            try:
+                with transaction.atomic():
+                    accept_quote(request.user, project.id, quote.id)
+                    start_checkout(request.user, project.id)
+                messages.success(
+                    request,
+                    "Payment was started using the saved quotation amount and currency.",
+                )
+                return redirect("order_summary", project_id=project.id)
+            except ValidationError as exc:
+                messages.error(request, " ".join(exc.messages))
+
+    features = snapshot.get("features", [])
+    if not isinstance(features, list):
+        features = []
+    breakdown = snapshot.get("estimate_breakdown", [])
+    if not isinstance(breakdown, list):
+        breakdown = []
+    return render(
+        request,
+        "commerce/custom_checkout.html",
+        {
+            "title": "Custom quotation and payment",
+            "project": project,
+            "order": order,
+            "quote": quote,
+            "snapshot": snapshot,
+            "features": features,
+            "breakdown": breakdown,
+            "valid_total": valid_total,
+            "sandbox": sandbox_enabled(),
+        },
+    )
+
+
 @role_required("client", "admin")
 def order_summary(request, project_id):
     project = project_for(request.user, project_id)

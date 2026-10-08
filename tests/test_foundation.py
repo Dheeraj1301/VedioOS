@@ -645,7 +645,11 @@ class FoundationTests(TestCase):
             },
         )
         project = Project.objects.get(title="No consultation options")
-        self.assertRedirects(response, f"/client/projects/{project.id}/")
+        self.assertRedirects(
+            response,
+            f"/client/checkout/{project.id}/",
+            fetch_redirect_response=False,
+        )
         self.assertFalse(project.call_before)
         self.assertFalse(project.call_after)
 
@@ -666,7 +670,11 @@ class FoundationTests(TestCase):
             },
         )
         project = Project.objects.get(title="Suggested music brief")
-        self.assertRedirects(saved, f"/client/projects/{project.id}/")
+        self.assertRedirects(
+            saved,
+            f"/client/checkout/{project.id}/",
+            fetch_redirect_response=False,
+        )
         self.assertEqual(project.song_information, "")
 
     def test_saved_brief_remains_populated_until_create_new_is_clicked(self):
@@ -684,7 +692,11 @@ class FoundationTests(TestCase):
             },
         )
         project = Project.objects.get(title="Persistent brief")
-        self.assertRedirects(response, f"/client/projects/{project.id}/")
+        self.assertRedirects(
+            response,
+            f"/client/checkout/{project.id}/",
+            fetch_redirect_response=False,
+        )
 
         resumed = browser.get("/client/new-order/")
         self.assertContains(resumed, "Persistent brief")
@@ -796,7 +808,11 @@ class FoundationTests(TestCase):
 
         saved = browser.post("/client/new-order/?new=1", {**data, "font_name": "Montserrat"})
         project = Project.objects.get(title="Typography brief")
-        self.assertRedirects(saved, f"/client/projects/{project.id}/")
+        self.assertRedirects(
+            saved,
+            f"/client/checkout/{project.id}/",
+            fetch_redirect_response=False,
+        )
         self.assertEqual(project.font_name, "Montserrat")
         form_page = browser.get("/client/new-order/")
         self.assertContains(form_page, "Describe the edit")
@@ -822,7 +838,11 @@ class FoundationTests(TestCase):
                 "song_choice": "suggest",
             },
         )
-        self.assertRedirects(response, f"/client/projects/{self.project.id}/")
+        self.assertRedirects(
+            response,
+            f"/client/checkout/{self.project.id}/",
+            fetch_redirect_response=False,
+        )
         self.project.refresh_from_db()
         self.assertEqual(self.project.title, "Updated brief")
         self.assertEqual(self.project.requirements, "Updated creative direction")
@@ -967,7 +987,11 @@ class FoundationTests(TestCase):
             },
         )
         custom_project = Project.objects.get(title="Custom ignores toggle")
-        self.assertRedirects(custom, f"/client/projects/{custom_project.id}/")
+        self.assertRedirects(
+            custom,
+            f"/client/checkout/{custom_project.id}/",
+            fetch_redirect_response=False,
+        )
         self.assertEqual(custom_project.order.kind, "custom")
         self.assertEqual(custom_project.order.pricing_period, Plan.PricingPeriod.PER_REEL)
 

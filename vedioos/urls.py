@@ -42,6 +42,11 @@ urlpatterns = [
     path("client/support/", support_views.client_support, name="client_support"),
     path("client/support/create/", support_views.create_support, name="create_support"),
     path("client/projects/<uuid:project_id>/quote/", commerce.quote_page, name="quote_select"),
+    path(
+        "client/checkout/<uuid:project_id>/",
+        commerce.custom_checkout,
+        name="custom_checkout",
+    ),
     path("api/custom-estimate/", commerce.estimate_custom, name="estimate_custom"),
     path("api/quote/", commerce.estimate_custom, name="api_quote"),
     path(
