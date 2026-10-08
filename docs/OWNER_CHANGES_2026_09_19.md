@@ -68,3 +68,11 @@ Status: requested interface changes are implemented. Production commercial activ
 - Plan drafts persist the chosen pricing period. Reopening the brief restores it, and server-generated quotes use and snapshot the matching catalog amount instead of trusting a browser-supplied price.
 - Monthly creator packages remain separate and unavailable for purchase until D13 defines their fulfillment and renewal policies. No commercial amount is seeded by the migration.
 - Additive migration `core.0011` adds the two optional plan amounts and the order pricing-period choice. It passed the isolated migration/tests and is applied to the local preview. Synchronization to the selected Supabase project remains pending because this workspace currently has no server-only PostgreSQL connection configuration.
+
+## Custom-checkout upload handoff — 2026-10-08
+
+- The creative-brief upload workflow now recognizes both supported post-save destinations: fixed plans redirect to the project page, while custom briefs redirect to their locked quotation checkout.
+- The saved project UUID is taken only from those same-origin route shapes before any private upload reservation is requested. Existing project-owner and upload-category checks remain authoritative on every backend operation.
+- Previously, a custom brief and quotation could save successfully, but the browser rejected the valid `/client/checkout/<project-id>/` redirect before uploading selected files and displayed “The saved project could not be identified.”
+- This is a JavaScript-only regression fix. It changes no schema or commercial policy and requires no Supabase migration.
+- Explicit `vedioos.local_settings` and `vedioos.test_settings` runs now establish SQLite before cloud-database validation, so a malformed shared-preview placeholder cannot prevent the documented isolated preview or test suite from starting. Default settings still fail closed on malformed or missing required Supabase configuration.

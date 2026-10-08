@@ -331,7 +331,10 @@ if (newOrderForm) {
         document.open(); document.write(await response.text()); document.close();
         return;
       }
-      const projectMatch = new URL(response.url).pathname.match(/^\/client\/projects\/([0-9a-f-]+)\/$/i);
+      const savedPath = new URL(response.url).pathname;
+      const projectMatch = savedPath.match(
+        /^\/client\/(?:projects|checkout)\/([0-9a-f-]+)\/$/i,
+      );
       if (!projectMatch) throw new Error('The saved project could not be identified. Please upload your files from the project page.');
       const projectId = projectMatch[1];
       newOrderForm.action = `/client/projects/${projectId}/edit/`;

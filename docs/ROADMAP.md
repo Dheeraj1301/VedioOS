@@ -206,3 +206,7 @@ Checks run and results:
 Unverified items / blockers:
 Next task:
 ```
+
+### 2026-10-08 custom-brief upload handoff evidence
+
+The browser now accepts the locked custom-checkout redirect as a valid saved-project destination, uploads selected originals and references against that project, verifies their persisted file metadata, and then continues to the quotation. This code-only fix requires no database migration; connected-environment storage verification remains dependent on valid private database and storage configuration.

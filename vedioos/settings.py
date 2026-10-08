@@ -7,7 +7,14 @@ from dotenv import load_dotenv
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 load_dotenv(BASE_DIR / ".env")
-DEBUG = os.getenv("DEBUG", "false").lower() == "true"
+ISOLATED_SQLITE_SETTINGS = os.getenv("DJANGO_SETTINGS_MODULE") in {
+    "vedioos.local_settings",
+    "vedioos.test_settings",
+}
+DEBUG = (
+    os.getenv("DJANGO_SETTINGS_MODULE") == "vedioos.local_settings"
+    or os.getenv("DEBUG", "false").lower() == "true"
+)
 SUPABASE_PROJECT_REF = os.getenv("SUPABASE_PROJECT_REF", "")
 SUPABASE_AUTH_URL = os.getenv(
     "SUPABASE_AUTH_URL",
@@ -61,7 +68,7 @@ TEMPLATES = [
     }
 ]
 WSGI_APPLICATION = "vedioos.wsgi.application"
-if os.getenv("DATABASE_URL"):
+if os.getenv("DATABASE_URL") and not ISOLATED_SQLITE_SETTINGS:
     from .database import postgres_database
 
     DATABASES = {
@@ -71,7 +78,7 @@ if os.getenv("DATABASE_URL"):
             sslrootcert=os.getenv("POSTGRES_SSLROOTCERT"),
         )
     }
-elif os.getenv("POSTGRES_DB"):
+elif os.getenv("POSTGRES_DB") and not ISOLATED_SQLITE_SETTINGS:
     DATABASES = {
         "default": {
             "ENGINE": "django.db.backends.postgresql",
@@ -83,7 +90,7 @@ elif os.getenv("POSTGRES_DB"):
         }
     }
 else:
-    if not DEBUG:
+    if not DEBUG and not ISOLATED_SQLITE_SETTINGS:
         raise ImproperlyConfigured("Production requires PostgreSQL configuration.")
     DATABASES = {
         "default": {
@@ -92,7 +99,7 @@ else:
             "OPTIONS": {"timeout": 20},
         }
     }
-if SHARED_PREVIEW_REQUIRED:
+if SHARED_PREVIEW_REQUIRED and not ISOLATED_SQLITE_SETTINGS:
     database_url = os.getenv("DATABASE_URL", "")
     parsed_database_url = urlparse(database_url)
     identity = f"{parsed_database_url.username or ''}@{parsed_database_url.hostname or ''}"
@@ -166,5 +173,5 @@ if PAYOUT_MODE not in {"disabled", "sandbox"} or (PAYOUT_MODE == "sandbox" and n
 SANDBOX_PAYMENT_SECRET = os.getenv("SANDBOX_PAYMENT_SECRET", "")
 if PAYMENT_MODE not in {"disabled", "sandbox"} or (PAYMENT_MODE == "sandbox" and not DEBUG):
     raise ImproperlyConfigured("Only disabled payments or an explicitly enabled DEBUG sandbox are supported.")
-if not DEBUG and not S3_ENDPOINT_URL.startswith("https://"):
+if not DEBUG and not ISOLATED_SQLITE_SETTINGS and not S3_ENDPOINT_URL.startswith("https://"):
     raise ImproperlyConfigured("Production object storage requires HTTPS.")
