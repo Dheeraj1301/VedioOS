@@ -128,8 +128,10 @@ if (newOrderForm) {
       const input = card.querySelector('[name="order_choice"]');
       card.classList.toggle('unavailable', !available);
       card.setAttribute('aria-disabled', String(!available));
-      input.disabled = !available;
-      if (!available && input.checked) input.checked = false;
+      if (input) {
+        input.disabled = !available;
+        if (!available && input.checked) input.checked = false;
+      }
       card.querySelector('[data-plan-price]').textContent = price || 'Coming soon';
       card.querySelector('[data-plan-period-label]').textContent = price ? pricingPeriodLabels[period] : '';
     });
@@ -333,7 +335,7 @@ if (newOrderForm) {
       }
       const savedPath = new URL(response.url).pathname;
       const projectMatch = savedPath.match(
-        /^\/client\/(?:projects|checkout)\/([0-9a-f-]+)\/$/i,
+        /^\/client\/(?:projects|checkout)\/([0-9a-f-]+)(?:\/edit)?\/$/i,
       );
       if (!projectMatch) throw new Error('The saved project could not be identified. Please upload your files from the project page.');
       const projectId = projectMatch[1];

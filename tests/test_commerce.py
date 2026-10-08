@@ -15,6 +15,7 @@ from core.models import (
     Client,
     CommercePolicy,
     CustomService,
+    File,
     InfluencerPackage,
     Order,
     OrderQuote,
@@ -267,6 +268,19 @@ class CommerceTests(TestCase):
             },
         )
         project = Project.objects.get(title="Checkout quotation")
+        File.objects.create(
+            project=project,
+            uploader=self.user,
+            filename="checkout-reference.jpg",
+            object_key=f"projects/{project.id}/checkout-reference",
+            size_bytes=128,
+            sha256="a" * 64,
+            content_type="image/jpeg",
+            category="reference",
+            state="ready",
+            expires_at=timezone.now() + timedelta(hours=1),
+            completed_at=timezone.now(),
+        )
         checkout_url = f"/client/checkout/{project.id}/"
         self.assertRedirects(response, checkout_url, fetch_redirect_response=False)
 
@@ -277,6 +291,9 @@ class CommerceTests(TestCase):
         self.assertContains(page, "Beat sync")
         self.assertContains(page, format_money(12380, "INR"))
         self.assertContains(page, "Make Payment")
+        self.assertContains(page, "Edit details")
+        self.assertContains(page, "checkout-reference.jpg")
+        self.assertContains(page, "Reference")
 
         CommercePolicy.objects.filter(pk=1).update(quotation_point_minor=999)
         QuotationFeature.objects.filter(code="beat_sync").update(complexity_score=1)

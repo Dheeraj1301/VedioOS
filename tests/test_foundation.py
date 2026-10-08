@@ -773,6 +773,10 @@ class FoundationTests(TestCase):
             [item["id"] for item in api.json()["files"]],
             [str(saved_file.id) for saved_file in saved_files],
         )
+        self.assertEqual(
+            [item["category"] for item in api.json()["files"]],
+            [saved_file.category for saved_file in saved_files],
+        )
 
         added_file = File.objects.create(
             project=self.project,

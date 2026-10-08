@@ -1,5 +1,13 @@
 # Phase 3 — Catalog, quotes and payment foundation
 
+## 2026-10-09 custom-order workflow verification
+
+The new-order browser now tolerates unpublished plan slots, so the Custom option remains usable before plans are configured. Save and Proceed recognizes both successful checkout redirects and the editable-draft fallback used when pricing is unavailable; selected source, inspiration and font-reference files therefore continue through private upload verification in either case. The protected project API includes each visible file's category so the browser and support diagnostics can distinguish source and reference uploads without exposing storage keys or signed URLs.
+
+The custom checkout shows the immutable quotation, selected options, itemized breakdown, total, uploaded private-file metadata and an Edit details action before payment. The Make Payment action still requires explicit terms acceptance and uses the configured payment adapter. Real checkout remains disabled until D05 selects and configures a provider.
+
+Verification covered two real Edge flows against isolated SQLite and loopback private storage: configured weighted pricing completed Save and Proceed → inspiration upload → quotation → Make Payment → one pending sandbox payment; disabled pricing completed Save and Proceed → inspiration upload → editable brief without losing the file. The backend suite passed 243 tests with 10 optional integrations skipped. No schema change was required.
+
 ## 2026-10-06 weighted custom quotation engine
 
 Custom briefs now include Overlays and Beat sync alongside colour grading, quality enhancement, duration, font/wording and music preference. Authenticated `POST /api/quote/` requests are validated by the backend and return a live deterministic estimate plus contributor breakdown; the legacy `/api/custom-estimate/` route remains compatible. No browser-supplied price is accepted.

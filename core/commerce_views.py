@@ -26,7 +26,7 @@ from .models import (
     QuotationFeature,
 )
 from .payments import apply_sandbox_event, sandbox_enabled, start_checkout
-from .permissions import project_for, role_required
+from .permissions import project_for, role_required, visible_files
 from .templatetags.money import money
 from .views import audit
 
@@ -298,6 +298,7 @@ def custom_checkout(request, project_id):
             "snapshot": snapshot,
             "features": features,
             "breakdown": breakdown,
+            "files": visible_files(request.user, project),
             "valid_total": valid_total,
             "sandbox": sandbox_enabled(),
         },

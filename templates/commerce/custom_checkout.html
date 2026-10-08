@@ -1,6 +1,6 @@
 {% extends 'workspace.html' %}{% load money %}
 {% block workspace_content %}
-<div class="page-heading"><div><p class="eyebrow">Custom quotation / Payment</p><h1>{{ project.title }}</h1><p class="muted">Quotation {{ quote.id }} · Prepared {{ quote.created_at|date:"M j, Y H:i" }} UTC</p></div><span class="badge">{{ order.get_payment_status_display }}</span></div>
+<div class="page-heading"><div><p class="eyebrow">Custom quotation / Payment</p><h1>{{ project.title }}</h1><p class="muted">Quotation {{ quote.id }} · Prepared {{ quote.created_at|date:"M j, Y H:i" }} UTC</p></div><div><span class="badge">{{ order.get_payment_status_display }}</span> {% if order.payment_status != 'confirmed' %}<a class="button secondary" href="{% url 'edit_project' project.id %}">Edit details</a>{% endif %}</div></div>
 
 <section class="panel detail-panel">
   <div class="panel-heading"><div><h2>Your customized quotation</h2><p class="muted">This is the locked quotation created when you selected Save and Proceed.</p></div><span class="badge">CUSTOM</span></div>
@@ -10,6 +10,11 @@
   {% if features %}<ul>{% for feature in features %}<li>{{ feature }}</li>{% endfor %}</ul>{% else %}<p class="muted">No optional editing features selected.</p>{% endif %}
   {% if breakdown %}<h3>Quotation breakdown</h3>{% for item in breakdown %}<div class="file-row"><span>{{ item.name }}</span><strong>{{ item.amount_minor|money:snapshot.currency }}</strong></div>{% endfor %}{% endif %}
   <div class="file-row"><h2>Total estimated price</h2><strong>{{ snapshot.total_minor|money:snapshot.currency }}</strong></div>
+</section>
+
+<section class="panel detail-panel">
+  <h2>Private project files</h2>
+  {% for file in files %}<div class="file-row"><div><strong>{{ file.filename }}</strong><p>{{ file.get_category_display }} · {{ file.size_bytes|filesizeformat }}</p></div><span class="badge">Uploaded</span></div>{% empty %}<p class="muted">No files have been uploaded for this project yet.</p>{% endfor %}
 </section>
 
 <section class="panel detail-panel">

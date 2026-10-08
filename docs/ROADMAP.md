@@ -45,6 +45,8 @@ The first-version scope is all 28 priorities in original brief section 34, cover
 
 **2026-10-08: locked custom checkout handoff implemented.** Saving a custom brief now creates its immutable quote and redirects to a dedicated quotation/payment screen showing the saved configuration, breakdown, terms and total. The payment CTA reuses the existing transactional checkout adapter, blocks missing/invalid totals, and shows completed payments without offering a duplicate action. No real payment provider was added; the production payment gate remains open.
 
+**2026-10-09: custom-order browser regression fixed and verified.** Empty plan slots no longer stop the Custom form JavaScript. Both checkout and editable-draft redirects retain queued private uploads, and checkout now previews uploaded file metadata with an Edit details action. Real Edge verification passed configured quote/payment-sandbox and unconfigured-pricing fallback paths; the isolated backend suite passed 243 tests with 10 optional integrations skipped. Shared Supabase pricing and real payments remain inactive until D04–D05 are approved.
+
 - Implement admin management of three plans and custom services with validated configuration.
 - Build plan/custom selection, backend price calculation, term snapshots, payment adapter, verified payment events, invoices/history foundations, and unique paid projects.
 - Show paid/unpaid queues in the presenter dashboard. Persist delivery timestamps under decided rules.

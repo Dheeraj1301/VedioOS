@@ -557,7 +557,13 @@ def project_api(request, project_id):
             "title": project.title,
             "status": project.status,
             "files": [
-                {"id": str(f.id), "filename": f.filename, "size_bytes": f.size_bytes}
+                {
+                    "id": str(f.id),
+                    "filename": f.filename,
+                    "size_bytes": f.size_bytes,
+                    "category": f.category,
+                    "category_label": f.get_category_display(),
+                }
                 for f in visible_files(request.user, project)
             ],
         }
