@@ -602,6 +602,7 @@ class FoundationTests(TestCase):
         blank = browser.get("/client/new-order/?new=1")
         self.assertContains(blank, "data-custom-fields hidden", html=False)
         self.assertContains(blank, "data-brief-fields hidden", html=False)
+        self.assertContains(blank, "data-submit-row hidden", html=False)
         self.assertContains(blank, "custom-fields is-hidden", html=False)
 
         custom = browser.post(
@@ -613,6 +614,8 @@ class FoundationTests(TestCase):
         self.assertNotContains(custom, "data-custom-fields hidden", html=False)
         self.assertContains(custom, "data-brief-fields", html=False)
         self.assertNotContains(custom, "data-brief-fields hidden", html=False)
+        self.assertContains(custom, "data-submit-row", html=False)
+        self.assertNotContains(custom, "data-submit-row hidden", html=False)
 
     def test_new_order_shows_clip_and_inspiration_uploads_with_bottom_save_action(self):
         response = self.auth(self.owner).get("/client/new-order/")
@@ -872,6 +875,19 @@ class FoundationTests(TestCase):
         order = Project.objects.get(title="Plan order").order
         self.assertEqual(order.kind, "plan")
         self.assertEqual(order.plan, plan)
+
+        no_hidden_brief_fields = browser.post(
+            "/client/new-order/?new=1",
+            {
+                "order_choice": f"plan:{plan.id}",
+                "pricing_period": "per_reel",
+            },
+        )
+        generated_project = Project.objects.get(title="Synthetic plan")
+        self.assertRedirects(
+            no_hidden_brief_fields, f"/client/projects/{generated_project.id}/"
+        )
+        self.assertEqual(generated_project.order.plan, plan)
 
     def test_plan_pricing_periods_render_validate_and_persist(self):
         plan = Plan.objects.create(

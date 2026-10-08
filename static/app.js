@@ -103,6 +103,9 @@ const newOrderForm = document.querySelector('[data-new-order-form]');
 if (newOrderForm) {
   const customFields = newOrderForm.querySelector('[data-custom-fields]');
   const briefFields = newOrderForm.querySelector('[data-brief-fields]');
+  const submitRow = newOrderForm.querySelector('[data-submit-row]');
+  const submitButton = submitRow.querySelector('[type="submit"]');
+  const submitStatus = submitRow.querySelector('.form-submit-status');
   const wordingDirection = newOrderForm.querySelector('[data-wording-direction]');
   const fontName = newOrderForm.querySelector('[data-font-name]');
   const fontInspiration = newOrderForm.querySelector('[data-font-inspiration]');
@@ -135,13 +138,17 @@ if (newOrderForm) {
   [...newOrderForm.querySelectorAll('[name="order_choice"]')]
     .find(field => field.value === newOrderForm.dataset.selectedChoice)?.click();
   const updateOrderFields = () => {
-    const custom = newOrderForm.querySelector('[name="order_choice"]:checked')?.value === 'custom';
+    const selectedChoice = newOrderForm.querySelector('[name="order_choice"]:checked')?.value || '';
+    const custom = selectedChoice === 'custom';
     customFields.hidden = !custom;
     customFields.classList.toggle('is-hidden', !custom);
     customFields.querySelectorAll('input, select').forEach(field => field.disabled = !custom);
     briefFields.hidden = !custom;
     briefFields.classList.toggle('is-hidden', !custom);
-    briefFields.querySelectorAll('input, select, textarea, button').forEach(field => field.disabled = !custom);
+    briefFields.querySelectorAll('input, select, textarea').forEach(field => field.disabled = !custom);
+    submitRow.hidden = !selectedChoice;
+    submitRow.classList.toggle('is-hidden', !selectedChoice);
+    submitButton.disabled = !selectedChoice;
     const wording = custom && wordingCheckbox.checked;
     wordingDirection.hidden = !wording;
     wordingDirection.querySelectorAll('select').forEach(field => field.disabled = !wording);
@@ -273,6 +280,12 @@ if (newOrderForm) {
     if (error) announce(fontInspirationStatus, error, true);
     else if (fontInspirationStatus.getAttribute('role') === 'alert') announce(fontInspirationStatus, '');
   });
+  submitButton.addEventListener('click', () => {
+    const invalidField = newOrderForm.querySelector(':invalid');
+    if (!invalidField) return;
+    const label = invalidField.labels?.[0]?.textContent?.trim() || 'the highlighted required field';
+    announce(submitStatus, `Complete ${label} before saving.`, true);
+  });
   newOrderForm.addEventListener('submit', async event => {
     const clipFiles = [...(selectedClipFiles.length ? selectedClipFiles : clipInput.files)];
     const inspirationFiles = [
@@ -284,17 +297,21 @@ if (newOrderForm) {
       event.preventDefault();
       const activeStatus = clipFiles.length ? clipStatus : inspirationFiles.length ? inspirationStatus : fontInspirationStatus;
       announce(activeStatus, 'File uploads are temporarily unavailable. Your project has not been saved.', true);
+      announce(submitStatus, 'Remove the selected files or try again when uploads are available.', true);
       return;
     }
     const fontError = fontInspirationError();
     if (fontError) {
       event.preventDefault();
       announce(fontInspirationStatus, fontError, true);
+      announce(submitStatus, 'Correct the font inspiration file before saving.', true);
       return;
     }
+    announce(submitStatus, 'Saving your creative brief…');
+    submitButton.disabled = true;
     if (!hasUploads) return;
     event.preventDefault();
-    const button = newOrderForm.querySelector('[type="submit"]');
+    const button = submitButton;
     const clipProgress = newOrderForm.querySelector('.brief-upload-progress');
     const inspirationProgress = newOrderForm.querySelector('.brief-inspiration-progress');
     const fontInspirationProgress = newOrderForm.querySelector('.brief-font-inspiration-progress');
@@ -357,6 +374,7 @@ if (newOrderForm) {
     } catch (error) {
       const activeStatus = clipFiles.length ? clipStatus : inspirationFiles.length ? inspirationStatus : fontInspirationStatus;
       announce(activeStatus, error.message, true);
+      announce(submitStatus, error.message, true);
       button.disabled = false;
     }
   });

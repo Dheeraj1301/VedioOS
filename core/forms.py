@@ -56,6 +56,10 @@ class ProjectForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         kwargs.setdefault("label_suffix", "")
         super().__init__(*args, **kwargs)
+        # Fixed plans hide the custom brief panel, so they must not depend on
+        # a hidden project-name input.
+        self.fields["title"].required = False
+        self.fields["song_choice"].required = False
         self.available_plans = Plan.objects.filter(active=True).order_by("slot")
         self.fields["order_choice"].choices = [
             (f"plan:{plan.pk}", plan.name) for plan in self.available_plans
@@ -76,6 +80,8 @@ class ProjectForm(forms.ModelForm):
             if not plan:
                 self.add_error("order_choice", "That plan is no longer available. Choose again.")
             data["selected_plan"] = plan
+            if plan and not data.get("title", "").strip():
+                data["title"] = plan.name
             if plan and not plan.price_for_period(pricing_period):
                 self.add_error(
                     "order_choice",
@@ -97,6 +103,8 @@ class ProjectForm(forms.ModelForm):
                 )
         elif choice == "custom":
             data["pricing_period"] = Plan.PricingPeriod.PER_REEL
+            if not data.get("title", "").strip():
+                self.add_error("title", "Enter a project name.")
             if not data.get("reel_duration"):
                 self.add_error("reel_duration", "Choose the expected reel duration.")
             if data.get("wants_wording") and not data.get("wording_direction"):
@@ -108,6 +116,8 @@ class ProjectForm(forms.ModelForm):
                 self.add_error("font_name", "Enter the font style or name.")
         else:
             data["font_name"] = ""
+        if not data.get("song_choice"):
+            data["song_choice"] = "suggest"
         if data.get("song_choice") == "suggest":
             data["song_information"] = ""
         return data
