@@ -47,6 +47,8 @@ The first-version scope is all 28 priorities in original brief section 34, cover
 
 **2026-10-09: custom-order browser regression fixed and verified.** Empty plan slots no longer stop the Custom form JavaScript. Both checkout and editable-draft redirects retain queued private uploads, and checkout now previews uploaded file metadata with an Edit details action. Real Edge verification passed configured quote/payment-sandbox and unconfigured-pricing fallback paths; the isolated backend suite passed 243 tests with 10 optional integrations skipped. Shared Supabase pricing and real payments remain inactive until D04–D05 are approved.
 
+**2026-10-09: Razorpay test checkout implemented.** The backend creates a Razorpay test order from the accepted quote, opens hosted Standard Checkout, verifies the returned HMAC, fetches captured status, and matches order, amount and currency before idempotent confirmation. Test payments and receipts remain labeled and are excluded from production assignment eligibility. D05 remains open for live credentials, webhook recovery, refunds/disputes, taxes and invoices.
+
 - Implement admin management of three plans and custom services with validated configuration.
 - Build plan/custom selection, backend price calculation, term snapshots, payment adapter, verified payment events, invoices/history foundations, and unique paid projects.
 - Show paid/unpaid queues in the presenter dashboard. Persist delivery timestamps under decided rules.

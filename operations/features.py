@@ -122,10 +122,14 @@ def feature_controls():
         },
         {
             "name": "Payment gateway",
-            "state": "Development sandbox"
-            if settings.DEBUG and settings.PAYMENT_MODE == "sandbox"
-            else "Disabled",
-            "detail": "Environment-controlled; the sandbox never represents real revenue.",
+            "state": (
+                "Razorpay Test Mode"
+                if settings.DEBUG and settings.PAYMENT_MODE == "razorpay_test"
+                else "Development sandbox"
+                if settings.DEBUG and settings.PAYMENT_MODE == "sandbox"
+                else "Disabled"
+            ),
+            "detail": "Environment-controlled; test payments never represent real revenue.",
             "url": None,
         },
         {

@@ -103,3 +103,8 @@ class FeatureControlTests(TestCase):
             [item["id"] for item in feature_controls()["launch_decisions"]],
             [f"D{number:02d}" for number in range(2, 17)],
         )
+
+    @override_settings(DEBUG=True, PAYMENT_MODE="razorpay_test")
+    def test_inventory_identifies_razorpay_test_mode(self):
+        states = {item["name"]: item["state"] for item in feature_controls()["features"]}
+        self.assertEqual(states["Payment gateway"], "Razorpay Test Mode")

@@ -1,5 +1,13 @@
 # Phase 3 — Catalog, quotes and payment foundation
 
+## 2026-10-09 Razorpay Test Mode
+
+The owner supplied Razorpay test credentials through a local ignored file and selected Razorpay for the test checkout. `PAYMENT_MODE=razorpay_test` is permitted only with `DEBUG=true`, an `rzp_test_` key ID, a server-only secret and the official HTTPS API base. Credentials remain in `.env` and are excluded from Git.
+
+After explicit quote acceptance, the backend creates a Razorpay Order from the persisted amount and currency. The client receives the public test key, gateway order ID and locked total and opens Razorpay Standard Checkout. A successful browser response is not trusted by itself: the backend recomputes the `order_id|payment_id` HMAC using the saved gateway order ID, fetches the payment from Razorpay, and requires a captured payment whose order, amount and currency match the VedioOS payment. Confirmation is transactionally idempotent through `PaymentEvent`; invalid signatures, mismatches, cross-client access and non-captured payments fail closed. Test history and receipts are visibly labeled and remain excluded from production assignment eligibility.
+
+Focused adapter, signature, capture, authorization and UI tests pass without sending credentials to the browser or test logs. A read-only live API credential probe reached Razorpay but received HTTP 429 from the shared execution IP, so successful external API access must be rechecked from the owner/team network before claiming a live test transaction. Production keys, refunds, disputes, webhook recovery, taxes and legal invoice data remain outside this test-mode milestone.
+
 ## 2026-10-09 custom-order workflow verification
 
 The new-order browser now tolerates unpublished plan slots, so the Custom option remains usable before plans are configured. Save and Proceed recognizes both successful checkout redirects and the editable-draft fallback used when pricing is unavailable; selected source, inspiration and font-reference files therefore continue through private upload verification in either case. The protected project API includes each visible file's category so the browser and support diagnostics can distinguish source and reference uploads without exposing storage keys or signed URLs.

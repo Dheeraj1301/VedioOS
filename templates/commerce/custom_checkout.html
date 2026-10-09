@@ -24,7 +24,7 @@
   {% elif not valid_total %}
     <p role="alert"><strong>Payment is blocked.</strong> This quotation has an invalid or zero total. Return to the customization form and save a valid quotation.</p>
   {% else %}
-    {% if sandbox %}<p><strong>Development sandbox:</strong> no real money is charged.</p>{% else %}<p class="muted">The payment provider is not enabled yet. This action uses the existing checkout flow and will remain safely blocked until the provider is configured.</p>{% endif %}
+    {% if razorpay_test %}<p><strong>Razorpay Test Mode:</strong> the hosted payment window uses simulated payments; no real money is charged.</p>{% elif sandbox %}<p><strong>Development sandbox:</strong> no real money is charged.</p>{% else %}<p class="muted">The payment provider is not enabled yet. This action uses the existing checkout flow and will remain safely blocked until the provider is configured.</p>{% endif %}
     <form method="post" class="form-stack">{% csrf_token %}
       <label><input type="checkbox" name="agree" value="yes" required> I accept this quotation and the included commercial terms.</label>
       <button class="button" type="submit">Make Payment <span>↗</span></button>

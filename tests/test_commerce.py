@@ -4,6 +4,7 @@ import json
 import time
 import uuid
 from datetime import timedelta
+from unittest.mock import Mock, patch
 
 from django.core.exceptions import ValidationError
 from django.test import TestCase, override_settings
@@ -27,10 +28,11 @@ from core.models import (
     User,
 )
 from core.money import format_money
-from core.payments import apply_sandbox_event, start_checkout
+from core.payments import apply_sandbox_event, confirm_razorpay_test_payment, start_checkout
 from operations.models import AuditLog, CallRequest, Editor, EditorProficiency, Notification
 
 SECRET = "synthetic-sandbox-key-for-tests-only-12345"
+RAZORPAY_SECRET = "synthetic-razorpay-test-secret"
 
 
 @override_settings(DEBUG=True, PAYMENT_MODE="sandbox", SANDBOX_PAYMENT_SECRET=SECRET)
@@ -342,6 +344,162 @@ class CommerceTests(TestCase):
         self.assertNotContains(page, "Make Payment")
         self.client.post(checkout_url, {"agree": "yes"})
         self.assertFalse(project.order.payments.exists())
+
+    @override_settings(
+        PAYMENT_MODE="razorpay_test",
+        RAZORPAY_KEY_ID="rzp_test_synthetic",
+        RAZORPAY_KEY_SECRET=RAZORPAY_SECRET,
+        RAZORPAY_API_BASE="https://api.razorpay.com/v1",
+    )
+    @patch("core.payments.requests.request")
+    def test_razorpay_test_order_checkout_and_captured_confirmation(self, request):
+        quote = self.quote()
+        accept_quote(self.user, self.project.id, quote.id)
+        gateway_order = Mock()
+        gateway_order.raise_for_status.return_value = None
+        gateway_order.json.return_value = {
+            "id": "order_synthetic123",
+            "amount": quote.total_minor,
+            "currency": quote.currency,
+            "status": "created",
+        }
+        gateway_payment = Mock()
+        gateway_payment.raise_for_status.return_value = None
+        gateway_payment.json.return_value = {
+            "id": "pay_synthetic123",
+            "order_id": "order_synthetic123",
+            "amount": quote.total_minor,
+            "currency": quote.currency,
+            "status": "captured",
+            "captured": True,
+        }
+        request.side_effect = [gateway_order, gateway_payment]
+
+        payment = start_checkout(self.user, self.project.id)
+        self.assertEqual(payment.provider, "razorpay_test")
+        self.assertEqual(payment.provider_reference, "order_synthetic123")
+        create_call = request.call_args_list[0]
+        self.assertEqual(create_call.args[:2], ("POST", "https://api.razorpay.com/v1/orders"))
+        self.assertEqual(create_call.kwargs["json"]["amount"], quote.total_minor)
+        self.assertNotIn(RAZORPAY_SECRET, str(create_call.kwargs["json"]))
+
+        self.client.force_login(self.user)
+        page = self.client.get(f"/payments/{payment.id}/razorpay/")
+        self.assertContains(page, "Razorpay checkout")
+        self.assertContains(page, "rzp_test_synthetic")
+        self.assertNotContains(page, RAZORPAY_SECRET)
+
+        self.client.force_login(self.other)
+        self.assertEqual(self.client.get(f"/payments/{payment.id}/razorpay/").status_code, 404)
+        self.client.force_login(self.user)
+
+        signature = hmac.new(
+            RAZORPAY_SECRET.encode(),
+            b"order_synthetic123|pay_synthetic123",
+            hashlib.sha256,
+        ).hexdigest()
+        payload = {
+            "razorpay_payment_id": "pay_synthetic123",
+            "razorpay_order_id": "order_synthetic123",
+            "razorpay_signature": signature,
+        }
+        response = self.client.post(
+            f"/api/payments/{payment.id}/razorpay/confirm/",
+            json.dumps(payload),
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["redirect"], f"/payments/{payment.id}/receipt/")
+        event = confirm_razorpay_test_payment(self.user, payment.id, payload)
+        self.assertEqual(event.payment_id, payment.id)
+        self.assertEqual(request.call_count, 2)
+        payment.refresh_from_db()
+        self.project.refresh_from_db()
+        self.order.refresh_from_db()
+        self.assertEqual(payment.status, "confirmed")
+        self.assertEqual(self.order.payment_status, "confirmed")
+        self.assertEqual(self.project.status, "payment_completed")
+        self.assertEqual(PaymentEvent.objects.filter(provider="razorpay_test").count(), 1)
+        self.assertContains(self.client.get(f"/payments/{payment.id}/receipt/"), "TEST RECEIPT")
+
+    @override_settings(
+        PAYMENT_MODE="razorpay_test",
+        RAZORPAY_KEY_ID="rzp_test_synthetic",
+        RAZORPAY_KEY_SECRET=RAZORPAY_SECRET,
+        RAZORPAY_API_BASE="https://api.razorpay.com/v1",
+    )
+    @patch("core.payments.requests.request")
+    def test_razorpay_rejects_bad_signature_and_mismatched_capture(self, request):
+        quote = self.quote()
+        accept_quote(self.user, self.project.id, quote.id)
+        gateway_order = Mock()
+        gateway_order.raise_for_status.return_value = None
+        gateway_order.json.return_value = {
+            "id": "order_synthetic_bad",
+            "amount": quote.total_minor,
+            "currency": quote.currency,
+            "status": "created",
+        }
+        request.return_value = gateway_order
+        payment = start_checkout(self.user, self.project.id)
+        payload = {
+            "razorpay_payment_id": "pay_synthetic_bad",
+            "razorpay_order_id": "order_synthetic_bad",
+            "razorpay_signature": "bad",
+        }
+        with self.assertRaises(ValidationError):
+            confirm_razorpay_test_payment(self.user, payment.id, payload)
+        payload["razorpay_signature"] = hmac.new(
+            RAZORPAY_SECRET.encode(),
+            b"order_synthetic_bad|pay_synthetic_bad",
+            hashlib.sha256,
+        ).hexdigest()
+        with self.assertRaises(ValidationError):
+            confirm_razorpay_test_payment(self.user, payment.id, payload)
+        payment.refresh_from_db()
+        self.assertEqual(payment.status, "pending")
+
+    @override_settings(
+        PAYMENT_MODE="razorpay_test",
+        RAZORPAY_KEY_ID="rzp_test_synthetic",
+        RAZORPAY_KEY_SECRET=RAZORPAY_SECRET,
+        RAZORPAY_API_BASE="https://api.razorpay.com/v1",
+    )
+    @patch("core.payments.requests.request")
+    def test_custom_make_payment_redirects_to_razorpay_test_checkout(self, request):
+        self.enable_weighted_engine()
+        self.client.force_login(self.user)
+        saved = self.client.post(
+            "/client/new-order/?new=1",
+            {
+                "title": "Razorpay custom checkout",
+                "order_choice": "custom",
+                "reel_duration": "30_50",
+                "song_choice": "suggest",
+            },
+        )
+        project = Project.objects.get(title="Razorpay custom checkout")
+        self.assertRedirects(
+            saved,
+            f"/client/checkout/{project.id}/",
+            fetch_redirect_response=False,
+        )
+        gateway_order = Mock()
+        gateway_order.raise_for_status.return_value = None
+        gateway_order.json.return_value = {
+            "id": "order_custom_test",
+            "amount": project.order.quotes.first().total_minor,
+            "currency": "INR",
+            "status": "created",
+        }
+        request.return_value = gateway_order
+        response = self.client.post(f"/client/checkout/{project.id}/", {"agree": "yes"})
+        payment = project.order.payments.get()
+        self.assertRedirects(
+            response,
+            f"/payments/{payment.id}/razorpay/",
+            fetch_redirect_response=False,
+        )
 
     def test_admin_can_manage_weighted_policy_and_feature_scores(self):
         invalid_values = {

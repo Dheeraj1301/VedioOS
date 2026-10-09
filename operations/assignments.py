@@ -60,7 +60,7 @@ def paid_project(project_id):
         status="confirmed", amount_minor=order.total_minor, currency=order.currency
     )
     if not settings.DEBUG:
-        payments = payments.exclude(provider="sandbox")
+        payments = payments.exclude(provider__in=["sandbox", "razorpay_test"])
     if order.payment_status != "confirmed" or not project.payment_completed_at or not payments.exists():
         raise ValidationError("A verified matching payment is required before assignment.")
     if project.status in TERMINAL or project.status == "payment_pending":

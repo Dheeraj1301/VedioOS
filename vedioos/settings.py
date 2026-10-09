@@ -171,7 +171,14 @@ PAYOUT_MODE = os.getenv("PAYOUT_MODE", "disabled")
 if PAYOUT_MODE not in {"disabled", "sandbox"} or (PAYOUT_MODE == "sandbox" and not DEBUG):
     raise ImproperlyConfigured("Only disabled payouts or an explicitly enabled DEBUG sandbox are supported.")
 SANDBOX_PAYMENT_SECRET = os.getenv("SANDBOX_PAYMENT_SECRET", "")
-if PAYMENT_MODE not in {"disabled", "sandbox"} or (PAYMENT_MODE == "sandbox" and not DEBUG):
-    raise ImproperlyConfigured("Only disabled payments or an explicitly enabled DEBUG sandbox are supported.")
+if PAYMENT_MODE not in {"disabled", "sandbox", "razorpay_test"} or (
+    PAYMENT_MODE in {"sandbox", "razorpay_test"} and not DEBUG
+):
+    raise ImproperlyConfigured(
+        "Only disabled payments or an explicitly enabled DEBUG test gateway are supported."
+    )
+RAZORPAY_KEY_ID = os.getenv("RAZORPAY_KEY_ID", "")
+RAZORPAY_KEY_SECRET = os.getenv("RAZORPAY_KEY_SECRET", "")
+RAZORPAY_API_BASE = os.getenv("RAZORPAY_API_BASE", "https://api.razorpay.com/v1").rstrip("/")
 if not DEBUG and not ISOLATED_SQLITE_SETTINGS and not S3_ENDPOINT_URL.startswith("https://"):
     raise ImproperlyConfigured("Production object storage requires HTTPS.")

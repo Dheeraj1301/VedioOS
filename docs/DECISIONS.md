@@ -176,6 +176,18 @@ Verification required: all seven scores are seeded without prices, admin validat
 
 Only mark a business choice approved when supported by an explicit owner decision. Contributors can document routine technical choices within authorized scope, identifying them as implementation decisions. A proposal is not a production default.
 
+## 2026-10-09 — Razorpay selected for test checkout
+
+Status: approved for test mode only; D05 remains open for production
+
+Owner / source of explicit decision: Hamsa supplied a Razorpay test-key file and requested a Razorpay test payment wall.
+
+Decision: add Razorpay Standard Checkout as a replaceable test-mode adapter. Create every Razorpay order on the backend from the accepted immutable VedioOS quote; expose only the browser-safe test key ID; verify `order_id|payment_id` using the server secret; and fetch the Razorpay payment before recording confirmation. Require captured status and exact order, amount and currency matching. Label all resulting records and receipts as test payments and exclude them from production assignment eligibility. Keep test credentials in ignored environment configuration.
+
+This decision does not authorize live keys, real charges, refunds, disputes, settlements, tax invoices or production launch. Those policies and provider-account requirements remain under D05.
+
+Verification required: server-owned order amount, secret exclusion from HTML/logs/Git, cross-client denial, signature rejection, captured-payment matching, retry idempotency, test labeling, production-mode refusal, and an owner-network test transaction before production work continues.
+
 ## 2026-09-17 — Earnings implementation (D10 remains open)
 
 Technical choice: use prospective fixed whole-coin awards as an optional admin-configured development rule. Snapshot them on new quotes, append a pending entry at client acceptance, and allow an administrator to release it once. Redemption reserves coins under a wallet lock and can be exercised only with an explicitly enabled DEBUG payout sandbox. The selected Supabase project retains a disabled policy with no configured amounts. No monetary conversion or real payout provider has been chosen; see [Phase 6](PHASE_6.md).

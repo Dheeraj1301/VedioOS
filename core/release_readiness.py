@@ -101,8 +101,8 @@ def release_findings(config, policies):
         "supabase_auth_key_configured"
     ]:
         block("supabase_auth", "Configure the selected Supabase Auth project and publishable key.")
-    if config["payment_mode"] == "sandbox":
-        block("payment_sandbox", "The development payment sandbox cannot run in production.")
+    if config["payment_mode"] in {"sandbox", "razorpay_test"}:
+        block("payment_sandbox", "A test payment gateway cannot run in production.")
     if config["payout_mode"] == "sandbox":
         block("payout_sandbox", "The development payout sandbox cannot run in production.")
     if policies["quotes_enabled"] and config["payment_mode"] == "disabled":

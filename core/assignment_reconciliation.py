@@ -28,7 +28,7 @@ def _funded(project):
         status="confirmed", amount_minor=order.total_minor, currency=order.currency
     )
     if not settings.DEBUG:
-        payments = payments.exclude(provider="sandbox")
+        payments = payments.exclude(provider__in=["sandbox", "razorpay_test"])
     return bool(
         order.payment_status == "confirmed"
         and project.payment_completed_at

@@ -10,10 +10,12 @@ import json
 import time
 import uuid
 
+import requests
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.utils import timezone
+from requests import RequestException
 
 from operations.calls import create_paid_calls, notify, notify_admins
 
@@ -28,9 +30,39 @@ def sandbox_enabled():
     )
 
 
+def razorpay_test_enabled():
+    return (
+        settings.DEBUG
+        and settings.PAYMENT_MODE == "razorpay_test"
+        and settings.RAZORPAY_KEY_ID.startswith("rzp_test_")
+        and len(settings.RAZORPAY_KEY_SECRET) >= 16
+        and settings.RAZORPAY_API_BASE == "https://api.razorpay.com/v1"
+    )
+
+
+def _razorpay_request(method, path, **kwargs):
+    if not razorpay_test_enabled():
+        raise ValidationError("Razorpay test checkout is not configured.")
+    try:
+        response = requests.request(
+            method,
+            f"{settings.RAZORPAY_API_BASE}/{path.lstrip('/')}",
+            auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET),
+            timeout=15,
+            **kwargs,
+        )
+        response.raise_for_status()
+        data = response.json()
+        if not isinstance(data, dict):
+            raise ValueError
+        return data
+    except (RequestException, ValueError):
+        raise ValidationError("Razorpay test gateway is unavailable. Please try again.") from None
+
+
 @transaction.atomic
 def start_checkout(user, project_id):
-    if not sandbox_enabled():
+    if not sandbox_enabled() and not razorpay_test_enabled():
         raise ValidationError(
             "Checkout is not open yet. The team is configuring payment and commercial terms."
         )
@@ -43,15 +75,142 @@ def start_checkout(user, project_id):
     existing = order.payments.first()
     if existing:
         return existing
+    if razorpay_test_enabled():
+        gateway_order = _razorpay_request(
+            "POST",
+            "orders",
+            json={
+                "amount": order.total_minor,
+                "currency": order.currency,
+                "receipt": f"vedioos_{order.pk.hex[:24]}",
+                "notes": {"vedioos_order_id": str(order.pk)},
+            },
+        )
+        reference = gateway_order.get("id")
+        if (
+            not isinstance(reference, str)
+            or not reference.startswith("order_")
+            or gateway_order.get("amount") != order.total_minor
+            or gateway_order.get("currency") != order.currency
+            or gateway_order.get("status") != "created"
+        ):
+            raise ValidationError("Razorpay returned an invalid test order.")
+        provider = "razorpay_test"
+    else:
+        provider = "sandbox"
+        reference = f"sandbox_{uuid.uuid4().hex}"
     payment = Payment.objects.create(
         order=order,
-        provider="sandbox",
-        provider_reference=f"sandbox_{uuid.uuid4().hex}",
+        provider=provider,
+        provider_reference=reference,
         amount_minor=order.total_minor,
         currency=order.currency,
     )
-    audit(user, "payment.started", payment.id, {"provider": "sandbox"})
+    audit(user, "payment.started", payment.id, {"provider": provider})
     return payment
+
+
+def razorpay_checkout_data(payment):
+    if not razorpay_test_enabled() or payment.provider != "razorpay_test":
+        raise ValidationError("Razorpay test checkout is unavailable.")
+    if payment.status != "pending" or payment.order.payment_status == "confirmed":
+        raise ValidationError("This payment is not awaiting checkout.")
+    return {
+        "key": settings.RAZORPAY_KEY_ID,
+        "amount": payment.amount_minor,
+        "currency": payment.currency,
+        "order_id": payment.provider_reference,
+        "payment_id": str(payment.pk),
+    }
+
+
+@transaction.atomic
+def confirm_razorpay_test_payment(user, payment_id, payload):
+    if not razorpay_test_enabled() or not isinstance(payload, dict) or set(payload) != {
+        "razorpay_payment_id",
+        "razorpay_order_id",
+        "razorpay_signature",
+    }:
+        raise ValidationError("Invalid Razorpay payment response.")
+    payment = (
+        Payment.objects.select_for_update()
+        .select_related("order__project__client__user")
+        .filter(pk=payment_id, order__project__client__user=user, provider="razorpay_test")
+        .first()
+    )
+    if not payment:
+        raise ValidationError("Unknown Razorpay payment.")
+    gateway_payment_id = payload.get("razorpay_payment_id")
+    supplied_order_id = payload.get("razorpay_order_id")
+    signature = payload.get("razorpay_signature")
+    if any(
+        not isinstance(value, str) or not 1 <= len(value) <= 200
+        for value in [gateway_payment_id, supplied_order_id, signature]
+    ):
+        raise ValidationError("Invalid Razorpay payment response.")
+    expected = hmac.new(
+        settings.RAZORPAY_KEY_SECRET.encode(),
+        f"{payment.provider_reference}|{gateway_payment_id}".encode(),
+        hashlib.sha256,
+    ).hexdigest()
+    if supplied_order_id != payment.provider_reference or not hmac.compare_digest(expected, signature):
+        raise ValidationError("Razorpay payment signature was rejected.")
+    canonical = json.dumps(payload, sort_keys=True, separators=(",", ":")).encode()
+    digest = hashlib.sha256(canonical).hexdigest()
+    previous = PaymentEvent.objects.filter(
+        provider="razorpay_test", event_id=gateway_payment_id
+    ).first()
+    if previous:
+        if previous.payload_digest != digest or previous.payment_id != payment.id:
+            raise ValidationError("Conflicting Razorpay payment response.")
+        return previous
+    gateway_payment = _razorpay_request("GET", f"payments/{gateway_payment_id}")
+    if (
+        gateway_payment.get("id") != gateway_payment_id
+        or gateway_payment.get("order_id") != payment.provider_reference
+        or gateway_payment.get("amount") != payment.amount_minor
+        or gateway_payment.get("currency") != payment.currency
+        or gateway_payment.get("status") != "captured"
+        or gateway_payment.get("captured") is not True
+    ):
+        raise ValidationError("Razorpay payment is not captured or does not match this order.")
+    order = payment.order
+    project = order.project
+    if payment.status != "confirmed":
+        if project.status != "payment_pending" or order.payment_status == "confirmed":
+            raise ValidationError("Payment needs reconciliation; project cannot be activated.")
+        now = timezone.now()
+        payment.status, payment.confirmed_at = "confirmed", now
+        order.payment_status = "confirmed"
+        project.status, project.payment_completed_at = "payment_completed", now
+        project.save(update_fields=["status", "payment_completed_at", "updated_at"])
+        create_paid_calls(project)
+        notify(
+            project.client.user,
+            project,
+            f"payment:{payment.pk}:client",
+            "Razorpay test payment confirmed. Your project remains in test-payment mode.",
+        )
+        notify_admins(
+            project,
+            f"payment:{payment.pk}",
+            "A Razorpay test payment was confirmed. It is not production revenue.",
+        )
+        audit(
+            None,
+            "payment.confirmed",
+            payment.id,
+            {"provider": "razorpay_test", "project": str(project.id)},
+        )
+    payment.save(update_fields=["status", "confirmed_at", "updated_at"])
+    order.save(update_fields=["payment_status", "updated_at"])
+    return PaymentEvent.objects.create(
+        provider="razorpay_test",
+        event_id=gateway_payment_id,
+        payment=payment,
+        payload_digest=digest,
+        outcome="confirmed",
+    )
 
 
 def verify_sandbox_event(body, signature):

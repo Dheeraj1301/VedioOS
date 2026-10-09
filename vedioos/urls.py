@@ -57,6 +57,16 @@ urlpatterns = [
     path("orders/<uuid:project_id>/", commerce.order_summary, name="order_summary"),
     path("orders/<uuid:project_id>/checkout/", commerce.checkout, name="checkout"),
     path("payments/<uuid:payment_id>/receipt/", commerce.payment_receipt, name="payment_receipt"),
+    path(
+        "payments/<uuid:payment_id>/razorpay/",
+        commerce.razorpay_checkout,
+        name="razorpay_checkout",
+    ),
+    path(
+        "api/payments/<uuid:payment_id>/razorpay/confirm/",
+        commerce.razorpay_confirm,
+        name="razorpay_confirm",
+    ),
     path("api/payments/sandbox/webhook/", commerce.sandbox_webhook),
     path("editor/", ops.editor_dashboard, name="editor_dashboard"),
     path(

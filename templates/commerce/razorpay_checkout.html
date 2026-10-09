@@ -1,0 +1,18 @@
+{% extends 'workspace.html' %}{% load static money %}
+{% block workspace_content %}
+<div class="page-heading"><div><p class="eyebrow">Test payment</p><h1>Razorpay checkout.</h1><p class="muted">{{ project.title }}</p></div><span class="badge">TEST MODE</span></div>
+<section class="panel detail-panel">
+  <h2>Confirm the test payment</h2>
+  <p class="notice"><strong>No real money is charged.</strong> Razorpay Test Mode opens a simulated hosted payment window.</p>
+  <div class="file-row"><span>Saved quotation total</span><strong>{{ payment.amount_minor|money:payment.currency }}</strong></div>
+  <div class="file-row"><span>Currency</span><strong>{{ payment.currency }}</strong></div>
+  <form id="razorpay-test-checkout" class="form-stack" data-key="{{ checkout.key }}" data-amount="{{ checkout.amount }}" data-currency="{{ checkout.currency }}" data-order-id="{{ checkout.order_id }}" data-confirm-url="{% url 'razorpay_confirm' payment.id %}" data-client-name="{{ request.user.name }}" data-client-email="{{ request.user.email }}">
+    {% csrf_token %}
+    <button class="button" type="button">Open Razorpay Test Checkout <span>↗</span></button>
+    <p class="form-submit-status" role="status" aria-live="polite"></p>
+  </form>
+  <p><a class="text-link" href="{% url 'order_summary' project.id %}">Return to order summary</a></p>
+</section>
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<script defer src="{% static 'razorpay-checkout.js' %}?v=20261009-1"></script>
+{% endblock %}

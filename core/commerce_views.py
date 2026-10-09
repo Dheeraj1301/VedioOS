@@ -1,8 +1,11 @@
+import json
+
 from django.contrib import messages
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import IntegrityError, transaction
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 
@@ -25,7 +28,14 @@ from .models import (
     Plan,
     QuotationFeature,
 )
-from .payments import apply_sandbox_event, sandbox_enabled, start_checkout
+from .payments import (
+    apply_sandbox_event,
+    confirm_razorpay_test_payment,
+    razorpay_checkout_data,
+    razorpay_test_enabled,
+    sandbox_enabled,
+    start_checkout,
+)
 from .permissions import project_for, role_required, visible_files
 from .templatetags.money import money
 from .views import audit
@@ -165,8 +175,6 @@ def estimate_custom(request):
         "beat_sync",
     }
     try:
-        import json
-
         data = json.loads(request.body)
         if not isinstance(data, dict) or set(data) - allowed:
             raise ValueError
@@ -272,11 +280,13 @@ def custom_checkout(request, project_id):
             try:
                 with transaction.atomic():
                     accept_quote(request.user, project.id, quote.id)
-                    start_checkout(request.user, project.id)
+                    payment = start_checkout(request.user, project.id)
                 messages.success(
                     request,
                     "Payment was started using the saved quotation amount and currency.",
                 )
+                if payment.provider == "razorpay_test":
+                    return redirect("razorpay_checkout", payment_id=payment.id)
                 return redirect("order_summary", project_id=project.id)
             except ValidationError as exc:
                 messages.error(request, " ".join(exc.messages))
@@ -301,6 +311,7 @@ def custom_checkout(request, project_id):
             "files": visible_files(request.user, project),
             "valid_total": valid_total,
             "sandbox": sandbox_enabled(),
+            "razorpay_test": razorpay_test_enabled(),
         },
     )
 
@@ -317,6 +328,7 @@ def order_summary(request, project_id):
             "order": project.order,
             "snapshot": project.order.terms_snapshot,
             "sandbox": sandbox_enabled(),
+            "razorpay_test": razorpay_test_enabled(),
             "payments": project.order.payments.order_by("-created_at"),
         },
     )
@@ -329,14 +341,58 @@ def checkout(request, project_id):
     if set(request.POST) - {"csrfmiddlewaretoken"}:
         raise PermissionDenied
     try:
-        start_checkout(request.user, project.id)
+        payment = start_checkout(request.user, project.id)
         messages.success(
             request,
-            "Development payment created. No money was charged. Awaiting the signed sandbox gateway event.",
+            "Test payment created. No live money has been charged.",
         )
+        if payment.provider == "razorpay_test":
+            return redirect("razorpay_checkout", payment_id=payment.id)
     except ValidationError as exc:
         messages.error(request, " ".join(exc.messages))
     return redirect("order_summary", project_id=project.id)
+
+
+@role_required("client")
+def razorpay_checkout(request, payment_id):
+    payment = get_object_or_404(
+        Payment.objects.select_related("order__project__client__user"),
+        pk=payment_id,
+        order__project__client__user=request.user,
+        provider="razorpay_test",
+    )
+    try:
+        checkout_data = razorpay_checkout_data(payment)
+    except ValidationError as exc:
+        messages.error(request, " ".join(exc.messages))
+        return redirect("order_summary", project_id=payment.order.project_id)
+    return render(
+        request,
+        "commerce/razorpay_checkout.html",
+        {
+            "title": "Razorpay test payment",
+            "payment": payment,
+            "project": payment.order.project,
+            "checkout": checkout_data,
+        },
+    )
+
+
+@require_POST
+@role_required("client")
+def razorpay_confirm(request, payment_id):
+    try:
+        payload = json.loads(request.body)
+        event = confirm_razorpay_test_payment(request.user, payment_id, payload)
+    except (json.JSONDecodeError, ValidationError, IntegrityError):
+        return JsonResponse({"error": "Razorpay test payment could not be verified."}, status=400)
+    return JsonResponse(
+        {
+            "confirmed": True,
+            "event_id": str(event.id),
+            "redirect": reverse("payment_receipt", args=[event.payment_id]),
+        }
+    )
 
 
 @csrf_exempt
