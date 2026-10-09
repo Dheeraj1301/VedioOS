@@ -143,8 +143,6 @@ Unpaid custom orders can refresh an older quotation against current rates withou
 
 **2026-10-09: confirmed Supabase Auth clients can use shared login.** The server now verifies Supabase email/password credentials, validates the returned session against the Auth user endpoint, links the immutable Auth UUID and provisions a client application profile on first login. Tokens are discarded, editable metadata is ignored for roles, and existing admin/editor identities are protected from takeover. Migration `core.0014` stores the unique link; every correctly bound preview reads the same client projects from the private Supabase PostgreSQL schema.
 
-**2026-10-09: passwordless Supabase Auth clients can use email-code login.** Existing Auth users that have no password can request a six digit code at `/login/code/`. Requests use `create_user=false`, verification links the immutable Auth UUID to a client profile, and only a Django application session is retained. The endpoint uses the existing database-backed auth rate limiter and generic send responses. Inbox delivery still depends on the selected project's SMTP/email limits and configuration.
-
 - Verify complete client → payment → assignment → editor → revision/acceptance → final download → earnings flow in the intended environment.
 - Check authorization for every role and project resource, original-file integrity, concurrency, event replay, and large-file interruption/recovery.
 - Verify required settings, real integration credentials, backups/restore, monitoring, reconciliation, support ownership, and deployment/recovery instructions.

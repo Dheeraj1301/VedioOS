@@ -49,8 +49,7 @@ class LoginForm(AuthenticationForm):
         except ValidationError as local_error:
             email = self.cleaned_data.get("username")
             password = self.cleaned_data.get("password")
-            submitted_identity = str(self.data.get("username") or "").strip()
-            if not email or "@" not in submitted_identity or not password:
+            if not email or "@" not in email or not password:
                 raise local_error
             try:
                 self.user_cache = authenticate_supabase_client(email, password)
@@ -60,11 +59,7 @@ class LoginForm(AuthenticationForm):
                     code="supabase_auth_unavailable",
                 ) from exc
             if self.user_cache is None:
-                raise ValidationError(
-                    "Supabase did not accept that email and password. If this account was "
-                    "created with an email code and has no password, use Email code sign in.",
-                    code="invalid_supabase_credentials",
-                ) from local_error
+                raise local_error
             self.confirm_login_allowed(self.user_cache)
             return self.cleaned_data
 

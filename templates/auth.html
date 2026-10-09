@@ -19,7 +19,7 @@
       {% if mode == 'editor_login' %}
         Client or administrator? <a href="{% url 'login' %}">Use regular sign in</a>
       {% elif mode == 'login' %}
-        <a href="{% url 'login_otp' %}">Use email code sign in</a><br>New client? <a href="{% url 'register' %}">Create an account</a>
+        New client? <a href="{% url 'register' %}">Create an account</a>
       {% else %}
         Already registered? <a href="{% url 'login' %}">Log in</a>
       {% endif %}

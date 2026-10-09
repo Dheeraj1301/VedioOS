@@ -16,10 +16,6 @@ class SupabaseAuthUnavailable(Exception):
     pass
 
 
-class SupabaseAuthCooldown(Exception):
-    pass
-
-
 def _configuration():
     base_url = settings.SUPABASE_AUTH_URL.rstrip("/") + "/"
     key = settings.SUPABASE_AUTH_PUBLISHABLE_KEY
@@ -164,80 +160,6 @@ def authenticate_supabase_client(email, password):
             user
             and user.role == User.Role.CLIENT
             and user.supabase_auth_user_id == identity["id"]
-            and hasattr(user, "client_profile")
-        ):
-            return user
-        return None
-
-
-def send_login_otp(email):
-    """Send an OTP only for an identity that already exists in Supabase Auth."""
-    if not settings.SUPABASE_AUTH_PASSWORD_LOGIN_ENABLED:
-        raise SupabaseAuthUnavailable("Supabase Auth login is not enabled.")
-    normalized_email = str(email or "").strip().lower()
-    if "@" not in normalized_email:
-        return
-    base_url, key = _configuration()
-    try:
-        response = requests.post(
-            urljoin(base_url, "auth/v1/otp"),
-            json={"email": normalized_email, "create_user": False},
-            headers={"apikey": key, "Authorization": f"Bearer {key}"},
-            timeout=settings.SUPABASE_AUTH_TIMEOUT_SECONDS,
-        )
-    except requests.RequestException as exc:
-        raise SupabaseAuthUnavailable("Supabase Auth could not be reached.") from exc
-    if response.status_code in {200, 204}:
-        return
-    if response.status_code == 429:
-        raise SupabaseAuthCooldown
-    if response.status_code in {400, 401, 403, 422}:
-        # Keep the public response generic so this endpoint cannot enumerate users.
-        return
-    raise SupabaseAuthUnavailable("Supabase Auth rejected the email-code request.")
-
-
-def authenticate_supabase_otp(email, code):
-    """Verify an existing Auth user's OTP and return its application client."""
-    if not settings.SUPABASE_AUTH_PASSWORD_LOGIN_ENABLED:
-        raise SupabaseAuthUnavailable("Supabase Auth login is not enabled.")
-    normalized_email = str(email or "").strip().lower()
-    if "@" not in normalized_email or not code:
-        return None
-    base_url, key = _configuration()
-    try:
-        response = requests.post(
-            urljoin(base_url, "auth/v1/verify"),
-            json={"email": normalized_email, "token": code, "type": "email"},
-            headers={"apikey": key, "Authorization": f"Bearer {key}"},
-            timeout=settings.SUPABASE_AUTH_TIMEOUT_SECONDS,
-        )
-    except requests.RequestException as exc:
-        raise SupabaseAuthUnavailable("Supabase Auth could not be reached.") from exc
-    body = _json(response)
-    if response.status_code == 429:
-        raise SupabaseAuthCooldown
-    if response.status_code not in {200, 201}:
-        if response.status_code in {400, 401, 403, 422}:
-            return None
-        raise SupabaseAuthUnavailable("Supabase Auth could not verify the email code.")
-
-    auth_user = body.get("user") or {}
-    confirmed_email = str(auth_user.get("email") or "").strip().lower()
-    if confirmed_email != normalized_email:
-        return None
-    try:
-        auth_user_id = uuid.UUID(str(auth_user.get("id")))
-    except (TypeError, ValueError, AttributeError):
-        raise SupabaseAuthUnavailable("Supabase Auth returned an invalid identity.") from None
-    try:
-        return _provision_client({"id": auth_user_id, "email": confirmed_email})
-    except IntegrityError:
-        user = User.objects.filter(email__iexact=normalized_email).first()
-        if (
-            user
-            and user.role == User.Role.CLIENT
-            and user.supabase_auth_user_id == auth_user_id
             and hasattr(user, "client_profile")
         ):
             return user

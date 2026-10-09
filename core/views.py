@@ -39,12 +39,6 @@ from .models import (
 from .payment_history import PAYMENT_STATUSES, payment_page
 from .permissions import can_upload, project_for, role_required, visible_files, visible_projects
 from .storage import download_permission, inspect_object, upload_permission
-from .supabase_auth import (
-    SupabaseAuthCooldown,
-    SupabaseAuthUnavailable,
-    authenticate_supabase_otp,
-    send_login_otp,
-)
 
 FONT_REFERENCE_MAX_BYTES = 1024 * 1024
 FONT_IMAGE_EXTENSIONS = {".avif", ".bmp", ".gif", ".heic", ".heif", ".jpeg", ".jpg", ".png", ".tif", ".tiff", ".webp"}
@@ -271,62 +265,6 @@ def _login_view(request, *, editor_only=False):
 
 def login_view(request):
     return _login_view(request)
-
-
-def login_otp_view(request):
-    if request.user.is_authenticated:
-        return redirect("dashboard")
-    if request.method == "POST" and auth_rate_limited(request):
-        return render(
-            request,
-            "error.html",
-            {"message": "Too many attempts. Please try again in 15 minutes."},
-            status=429,
-        )
-    email = (
-        request.POST.get("email", "")
-        or request.session.get("login_otp_email", "")
-    ).strip().lower()[:254]
-    if request.method == "POST":
-        action = request.POST.get("action")
-        if action == "send":
-            try:
-                send_login_otp(email)
-            except SupabaseAuthCooldown:
-                messages.info(request, "Please wait before requesting another code.")
-            except SupabaseAuthUnavailable:
-                messages.error(request, "Email-code sign in is temporarily unavailable.")
-            else:
-                messages.success(
-                    request,
-                    "If that Supabase account is eligible, a six digit sign-in code has been sent.",
-                )
-            request.session["login_otp_email"] = email
-            return redirect("login_otp")
-        if action == "verify":
-            code = request.POST.get("code", "").strip()
-            if not re.fullmatch(r"\d{6}", code):
-                messages.error(request, "Enter the six digit code from your email.")
-            else:
-                try:
-                    user = authenticate_supabase_otp(email, code)
-                except SupabaseAuthCooldown:
-                    messages.error(request, "Too many attempts. Request a new code shortly.")
-                except SupabaseAuthUnavailable:
-                    messages.error(request, "Email-code sign in is temporarily unavailable.")
-                else:
-                    if user:
-                        login(request, user)
-                        request.session.pop("login_otp_email", None)
-                        messages.success(request, "Email verified. Welcome to your client workspace.")
-                        return redirect("client_dashboard")
-                    messages.error(request, "That code is invalid or expired. Request a new code.")
-            request.session["login_otp_email"] = email
-    return render(
-        request,
-        "login_otp.html",
-        {"title": "Sign in with an email code", "login_otp_email": email},
-    )
 
 
 def editor_login_view(request):

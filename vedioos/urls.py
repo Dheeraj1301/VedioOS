@@ -28,7 +28,6 @@ urlpatterns = [
     path("verify-email/resend/", views.resend_verification, name="resend_verification"),
     path("register/editor/", ops.editor_register, name="editor_register"),
     path("login/", views.login_view, name="login"),
-    path("login/code/", views.login_otp_view, name="login_otp"),
     path("editor/signin/", views.editor_login_view, name="editor_login"),
     path("logout/", views.logout_view, name="logout"),
     path("dashboard/", views.dashboard, name="dashboard"),

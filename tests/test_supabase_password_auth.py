@@ -109,7 +109,7 @@ class SupabasePasswordLoginTests(TestCase):
         )
 
         self.assertEqual(rejected.status_code, 200)
-        self.assertContains(rejected, "Supabase did not accept that email and password")
+        self.assertContains(rejected, "Please enter a correct email and password")
         self.assertFalse(User.objects.filter(email="missing@example.test").exists())
         self.assertFalse(self.client.session.get("_auth_user_id"))
 
@@ -143,84 +143,3 @@ class SupabasePasswordLoginTests(TestCase):
         self.assertEqual(unavailable.status_code, 200)
         self.assertContains(unavailable, "Sign-in is temporarily unavailable")
         self.assertFalse(User.objects.filter(email="outage@example.test").exists())
-
-
-@override_settings(
-    SUPABASE_AUTH_URL="https://project.supabase.co",
-    SUPABASE_AUTH_PUBLISHABLE_KEY="sb_publishable_test",
-    SUPABASE_AUTH_TIMEOUT_SECONDS=7,
-    SUPABASE_AUTH_PASSWORD_LOGIN_ENABLED=True,
-)
-class SupabaseEmailCodeLoginTests(TestCase):
-    @patch("core.supabase_auth.requests.post")
-    def test_send_code_uses_existing_identity_only(self, post):
-        post.return_value = response(200, {})
-
-        sent = self.client.post(
-            "/login/code/",
-            {"action": "send", "email": "EXISTING@example.test"},
-        )
-
-        self.assertRedirects(sent, "/login/code/", fetch_redirect_response=False)
-        self.assertEqual(self.client.session["login_otp_email"], "existing@example.test")
-        _, kwargs = post.call_args
-        self.assertEqual(
-            kwargs["json"],
-            {"email": "existing@example.test", "create_user": False},
-        )
-
-    @patch("core.supabase_auth.requests.post")
-    def test_valid_code_provisions_client_and_starts_django_session(self, post):
-        auth_id = uuid.uuid4()
-        post.return_value = response(
-            200,
-            {
-                "access_token": "discard-this-token",
-                "refresh_token": "discard-this-refresh-token",
-                "user": {"id": str(auth_id), "email": "code@example.test"},
-            },
-        )
-        session = self.client.session
-        session["login_otp_email"] = "code@example.test"
-        session.save()
-
-        verified = self.client.post(
-            "/login/code/",
-            {"action": "verify", "code": "123456"},
-        )
-
-        self.assertRedirects(verified, "/client/", fetch_redirect_response=False)
-        user = User.objects.get(email="code@example.test")
-        self.assertEqual(user.role, User.Role.CLIENT)
-        self.assertEqual(user.supabase_auth_user_id, auth_id)
-        self.assertTrue(Client.objects.filter(user=user).exists())
-        self.assertEqual(self.client.get("/client/").status_code, 200)
-        self.assertEqual(self.client.get("/admin/").status_code, 403)
-        self.assertNotIn("discard-this-token", str(dict(self.client.session)))
-        _, kwargs = post.call_args
-        self.assertEqual(
-            kwargs["json"],
-            {"email": "code@example.test", "token": "123456", "type": "email"},
-        )
-
-    @patch("core.supabase_auth.requests.post")
-    def test_invalid_code_does_not_create_or_authenticate_user(self, post):
-        post.return_value = response(403, {"code": "otp_expired"})
-        session = self.client.session
-        session["login_otp_email"] = "missing@example.test"
-        session.save()
-
-        rejected = self.client.post(
-            "/login/code/",
-            {"action": "verify", "code": "654321"},
-        )
-
-        self.assertEqual(rejected.status_code, 200)
-        self.assertContains(rejected, "invalid or expired")
-        self.assertFalse(User.objects.filter(email="missing@example.test").exists())
-        self.assertFalse(self.client.session.get("_auth_user_id"))
-
-    def test_password_login_page_links_to_email_code_flow(self):
-        page = self.client.get("/login/")
-
-        self.assertContains(page, 'href="/login/code/"')
