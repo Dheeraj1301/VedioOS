@@ -16,6 +16,14 @@ class SupabaseAuthUnavailable(Exception):
     pass
 
 
+class SupabaseAuthRejected(Exception):
+    """A safe, non-secret reason returned by the Supabase Auth boundary."""
+
+    def __init__(self, reason):
+        self.reason = reason
+        super().__init__(reason)
+
+
 def _configuration():
     base_url = settings.SUPABASE_AUTH_URL.rstrip("/") + "/"
     key = settings.SUPABASE_AUTH_PUBLISHABLE_KEY
@@ -44,12 +52,19 @@ def verify_password(email, password):
     except requests.RequestException as exc:
         raise SupabaseAuthUnavailable("Supabase Auth could not be reached.") from exc
 
+    token_body = _json(token_response)
+    error_code = str(
+        token_body.get("error_code") or token_body.get("code") or ""
+    ).strip().lower()
+    if token_response.status_code == 429:
+        raise SupabaseAuthRejected("rate_limited")
     if token_response.status_code in {400, 401, 403, 422}:
+        if error_code == "email_not_confirmed":
+            raise SupabaseAuthRejected("email_not_confirmed")
         return None
     if token_response.status_code != 200:
         raise SupabaseAuthUnavailable("Supabase Auth rejected the sign-in request.")
 
-    token_body = _json(token_response)
     access_token = token_body.get("access_token")
     if not isinstance(access_token, str) or not access_token:
         raise SupabaseAuthUnavailable("Supabase Auth returned an incomplete session.")

@@ -114,6 +114,30 @@ class SupabasePasswordLoginTests(TestCase):
         self.assertFalse(self.client.session.get("_auth_user_id"))
 
     @patch("core.supabase_auth.requests.post")
+    def test_unconfirmed_supabase_user_gets_actionable_error(self, post):
+        post.return_value = response(400, {"error_code": "email_not_confirmed"})
+
+        rejected = self.client.post(
+            "/login/", {"username": "pending@example.test", "password": PASSWORD}
+        )
+
+        self.assertEqual(rejected.status_code, 200)
+        self.assertContains(rejected, "email is not confirmed")
+        self.assertFalse(User.objects.filter(email="pending@example.test").exists())
+
+    @patch("core.supabase_auth.requests.post")
+    def test_supabase_rate_limit_gets_actionable_error(self, post):
+        post.return_value = response(429, {"error_code": "over_request_rate_limit"})
+
+        rejected = self.client.post(
+            "/login/", {"username": "limited@example.test", "password": PASSWORD}
+        )
+
+        self.assertEqual(rejected.status_code, 200)
+        self.assertContains(rejected, "limited sign-in attempts")
+        self.assertFalse(User.objects.filter(email="limited@example.test").exists())
+
+    @patch("core.supabase_auth.requests.post")
     def test_supabase_identity_cannot_take_over_admin_email(self, post):
         admin = User.objects.create_user(
             "manager@example.test",

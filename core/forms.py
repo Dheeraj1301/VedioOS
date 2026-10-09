@@ -3,7 +3,11 @@ from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
 from django.core.exceptions import ValidationError
 
 from .models import Plan, Project, User
-from .supabase_auth import SupabaseAuthUnavailable, authenticate_supabase_client
+from .supabase_auth import (
+    SupabaseAuthRejected,
+    SupabaseAuthUnavailable,
+    authenticate_supabase_client,
+)
 
 
 class RegistrationForm(UserCreationForm):
@@ -53,6 +57,15 @@ class LoginForm(AuthenticationForm):
                 raise local_error
             try:
                 self.user_cache = authenticate_supabase_client(email, password)
+            except SupabaseAuthRejected as exc:
+                if exc.reason == "email_not_confirmed":
+                    message = (
+                        "This Supabase user exists, but its email is not confirmed. "
+                        "Confirm the user in Supabase Authentication and try again."
+                    )
+                else:
+                    message = "Supabase has temporarily limited sign-in attempts. Try again shortly."
+                raise ValidationError(message, code=exc.reason) from exc
             except SupabaseAuthUnavailable as exc:
                 raise ValidationError(
                     "Sign-in is temporarily unavailable. Please try again shortly.",
