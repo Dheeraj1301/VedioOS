@@ -55,6 +55,8 @@ The first-version scope is all 28 priorities in original brief section 34, cover
 
 Unpaid custom orders can refresh an older quotation against current rates without mutating history. Pending payment sessions are cancelled, old accepted quotes remain auditable, and a new locked quotation/payment session is created; paid and cross-client requests fail closed.
 
+**2026-10-09: shared preview and payment-path guard.** Client project details now expose the correct next action for incomplete briefs, saved custom quotations and plan orders, restoring a visible path from quotation to payment. The team launcher verifies the selected Supabase database, private schema, Auth project, security posture and migration state before starting; it refuses an isolated SQLite preview so account and project writes cannot be mistaken for shared data.
+
 - Implement admin management of three plans and custom services with validated configuration.
 - Build plan/custom selection, backend price calculation, term snapshots, payment adapter, verified payment events, invoices/history foundations, and unique paid projects.
 - Show paid/unpaid queues in the presenter dashboard. Persist delivery timestamps under decided rules.

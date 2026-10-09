@@ -336,6 +336,11 @@ class CommerceTests(TestCase):
         self.assertContains(page, "checkout-reference.jpg")
         self.assertContains(page, "Reference")
 
+        project_detail = self.client.get(f"/client/projects/{project.id}/")
+        self.assertContains(project_detail, "Complete your order")
+        self.assertContains(project_detail, "Review quotation &amp; continue to payment")
+        self.assertContains(project_detail, checkout_url)
+
         CommercePolicy.objects.filter(pk=1).update(quotation_point_minor=999)
         QuotationFeature.objects.filter(code="beat_sync").update(complexity_score=1)
         unchanged = self.client.get(checkout_url)

@@ -142,10 +142,10 @@ New client accounts remain inactive until the client enters the six digit code s
 Every team preview intended to use shared data must set `SHARED_PREVIEW_REQUIRED=true`, `SUPABASE_PROJECT_REF=lmwvoniiykmfzuxigzqf`, and the privately supplied Supabase connection settings in its ignored `.env`. Confirm the binding before starting the server:
 
 ```powershell
-.venv/Scripts/python.exe manage.py check_shared_preview
+.venv/Scripts/python.exe scripts/start_shared_preview.py
 ```
 
-The command refuses SQLite, the wrong project, the wrong schema, or pending migrations and prints aggregate counts only. In Supabase Studio, select schema **vedioos**; `public` and Supabase Auth's `auth.users` are intentionally separate from this Django application.
+This is the required team command for shared testing. It verifies the database, schema, migration state and matching Supabase Auth project before starting Django, and refuses to start against SQLite or an incomplete environment. Use `--check-only` when you only want to verify the binding. In Supabase Studio, select schema **vedioos**; client/editor/admin credentials are hashed in `vedioos.users`, while Supabase Auth's `auth.users` records the separate email-OTP identity. A teammate can use the same application login only when this command passes against the same project. Git cannot distribute the ignored database URL, CA, storage credentials, or payment secret; supply the same approved `.env` values through the team's private secret channel.
 
 External notification delivery is held by default. In-app notices work without a provider. After approving an email provider, sender domain, templates and notification policy, set `NOTIFICATION_EMAIL_ENABLED=true` and schedule this bounded command from a trusted worker:
 

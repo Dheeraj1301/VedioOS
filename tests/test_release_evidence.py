@@ -4,7 +4,7 @@ from unittest.mock import patch
 
 from django.core.management import call_command
 from django.core.management.base import CommandError
-from django.test import SimpleTestCase
+from django.test import SimpleTestCase, override_settings
 
 
 class ReleaseEvidenceCommandTests(SimpleTestCase):
@@ -52,3 +52,10 @@ class ReleaseEvidenceCommandTests(SimpleTestCase):
             )
         self.assertIn("Overall: FAIL", output.getvalue())
         collect.assert_called_once_with(active_storage=True)
+
+
+class SharedPreviewGuardTests(SimpleTestCase):
+    @override_settings(SHARED_PREVIEW_REQUIRED=False)
+    def test_shared_preview_check_requires_fail_closed_mode(self):
+        with self.assertRaisesMessage(CommandError, "SHARED_PREVIEW_REQUIRED=true"):
+            call_command("check_shared_preview", stdout=StringIO())

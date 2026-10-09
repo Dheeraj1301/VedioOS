@@ -9,7 +9,7 @@ git clone --branch codex/foundation-and-commerce https://github.com/Dheeraj1301/
 cd VedioOS
 ```
 
-Follow [README setup](../README.md). Each developer generates their own local `.env`, database and S3 credentials using `scripts/setup_local.py`. The app works with local SQLite when no cloud database URL is configured. Supabase credentials must be shared separately through an approved private channel, never committed or pasted into issues.
+Follow [README setup](../README.md). `scripts/setup_local.py` creates an intentionally isolated SQLite workspace; data and credentials created there do not synchronize. For team testing, provision the approved shared `.env` privately and start only with `.venv/Scripts/python.exe scripts/start_shared_preview.py`. That launcher fails before serving the app unless the selected Supabase database, private schema, Auth project and migrations match. Supabase credentials must be shared separately through an approved private channel, never committed or pasted into issues.
 
 For a Codex-operated preview against the configured shared database, copy the repository's [live-preview master prompt](CODEX_LIVE_PREVIEW_PROMPT.md). It verifies Supabase and local private storage, starts the services, and reports the current feature gates without adding shared fixtures or exposing credentials.
 

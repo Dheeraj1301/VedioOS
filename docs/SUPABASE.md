@@ -38,14 +38,14 @@ Client email verification crosses the identity boundary in one narrowly scoped p
 .venv/Scripts/python.exe manage.py check_database
 .venv/Scripts/python.exe manage.py check_shared_preview
 .venv/Scripts/python.exe manage.py verify_cloud
-.venv/Scripts/python.exe manage.py runserver 127.0.0.1:8000 --noreload
+.venv/Scripts/python.exe scripts/start_shared_preview.py
 ```
 
 `verify_cloud` creates synthetic users/project/session records inside a transaction and rolls them back. It does not drop or flush the shared database. Normal `manage.py test` commands automatically use `vedioos.test_settings` and an isolated SQLite test database.
 
 The verifier follows the current account contract: client registration remains inactive until its email OTP is consumed, editor self-registration redirects to login, and the synthetic editor signs in with an administrator-issued editor ID. Automated verification mocks the Supabase Auth boundary and never sends an external email or creates a persistent Auth user.
 
-For a shared preview, set `SHARED_PREVIEW_REQUIRED=true`. Startup then refuses a missing/wrong Supabase project URL or a schema other than `vedioos`. Teammates still need the credentials through the team's private secret channel; the repository deliberately cannot distribute them.
+For a shared preview, set `SHARED_PREVIEW_REQUIRED=true` and use `scripts/start_shared_preview.py`. The launcher refuses SQLite, a missing or wrong Supabase project, a schema other than `vedioos`, mismatched Supabase Auth, failed database security checks, or pending migrations. Teammates still need the same server connection, CA, storage and test-payment credentials through the team's private secret channel; the repository deliberately cannot distribute them. Password hashes and application roles live in `vedioos.users`, so accounts are shared across every correctly bound preview even though they are not listed as password identities in `auth.users`. Supabase Auth remains the email-OTP boundary described above.
 
 For deliberate offline development:
 

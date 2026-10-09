@@ -1,5 +1,11 @@
 # Phase 3 — Catalog, quotes and payment foundation
 
+## 2026-10-09 shared workflow continuity
+
+Client project details now show a prominent next-step card whenever payment is pending. Custom projects with a saved quotation return directly to the quotation and payment screen; incomplete custom briefs return to customization; plan orders move to quotation selection or the saved order summary as appropriate. This fixes the hidden path that left clients on project details without a payment action even though the quotation itself remained valid.
+
+Team previews now start through `scripts/start_shared_preview.py`. The launcher runs the shared Supabase and database security checks before serving and fails closed for SQLite, an incomplete environment, the wrong project/schema/Auth endpoint or pending migrations. Application password hashes and roles remain in the shared private `vedioos.users` table, while `auth.users` remains the separate Supabase email-OTP identity boundary. No schema migration was required.
+
 ## 2026-10-09 guarded test quotation fallback
 
 The quotation failure in the shared preview was caused by an absent `CommercePolicy`, not a calculation error: all seven weighted feature rows existed, but no approved base, per-point, minimum, maximum, currency or terms had been persisted. A real ML predictor remains unavailable because the project has no labelled historical effort/price dataset or acceptance threshold.

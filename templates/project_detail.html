@@ -5,6 +5,19 @@
   <span class="badge">{{ project.get_status_display }}</span>
 </div>
 <div class="project-columns{% if request.user.role == 'client' %} project-columns-single{% endif %}"><div>
+  {% if request.user.role == 'client' and project.status == 'payment_pending' %}
+  <section class="panel detail-panel">
+    <div class="panel-heading"><div><p class="eyebrow">Next step</p><h2>Complete your order</h2></div><span class="badge">Payment pending</span></div>
+    {% if project.order.kind == 'custom' %}
+      {% if project.order.quotes.exists %}<p>Your customized quotation is ready. Review the saved amount and terms, then continue to payment.</p><p><a class="button" href="{% url 'custom_checkout' project.id %}">Review quotation &amp; continue to payment <span>↗</span></a></p>
+      {% else %}<p>Complete the customization form to generate your quotation.</p><p><a class="button" href="{% url 'edit_project' project.id %}">Complete customization <span>↗</span></a></p>{% endif %}
+    {% elif project.order.terms_snapshot %}
+      <p>Your selected package and saved terms are ready for payment.</p><p><a class="button" href="{% url 'order_summary' project.id %}">Continue to payment <span>↗</span></a></p>
+    {% else %}
+      <p>Choose a package and review the quotation before payment.</p><p><a class="button" href="{% url 'quote_select' project.id %}">Choose package &amp; quotation <span>↗</span></a></p>
+    {% endif %}
+  </section>
+  {% endif %}
   <section class="panel detail-panel">
     <div class="panel-heading"><div><p class="eyebrow">The creative brief</p><h2>What we're making</h2></div>{% if request.user.role == 'client' and project.status == 'payment_pending' and not project.order.terms_snapshot %}<a class="text-link" href="{% url 'edit_project' project.id %}">Edit</a>{% endif %}</div>
     <p class="preserve-lines">{{ project.requirements|default:"No editing notes added yet." }}</p>

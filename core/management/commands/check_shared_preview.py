@@ -15,6 +15,10 @@ class Command(BaseCommand):
     help = "Verify shared Supabase binding without printing credentials or user data."
 
     def handle(self, *args, **options):
+        if not settings.SHARED_PREVIEW_REQUIRED:
+            raise CommandError(
+                "Set SHARED_PREVIEW_REQUIRED=true before starting a shared preview."
+            )
         if connection.vendor != "postgresql":
             raise CommandError("Preview is not using PostgreSQL.")
 
@@ -24,6 +28,14 @@ class Command(BaseCommand):
         identity = f"{parsed.username or ''}@{parsed.hostname or ''}"
         if not expected_ref or expected_ref not in identity:
             raise CommandError("Database connection does not match SUPABASE_PROJECT_REF.")
+
+        auth_url = urlparse(settings.SUPABASE_AUTH_URL)
+        if (
+            auth_url.scheme != "https"
+            or auth_url.hostname != f"{expected_ref}.supabase.co"
+            or not settings.SUPABASE_AUTH_PUBLISHABLE_KEY
+        ):
+            raise CommandError("Supabase Auth does not match the selected shared project.")
 
         with connection.cursor() as cursor:
             cursor.execute("select current_schema()")
