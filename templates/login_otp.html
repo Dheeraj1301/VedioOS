@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+{% block content %}
+<section class="section error-page" aria-labelledby="otp-login-heading">
+  <p class="eyebrow">Passwordless sign in</p>
+  <h1 id="otp-login-heading">Use your email code.</h1>
+  <p class="error-detail">Use this option for an existing Supabase account created with email verification instead of a password.</p>
+  {% for message in messages %}<div class="notice" role="status" aria-live="polite">{{ message }}</div>{% endfor %}
+  <form class="form-stack verification-form" method="post">{% csrf_token %}
+    <input type="hidden" name="action" value="send">
+    <div><label for="login-otp-email">Email address</label><input id="login-otp-email" name="email" type="email" autocomplete="email" maxlength="254" value="{{ login_otp_email }}" required></div>
+    <button class="button secondary" type="submit">Send six digit code <span>↗</span></button>
+  </form>
+  {% if login_otp_email %}
+  <form class="form-stack verification-form" method="post">{% csrf_token %}
+    <input type="hidden" name="action" value="verify">
+    <input type="hidden" name="email" value="{{ login_otp_email }}">
+    <div><label for="login-otp-code">Six digit code</label><input id="login-otp-code" name="code" type="text" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" minlength="6" maxlength="6" required></div>
+    <button class="button" type="submit">Verify and sign in <span>↗</span></button>
+  </form>
+  {% endif %}
+  <p>If the email does not arrive, the Supabase project's email-delivery configuration must be completed.</p>
+  <p><a class="text-link" href="{% url 'login' %}">Return to password login</a></p>
+</section>
+{% endblock %}
