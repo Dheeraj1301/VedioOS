@@ -1,7 +1,9 @@
 from django import forms
 from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
+from django.core.exceptions import ValidationError
 
 from .models import Plan, Project, User
+from .supabase_auth import SupabaseAuthUnavailable, authenticate_supabase_client
 
 
 class RegistrationForm(UserCreationForm):
@@ -40,6 +42,26 @@ class LoginForm(AuthenticationForm):
 
         editor = Editor.objects.filter(login_id__iexact=identity).select_related("user").first()
         return editor.user.email if editor else identity.lower()
+
+    def clean(self):
+        try:
+            return super().clean()
+        except ValidationError as local_error:
+            email = self.cleaned_data.get("username")
+            password = self.cleaned_data.get("password")
+            if not email or "@" not in email or not password:
+                raise local_error
+            try:
+                self.user_cache = authenticate_supabase_client(email, password)
+            except SupabaseAuthUnavailable as exc:
+                raise ValidationError(
+                    "Sign-in is temporarily unavailable. Please try again shortly.",
+                    code="supabase_auth_unavailable",
+                ) from exc
+            if self.user_cache is None:
+                raise local_error
+            self.confirm_login_allowed(self.user_cache)
+            return self.cleaned_data
 
 
 class ProjectForm(forms.ModelForm):

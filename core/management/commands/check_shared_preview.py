@@ -36,6 +36,8 @@ class Command(BaseCommand):
             or not settings.SUPABASE_AUTH_PUBLISHABLE_KEY
         ):
             raise CommandError("Supabase Auth does not match the selected shared project.")
+        if not settings.SUPABASE_AUTH_PASSWORD_LOGIN_ENABLED:
+            raise CommandError("Supabase Auth password login is not enabled.")
 
         with connection.cursor() as cursor:
             cursor.execute("select current_schema()")

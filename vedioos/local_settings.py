@@ -3,6 +3,8 @@
 from .settings import *  # noqa: F403
 from .settings import BASE_DIR
 
+SUPABASE_AUTH_PASSWORD_LOGIN_ENABLED = False
+
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.sqlite3",

@@ -22,6 +22,9 @@ SUPABASE_AUTH_URL = os.getenv(
 )
 SUPABASE_AUTH_PUBLISHABLE_KEY = os.getenv("SUPABASE_AUTH_PUBLISHABLE_KEY", "")
 SUPABASE_AUTH_TIMEOUT_SECONDS = int(os.getenv("SUPABASE_AUTH_TIMEOUT_SECONDS", "10"))
+SUPABASE_AUTH_PASSWORD_LOGIN_ENABLED = (
+    os.getenv("SUPABASE_AUTH_PASSWORD_LOGIN_ENABLED", "false").lower() == "true"
+)
 SHARED_PREVIEW_REQUIRED = os.getenv("SHARED_PREVIEW_REQUIRED", "false").lower() == "true"
 SECRET_KEY = os.getenv("SECRET_KEY", "")
 if not SECRET_KEY:
@@ -117,6 +120,10 @@ if SHARED_PREVIEW_REQUIRED and not ISOLATED_SQLITE_SETTINGS:
     ):
         raise ImproperlyConfigured(
             "SHARED_PREVIEW_REQUIRED needs the selected project's Supabase Auth URL and publishable key."
+        )
+    if not SUPABASE_AUTH_PASSWORD_LOGIN_ENABLED:
+        raise ImproperlyConfigured(
+            "SHARED_PREVIEW_REQUIRED needs SUPABASE_AUTH_PASSWORD_LOGIN_ENABLED=true."
         )
 AUTH_USER_MODEL = "core.User"
 AUTH_PASSWORD_VALIDATORS = [

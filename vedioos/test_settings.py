@@ -13,3 +13,4 @@ DATABASES = {
     "restore_rehearsal": {"ENGINE": "django.db.backends.sqlite3", "NAME": ":memory:"},
 }
 PASSWORD_HASHERS = ["django.contrib.auth.hashers.MD5PasswordHasher"]
+SUPABASE_AUTH_PASSWORD_LOGIN_ENABLED = False

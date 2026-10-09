@@ -186,6 +186,18 @@ Decision: add Razorpay Standard Checkout as a replaceable test-mode adapter. Cre
 
 This decision does not authorize live keys, real charges, refunds, disputes, settlements, tax invoices or production launch. Those policies and provider-account requirements remain under D05.
 
+## 2026-10-09 — Supabase Auth client password bridge
+
+Status: approved implementation for shared client testing
+
+Owner / source of explicit decision: Hamsa requested that confirmed users created in the selected Supabase Authentication user table be able to log in from any correctly connected VedioOS preview and see the same shared application data.
+
+Decision: retain Django sessions and the private `vedioos.users` authorization/profile identity, while accepting confirmed Supabase Auth email/password credentials for clients. After the local client-password check fails, the backend calls the selected project's password token endpoint, validates the returned short-lived token through `/auth/v1/user`, and discards all Supabase session tokens. It links the immutable Supabase Auth UUID to one application user. If no application user exists for that verified email, first login creates an active client user/profile with an unusable local password. Auth `user_metadata` never determines role or authorization. Existing editor/admin emails cannot use this bridge, and existing Django credentials remain supported during transition.
+
+Migration `core.0014` adds the nullable unique Auth UUID link. This does not expose the private application schema to browser roles or replace backend role/project authorization. Future consolidation of public registration into Supabase password signup requires a separate migration plan for existing local-password clients and is not implied by this bridge.
+
+Verification required: valid confirmed Auth login and first-login provisioning, immutable UUID linking, duplicate/race safety, invalid-password and provider-outage handling, admin/editor collision denial, token non-persistence, shared PostgreSQL migration/security checks, and unchanged existing login/role isolation.
+
 ## 2026-10-09 — Test-only quotation fallback
 
 Status: approved for shared workflow testing only; D04 and D08 remain open for production
