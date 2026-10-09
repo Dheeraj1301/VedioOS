@@ -3,6 +3,7 @@
 from copy import deepcopy
 from decimal import ROUND_HALF_UP, Decimal
 
+from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.utils import timezone
@@ -214,6 +215,7 @@ def saved_custom_estimate_snapshot(subject, *, lock=False):
     result = custom_estimate_result(subject, lock=lock)
     return {
         "version": 1,
+        "pricing_context": result["policy"].pricing_context,
         "currency": result["policy"].currency,
         "total_minor": result["total_minor"],
         "items": deepcopy(result["items"]),
@@ -225,6 +227,12 @@ def saved_custom_estimate_snapshot(subject, *, lock=False):
 def check_policy(policy):
     if not policy or not policy.quotes_enabled:
         raise ValidationError("Pricing is being prepared. You can save your brief and upload files now.")
+    if policy.pricing_context == CommercePolicy.PricingContext.TEST and not (
+        settings.DEBUG and settings.PAYMENT_MODE in {"sandbox", "razorpay_test"}
+    ):
+        raise ValidationError("Test-only pricing is unavailable outside a test payment environment.")
+    if policy.pricing_context == CommercePolicy.PricingContext.UNCONFIGURED:
+        raise ValidationError("Pricing context is not configured. Please contact the team.")
     values = {field: getattr(policy, field) for field in PolicyForm.Meta.fields}
     if not PolicyForm(values, instance=policy, values_are_minor=True).is_valid():
         raise ValidationError("Commercial terms are incomplete. Please contact the team.")
@@ -266,6 +274,7 @@ def _validated_saved_weighted_estimate(project):
     items = snapshot.get("items")
     total = snapshot.get("total_minor")
     currency = snapshot.get("currency")
+    pricing_context = snapshot.get("pricing_context")
     if (
         not isinstance(quotation, dict)
         or quotation.get("model") != "weighted_heuristic_v1"
@@ -275,6 +284,10 @@ def _validated_saved_weighted_estimate(project):
         or total <= 0
         or not isinstance(currency, str)
         or len(currency) != 3
+        or pricing_context not in {
+            CommercePolicy.PricingContext.TEST,
+            CommercePolicy.PricingContext.PRODUCTION,
+        }
     ):
         return None
     if any(
@@ -308,6 +321,7 @@ def create_quote(
     items = []
     quote_currency = policy.currency
     quotation = None
+    pricing_context = policy.pricing_context
     if kind == "plan":
         pricing_period = normalize_pricing_period(pricing_period)
         plan = Plan.objects.select_for_update().filter(pk=plan_id).first()
@@ -343,6 +357,7 @@ def create_quote(
             quote_currency = saved_estimate["currency"]
             quotation = saved_estimate["quotation"]
             estimate_breakdown = saved_estimate.get("breakdown", [])
+            pricing_context = saved_estimate["pricing_context"]
         else:
             estimate_result = custom_estimate_result(order.project, lock=True)
             required_services = estimate_result["services"]
@@ -371,6 +386,7 @@ def create_quote(
         raise ValidationError("The quote total is outside the supported range. Contact the team.")
     snapshot = {
         "version": 2,
+        "pricing_context": pricing_context,
         "kind": kind,
         "plan_id": str(plan_id) if kind == "plan" else None,
         "pricing_period": pricing_period,
@@ -398,6 +414,10 @@ def create_quote(
 def accept_quote(user, project_id, quote_id):
     order = Order.objects.select_for_update().get(project_id=project_id, project__client__user=user)
     quote = OrderQuote.objects.get(pk=quote_id, order=order)
+    if quote.snapshot.get("pricing_context") == CommercePolicy.PricingContext.TEST and not (
+        settings.DEBUG and settings.PAYMENT_MODE in {"sandbox", "razorpay_test"}
+    ):
+        raise ValidationError("This test-only quotation cannot be accepted outside test mode.")
     if str(order.terms_snapshot.get("quote_id")) == str(quote.id):
         return order
     ensure_editable(order)

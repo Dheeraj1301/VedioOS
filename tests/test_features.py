@@ -46,6 +46,7 @@ class FeatureControlTests(TestCase):
         CommercePolicy.objects.update_or_create(
             pk=1,
             defaults={
+                "pricing_context": "production",
                 "currency": "INR",
                 "terms": "Synthetic terms",
                 "delivery_terms": "Synthetic delivery",

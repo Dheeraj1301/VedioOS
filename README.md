@@ -166,6 +166,14 @@ Fresh local settings intentionally contain **no plan prices, payment gateway, as
 
 Razorpay Test Mode is available as the hosted checkout adapter. Put a test key in the ignored `.env` as `RAZORPAY_KEY_ID` and `RAZORPAY_KEY_SECRET`, keep the official API base unchanged, and set `PAYMENT_MODE=razorpay_test`. The key ID must begin with `rzp_test_`; live keys are rejected by this mode. The backend creates the Razorpay order from the accepted server-owned quotation, verifies the returned HMAC signature, fetches the payment from Razorpay, and records confirmation only when the captured amount, currency and order ID match. Test receipts remain labeled as test records and cannot be treated as production revenue. Team members must obtain credentials through the private team channel; credentials are never stored in Git.
 
+For an end-to-end test when production prices are still undecided, an administrator can persist an explicitly test-only weighted policy. Amounts are integer minor units and must be supplied deliberately; the command has no price defaults:
+
+```powershell
+.venv/Scripts/python.exe manage.py configure_test_quotation --confirm-test-only --base-minor 10000 --point-minor 1000 --minimum-minor 10000 --maximum-minor 100000
+```
+
+This example means a synthetic ₹100 base, ₹10 per weighted point, ₹100 minimum and ₹1,000 maximum. Test policy values are visibly labeled in quotations and are rejected unless Django is in `DEBUG` with the sandbox or Razorpay test gateway. Replace the policy through `/admin/pricing/policy/` with owner-approved values and select `Production` before launch.
+
 The custom-order estimate supports the existing custom base plus administrator-priced service mappings and an opt-in seven-feature weighted engine. Configure its base, per-point amount, min/max bounds, currency and weights under `/admin/pricing/policy/`; feature scores and multipliers are managed from `/admin/pricing/`. No production prices are seeded, and incomplete configuration keeps the weighted engine disabled rather than inventing a price. Configured custom submissions retain a server-owned estimate snapshot so later pricing edits apply prospectively.
 
 Administrators may also prepare inactive monthly-package drafts from `/admin/pricing/`. Draft configuration does not publish or sell a subscription. Renewal, expiry, rollover, allowance accounting and dedicated-editor rules must be approved before that feature can be activated.

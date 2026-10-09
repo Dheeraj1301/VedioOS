@@ -1,5 +1,13 @@
 # Phase 3 — Catalog, quotes and payment foundation
 
+## 2026-10-09 guarded test quotation fallback
+
+The quotation failure in the shared preview was caused by an absent `CommercePolicy`, not a calculation error: all seven weighted feature rows existed, but no approved base, per-point, minimum, maximum, currency or terms had been persisted. A real ML predictor remains unavailable because the project has no labelled historical effort/price dataset or acceptance threshold.
+
+Migration `core.0013` adds an explicit pricing context. The primary test calculation remains the owner-approved deterministic 40% time / 20% importance / 40% editor-complexity model. `configure_test_quotation` persists explicitly supplied synthetic amounts and test-only terms only while `DEBUG` and a test payment adapter are active. Test quotes carry their context in the immutable snapshot, show a prominent warning, fail outside a test environment and block release readiness. This enables Save and Proceed → locked quotation → Make Payment → Razorpay Test Checkout without treating synthetic values as production pricing.
+
+Before applying `core.0013` to Supabase project `lmwvoniiykmfzuxigzqf`, a verified ignored snapshot captured 47 tables and 330 rows. The additive migration and guarded test configuration then completed successfully. Post-change checks confirmed current migrations, 47 RLS-protected tables, no browser-role access, a bounded shared weighted estimate and clean commerce reconciliation. The PostgreSQL quote/payment/idempotency exercise passed inside a rolled-back transaction and retained no synthetic fixture rows.
+
 ## 2026-10-09 Razorpay Test Mode
 
 The owner supplied Razorpay test credentials through a local ignored file and selected Razorpay for the test checkout. `PAYMENT_MODE=razorpay_test` is permitted only with `DEBUG=true`, an `rzp_test_` key ID, a server-only secret and the official HTTPS API base. Credentials remain in `.env` and are excluded from Git.

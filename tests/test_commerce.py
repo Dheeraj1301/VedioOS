@@ -7,6 +7,7 @@ from datetime import timedelta
 from unittest.mock import Mock, patch
 
 from django.core.exceptions import ValidationError
+from django.core.management import call_command
 from django.test import TestCase, override_settings
 from django.utils import timezone
 
@@ -50,6 +51,7 @@ class CommerceTests(TestCase):
         Client.objects.create(user=cls.other)
         cls.order = Order.objects.create(project=cls.project)
         cls.policy = CommercePolicy.objects.create(
+            pricing_context="production",
             currency="INR",
             custom_base_minor=10000,
             custom_revision_limit=2,
@@ -217,6 +219,43 @@ class CommerceTests(TestCase):
         self.assertEqual(response.json()["total_minor"], 12380)
         self.assertEqual(response.json()["model"], "weighted_heuristic_v1")
         self.assertEqual(len(response.json()["breakdown"]), 8)
+
+    def test_test_quotation_setup_is_persisted_and_cannot_run_as_production(self):
+        call_command(
+            "configure_test_quotation",
+            confirm_test_only=True,
+            base_minor=10000,
+            point_minor=1000,
+            minimum_minor=10000,
+            maximum_minor=100000,
+            verbosity=0,
+        )
+        self.policy.refresh_from_db()
+        self.assertEqual(self.policy.pricing_context, "test")
+        self.assertTrue(self.policy.quotation_engine_enabled)
+        estimate = custom_estimate_result(
+            {"reel_duration": "30_50", "song_choice": "suggest"}
+        )
+        self.assertGreater(estimate["total_minor"], 0)
+        self.assertEqual(estimate["quotation"]["model"], "weighted_heuristic_v1")
+        self.client.force_login(self.user)
+        response = self.client.post(
+            "/client/new-order/?new=1",
+            {
+                "title": "Test-only quotation handoff",
+                "order_choice": "custom",
+                "reel_duration": "30_50",
+                "song_choice": "suggest",
+            },
+        )
+        project = Project.objects.get(title="Test-only quotation handoff")
+        checkout_url = f"/client/checkout/{project.id}/"
+        self.assertRedirects(response, checkout_url, fetch_redirect_response=False)
+        self.assertContains(self.client.get(checkout_url), "TEST QUOTATION")
+        self.assertEqual(project.order.quotes.count(), 1)
+        with self.settings(DEBUG=False, PAYMENT_MODE="disabled"):
+            with self.assertRaisesMessage(ValidationError, "Test-only pricing is unavailable"):
+                custom_estimate_result({"reel_duration": "30_50", "song_choice": "suggest"})
 
     def test_saved_weighted_snapshot_survives_later_pricing_changes(self):
         self.enable_weighted_engine()

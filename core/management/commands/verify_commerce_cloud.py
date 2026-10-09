@@ -38,12 +38,14 @@ class Command(BaseCommand):
             CommercePolicy.objects.update_or_create(
                 pk=1,
                 defaults={
+                    "pricing_context": "test",
                     "currency": "INR",
                     "custom_base_minor": 10000,
                     "custom_revision_limit": 2,
                     "custom_delivery_hours": 24,
                     "custom_duration_limit_seconds": 60,
                     "custom_priority": 1,
+                    "quotation_engine_enabled": False,
                     "terms": "Temporary test only",
                     "delivery_terms": "Temporary test only",
                     "refund_terms": "Temporary test only",

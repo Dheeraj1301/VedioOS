@@ -186,6 +186,16 @@ Decision: add Razorpay Standard Checkout as a replaceable test-mode adapter. Cre
 
 This decision does not authorize live keys, real charges, refunds, disputes, settlements, tax invoices or production launch. Those policies and provider-account requirements remain under D05.
 
+## 2026-10-09 — Test-only quotation fallback
+
+Status: approved for shared workflow testing only; D04 and D08 remain open for production
+
+Owner / source of explicit decision: Hamsa requested that custom quotation always reach the test payment wall and asked for a calculation fallback when ML prediction is unavailable.
+
+Decision: the existing seven-feature weighted heuristic remains the primary test quotation model because no labelled historical effort/price dataset or evaluation threshold exists for a defensible ML predictor. A persisted pricing context distinguishes `test` from `production`. The guarded `configure_test_quotation` command accepts explicit synthetic minor-unit amounts, enables the approved 40/20/40 score formula, and records test-only terms. Test quotations are visibly labelled and cannot be generated or accepted outside `DEBUG` with a test payment gateway. The release audit blocks any enabled quotation policy whose context is not `production`.
+
+This fallback is deterministic and server-authoritative; it does not claim to be ML and never trusts a browser-provided total. Training a future model still requires an owner-approved dataset, prediction target, evaluation threshold, versioning and a human override policy under D08.
+
 Verification required: server-owned order amount, secret exclusion from HTML/logs/Git, cross-client denial, signature rejection, captured-payment matching, retry idempotency, test labeling, production-mode refusal, and an owner-network test transaction before production work continues.
 
 ## 2026-09-17 — Earnings implementation (D10 remains open)

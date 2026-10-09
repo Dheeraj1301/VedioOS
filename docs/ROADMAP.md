@@ -49,6 +49,8 @@ The first-version scope is all 28 priorities in original brief section 34, cover
 
 **2026-10-09: Razorpay test checkout implemented.** The backend creates a Razorpay test order from the accepted quote, opens hosted Standard Checkout, verifies the returned HMAC, fetches captured status, and matches order, amount and currency before idempotent confirmation. Test payments and receipts remain labeled and are excluded from production assignment eligibility. D05 remains open for live credentials, webhook recovery, refunds/disputes, taxes and invoices.
 
+**2026-10-09: guarded test quotation fallback implemented.** Shared-preview quotation failure was traced to the intentionally absent commerce policy. Pricing now has an explicit persisted test/production context, a guarded command accepts deliberate synthetic values for the existing 40/20/40 weighted model, immutable quote snapshots retain that context, and test quotations are visibly labelled and rejected outside the test gateway environment. Release readiness blocks test pricing. A genuine ML predictor remains deferred under D08 until labelled training data and evaluation criteria exist.
+
 - Implement admin management of three plans and custom services with validated configuration.
 - Build plan/custom selection, backend price calculation, term snapshots, payment adapter, verified payment events, invoices/history foundations, and unique paid projects.
 - Show paid/unpaid queues in the presenter dashboard. Persist delivery timestamps under decided rules.

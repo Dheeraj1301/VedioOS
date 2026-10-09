@@ -269,6 +269,7 @@ class PolicyForm(MajorUnitPriceFormMixin, forms.ModelForm):
     class Meta:
         model = CommercePolicy
         fields = [
+            "pricing_context",
             "currency",
             "custom_base_minor",
             "custom_revision_limit",
@@ -294,6 +295,7 @@ class PolicyForm(MajorUnitPriceFormMixin, forms.ModelForm):
             for field in ["terms", "delivery_terms", "refund_terms", "tax_terms"]
         }
         help_texts = {
+            "pricing_context": "Test-only pricing runs only in DEBUG with a test payment gateway. Select Production only after commercial terms are approved.",
             "quotes_enabled": "Allow clients to request quotes. Real checkout requires a separate provider integration.",
             "quotation_engine_enabled": "Use the seven-feature weighted model for new custom estimates. Existing saved snapshots remain unchanged.",
             "tax_terms": "Describe applicable taxes and whether the displayed total includes them.",
@@ -302,6 +304,8 @@ class PolicyForm(MajorUnitPriceFormMixin, forms.ModelForm):
 
     def clean(self):
         data = super().clean()
+        if data.get("quotes_enabled") and data.get("pricing_context") == "unconfigured":
+            self.add_error("pricing_context", "Choose Test only or Production before enabling quotes.")
         if data.get("quotes_enabled"):
             for field in ["currency", "terms", "delivery_terms", "refund_terms", "tax_terms"]:
                 if not data.get(field):

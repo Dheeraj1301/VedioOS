@@ -4,6 +4,7 @@
 
 <section class="panel detail-panel">
   <div class="panel-heading"><div><h2>Your customized quotation</h2><p class="muted">This is the locked quotation created when you selected Save and Proceed.</p></div><span class="badge">CUSTOM</span></div>
+  {% if snapshot.pricing_context == 'test' %}<p class="notice"><strong>TEST QUOTATION:</strong> These are synthetic values for workflow testing. This is not a commercial offer, invoice, or real charge.</p>{% endif %}
   <div class="file-row"><strong>Project name</strong><span>{{ project.title }}</span></div>
   <div class="file-row"><strong>Selected plan</strong><span>Customize my edit</span></div>
   <h3>Selected options</h3>

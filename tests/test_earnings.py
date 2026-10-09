@@ -96,6 +96,7 @@ class EarningTests(TestCase):
         )
         self.assertEqual(quote_rule("plan", plan, self.policy)["coins"], 120)
         policy = CommercePolicy.objects.create(
+            pricing_context="production",
             currency="INR",
             terms="test",
             delivery_terms="test",

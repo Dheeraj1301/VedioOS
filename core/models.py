@@ -362,7 +362,17 @@ class AuthAttempt(models.Model):
 class CommercePolicy(models.Model):
     """Unconfigured by default; prices and commercial promises require owner input."""
 
+    class PricingContext(models.TextChoices):
+        UNCONFIGURED = "unconfigured", "Unconfigured"
+        TEST = "test", "Test only"
+        PRODUCTION = "production", "Production"
+
     id = models.PositiveSmallIntegerField(primary_key=True, default=1, editable=False)
+    pricing_context = models.CharField(
+        max_length=20,
+        choices=PricingContext.choices,
+        default=PricingContext.UNCONFIGURED,
+    )
     currency = models.CharField(max_length=3, blank=True)
     custom_base_minor = models.PositiveBigIntegerField(null=True, blank=True)
     custom_revision_limit = models.PositiveIntegerField(null=True, blank=True)

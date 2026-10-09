@@ -55,6 +55,7 @@ def current_policy_state():
     upload = UploadPolicy.objects.filter(pk=1).first()
     return {
         "quotes_enabled": bool(commerce and commerce.quotes_enabled),
+        "pricing_context": commerce.pricing_context if commerce else "unconfigured",
         "automatic_assignment": bool(assignment and assignment.automatic_enabled),
         "earnings_enabled": bool(earnings and earnings.enabled),
         "redemptions_enabled": bool(earnings and earnings.redemptions_enabled),
@@ -107,6 +108,8 @@ def release_findings(config, policies):
         block("payout_sandbox", "The development payout sandbox cannot run in production.")
     if policies["quotes_enabled"] and config["payment_mode"] == "disabled":
         block("quotes_without_gateway", "Disable quotes or configure the approved payment adapter.")
+    if policies["quotes_enabled"] and policies.get("pricing_context", "unconfigured") != "production":
+        block("test_pricing", "Replace test-only quotation values with approved production pricing.")
     if policies["redemptions_enabled"] and config["payout_mode"] == "disabled":
         block("redemptions_without_provider", "Disable redemptions or configure the approved payout adapter.")
     if not policies["uploads_enabled"]:
