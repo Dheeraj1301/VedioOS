@@ -51,6 +51,10 @@ The first-version scope is all 28 priorities in original brief section 34, cover
 
 **2026-10-09: guarded test quotation fallback implemented.** Shared-preview quotation failure was traced to the intentionally absent commerce policy. Pricing now has an explicit persisted test/production context, a guarded command accepts deliberate synthetic values for the existing 40/20/40 weighted model, immutable quote snapshots retain that context, and test quotations are visibly labelled and rejected outside the test gateway environment. Release readiness blocks test pricing. A genuine ML predictor remains deferred under D08 until labelled training data and evaluation criteria exist.
 
+**2026-10-09: market-reference quotation calibration.** Published Indian reel, colour-grading, captions/effects and cinematic-editing price ranges informed a higher ₹1,000–₹8,000 preview band. The active weighted policy now uses a ₹750 base and ₹150 per point, yielding ₹600 for colour grading, ₹1,560 for a normal 30–50 second edit with suggested music, and ₹4,320 for all seven features. Client copy is commercially readable while retaining an accurate no-live-charge disclosure at checkout.
+
+Unpaid custom orders can refresh an older quotation against current rates without mutating history. Pending payment sessions are cancelled, old accepted quotes remain auditable, and a new locked quotation/payment session is created; paid and cross-client requests fail closed.
+
 - Implement admin management of three plans and custom services with validated configuration.
 - Build plan/custom selection, backend price calculation, term snapshots, payment adapter, verified payment events, invoices/history foundations, and unique paid projects.
 - Show paid/unpaid queues in the presenter dashboard. Persist delivery timestamps under decided rules.

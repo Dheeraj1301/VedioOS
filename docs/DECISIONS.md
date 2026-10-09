@@ -196,6 +196,10 @@ Decision: the existing seven-feature weighted heuristic remains the primary test
 
 This fallback is deterministic and server-authoritative; it does not claim to be ML and never trusts a browser-provided total. Training a future model still requires an owner-approved dataset, prediction target, evaluation threshold, versioning and a human override policy under D08.
 
+Market-reference update, 2026-10-09: published Indian short-form editing prices were reviewed before increasing the preview policy. Observed references ranged from ₹499 for a starter reel, ₹999 for a high-retention edit and ₹1,999+ for advanced motion work; another published rate card listed ₹300–₹800 for basic reels, ₹500–₹1,200 with captions/effects, ₹500–₹2,000 for professional colour grading and ₹1,500–₹5,000 for cinematic editing. Agency-oriented guidance placed a professional captioned/color-graded reel around ₹1,200–₹2,500, with broader single-reel freelancer/studio pricing extending toward ₹8,000. The shared preview therefore uses a ₹750 base, ₹150 per weighted point and a ₹1,000–₹8,000 clamp. With current scores, colour grading contributes ₹600; a normal 30–50 second edit with suggested music is ₹1,560; selecting every feature is ₹4,320. These remain provisional admin-managed rates, not an approved production rate card.
+
+Research references: [Reelkraft Media 2026 India pricing guide](https://www.reelkraftmedia.com/blog/video-editing-cost-india-2026), [PurlyEdit published editing rates](https://www.purlyedit.in/editing_pricing), [Gigmate reel pricing](https://gigmate.in/reel-editing-service), and [Plumlet India reel pricing comparison](https://plumlet.app/reel-editing-charges-india).
+
 Verification required: server-owned order amount, secret exclusion from HTML/logs/Git, cross-client denial, signature rejection, captured-payment matching, retry idempotency, test labeling, production-mode refusal, and an owner-network test transaction before production work continues.
 
 ## 2026-09-17 — Earnings implementation (D10 remains open)

@@ -10,7 +10,7 @@ if (razorpayForm) {
   };
   button.addEventListener('click', () => {
     if (typeof window.Razorpay !== 'function') {
-      report('Razorpay Test Checkout could not load. Check your connection and try again.', true);
+      report('Secure checkout could not load. Check your connection and try again.', true);
       return;
     }
     const checkout = new window.Razorpay({
@@ -18,17 +18,17 @@ if (razorpayForm) {
       amount: Number(razorpayForm.dataset.amount),
       currency: razorpayForm.dataset.currency,
       name: 'VedioOS',
-      description: 'Video editing order — test payment',
+      description: 'Video editing order',
       order_id: razorpayForm.dataset.orderId,
       prefill: {
         name: razorpayForm.dataset.clientName,
         email: razorpayForm.dataset.clientEmail,
       },
       theme: {color: '#173f35'},
-      modal: {ondismiss: () => report('Test checkout closed. No payment was recorded.')},
+      modal: {ondismiss: () => report('Checkout closed. No payment was recorded.')},
       handler: async response => {
         button.disabled = true;
-        report('Verifying the captured test payment…');
+        report('Verifying payment…');
         try {
           const result = await fetch(razorpayForm.dataset.confirmUrl, {
             method: 'POST',
@@ -41,7 +41,7 @@ if (razorpayForm) {
             }),
           });
           const body = await result.json();
-          if (!result.ok) throw new Error(body.error || 'The test payment could not be verified.');
+          if (!result.ok) throw new Error(body.error || 'The payment could not be verified.');
           window.location.assign(body.redirect);
         } catch (error) {
           report(error.message, true);
@@ -49,7 +49,7 @@ if (razorpayForm) {
         }
       },
     });
-    checkout.on('payment.failed', () => report('The Razorpay test payment failed. Try again.', true));
+    checkout.on('payment.failed', () => report('The payment failed. Try again.', true));
     checkout.open();
   });
 }

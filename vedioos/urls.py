@@ -47,6 +47,11 @@ urlpatterns = [
         commerce.custom_checkout,
         name="custom_checkout",
     ),
+    path(
+        "client/checkout/<uuid:project_id>/refresh/",
+        commerce.refresh_quote,
+        name="refresh_quote",
+    ),
     path("api/custom-estimate/", commerce.estimate_custom, name="estimate_custom"),
     path("api/quote/", commerce.estimate_custom, name="api_quote"),
     path(

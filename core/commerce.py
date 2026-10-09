@@ -242,7 +242,7 @@ def ensure_editable(order):
     if (
         order.project.status != "payment_pending"
         or order.payment_status == "confirmed"
-        or order.payments.exists()
+        or order.payments.filter(status="pending").exists()
     ):
         raise ValidationError("This order is locked for payment. Its agreed price cannot be changed.")
 
@@ -407,6 +407,36 @@ def create_quote(
         order=order, snapshot=snapshot, total_minor=total, currency=quote_currency
     )
     audit(user, "quote.created", quote.id, {"order": str(order.id)})
+    return quote
+
+
+@transaction.atomic
+def refresh_custom_quote(user, project_id):
+    order = (
+        Order.objects.select_for_update()
+        .select_related("project__client__user")
+        .get(project_id=project_id, project__client__user=user)
+    )
+    project = order.project
+    if order.kind != "custom" or project.status != "payment_pending":
+        raise ValidationError("Only an unpaid custom order can be refreshed.")
+    if order.payment_status == "confirmed" or order.payments.filter(status="confirmed").exists():
+        raise ValidationError("A paid order cannot be repriced.")
+    for payment in order.payments.select_for_update().filter(status="pending"):
+        payment.status = "cancelled"
+        payment.save(update_fields=["status", "updated_at"])
+        audit(user, "payment.cancelled_for_requote", payment.id, {"order": str(order.id)})
+    order.terms_snapshot = {}
+    order.total_minor = None
+    order.currency = ""
+    order.payment_status = "pending"
+    order.save(
+        update_fields=["terms_snapshot", "total_minor", "currency", "payment_status", "updated_at"]
+    )
+    project.quotation_snapshot = saved_custom_estimate_snapshot(project, lock=True)
+    project.save(update_fields=["quotation_snapshot", "updated_at"])
+    quote = create_quote(user, project.id, "custom")
+    audit(user, "quote.refreshed", quote.id, {"order": str(order.id)})
     return quote
 
 

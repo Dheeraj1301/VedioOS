@@ -9,7 +9,13 @@ from django.urls import reverse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 
-from .commerce import accept_quote, check_policy, create_quote, custom_estimate_result
+from .commerce import (
+    accept_quote,
+    check_policy,
+    create_quote,
+    custom_estimate_result,
+    refresh_custom_quote,
+)
 from .commerce_forms import (
     CustomEstimateForm,
     PackageForm,
@@ -316,6 +322,20 @@ def custom_checkout(request, project_id):
     )
 
 
+@require_POST
+@role_required("client")
+def refresh_quote(request, project_id):
+    project = project_for(request.user, project_id)
+    if set(request.POST) - {"csrfmiddlewaretoken"}:
+        raise PermissionDenied
+    try:
+        refresh_custom_quote(request.user, project.id)
+        messages.success(request, "Your quotation was refreshed using the current rates.")
+    except ValidationError as exc:
+        messages.error(request, " ".join(exc.messages))
+    return redirect("custom_checkout", project_id=project.id)
+
+
 @role_required("client", "admin")
 def order_summary(request, project_id):
     project = project_for(request.user, project_id)
@@ -344,7 +364,7 @@ def checkout(request, project_id):
         payment = start_checkout(request.user, project.id)
         messages.success(
             request,
-            "Test payment created. No live money has been charged.",
+            "Checkout session created. Continue in the secure payment window.",
         )
         if payment.provider == "razorpay_test":
             return redirect("razorpay_checkout", payment_id=payment.id)
@@ -370,7 +390,7 @@ def razorpay_checkout(request, payment_id):
         request,
         "commerce/razorpay_checkout.html",
         {
-            "title": "Razorpay test payment",
+            "title": "Secure checkout",
             "payment": payment,
             "project": payment.order.project,
             "checkout": checkout_data,
@@ -385,7 +405,7 @@ def razorpay_confirm(request, payment_id):
         payload = json.loads(request.body)
         event = confirm_razorpay_test_payment(request.user, payment_id, payload)
     except (json.JSONDecodeError, ValidationError, IntegrityError):
-        return JsonResponse({"error": "Razorpay test payment could not be verified."}, status=400)
+        return JsonResponse({"error": "The payment could not be verified."}, status=400)
     return JsonResponse(
         {
             "confirmed": True,

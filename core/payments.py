@@ -42,7 +42,7 @@ def razorpay_test_enabled():
 
 def _razorpay_request(method, path, **kwargs):
     if not razorpay_test_enabled():
-        raise ValidationError("Razorpay test checkout is not configured.")
+        raise ValidationError("Payment checkout is not configured.")
     try:
         response = requests.request(
             method,
@@ -57,7 +57,7 @@ def _razorpay_request(method, path, **kwargs):
             raise ValueError
         return data
     except (RequestException, ValueError):
-        raise ValidationError("Razorpay test gateway is unavailable. Please try again.") from None
+        raise ValidationError("Payment checkout is unavailable. Please try again.") from None
 
 
 @transaction.atomic
@@ -72,7 +72,7 @@ def start_checkout(user, project_id):
         raise ValidationError("Review and accept a quote before starting checkout.")
     if order.payment_status == "confirmed" or order.project.status != "payment_pending":
         raise ValidationError("This order is not awaiting payment.")
-    existing = order.payments.first()
+    existing = order.payments.filter(status="pending").first()
     if existing:
         return existing
     if razorpay_test_enabled():
@@ -94,7 +94,7 @@ def start_checkout(user, project_id):
             or gateway_order.get("currency") != order.currency
             or gateway_order.get("status") != "created"
         ):
-            raise ValidationError("Razorpay returned an invalid test order.")
+            raise ValidationError("The payment provider returned an invalid order.")
         provider = "razorpay_test"
     else:
         provider = "sandbox"
@@ -112,7 +112,7 @@ def start_checkout(user, project_id):
 
 def razorpay_checkout_data(payment):
     if not razorpay_test_enabled() or payment.provider != "razorpay_test":
-        raise ValidationError("Razorpay test checkout is unavailable.")
+        raise ValidationError("Payment checkout is unavailable.")
     if payment.status != "pending" or payment.order.payment_status == "confirmed":
         raise ValidationError("This payment is not awaiting checkout.")
     return {
@@ -164,6 +164,8 @@ def confirm_razorpay_test_payment(user, payment_id, payload):
         if previous.payload_digest != digest or previous.payment_id != payment.id:
             raise ValidationError("Conflicting Razorpay payment response.")
         return previous
+    if payment.status != "pending":
+        raise ValidationError("This payment session is no longer active.")
     gateway_payment = _razorpay_request("GET", f"payments/{gateway_payment_id}")
     if (
         gateway_payment.get("id") != gateway_payment_id

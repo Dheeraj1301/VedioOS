@@ -8,6 +8,10 @@ Migration `core.0013` adds an explicit pricing context. The primary test calcula
 
 Before applying `core.0013` to Supabase project `lmwvoniiykmfzuxigzqf`, a verified ignored snapshot captured 47 tables and 330 rows. The additive migration and guarded test configuration then completed successfully. Post-change checks confirmed current migrations, 47 RLS-protected tables, no browser-role access, a bounded shared weighted estimate and clean commerce reconciliation. The PostgreSQL quote/payment/idempotency exercise passed inside a rolled-back transaction and retained no synthetic fixture rows.
 
+The initial ₹100–₹1,000 preview clamp was later replaced after reviewing published Indian market references. The active preview policy uses a ₹750 base, ₹150 per weighted point and a ₹1,000–₹8,000 clamp. That places colour grading at ₹600, a 30–50 second edit with suggested music at ₹1,560, and the full seven-feature selection at ₹4,320. Client wording now presents this as a market-reference estimate and keeps a single clear no-live-charge disclosure at payment boundaries, without exposing technical environment names or provider identifiers.
+
+Accepted quotations remain immutable. An unpaid custom order can now use **Refresh quotation with current rates**: the backend locks the order, cancels only pending payment sessions, preserves prior quote/payment records for audit, rebuilds the server-owned estimate from the saved brief and creates a new immutable quote. Paid orders and cross-client requests remain denied, and a cancelled Razorpay session cannot later activate the project.
+
 ## 2026-10-09 Razorpay Test Mode
 
 The owner supplied Razorpay test credentials through a local ignored file and selected Razorpay for the test checkout. `PAYMENT_MODE=razorpay_test` is permitted only with `DEBUG=true`, an `rzp_test_` key ID, a server-only secret and the official HTTPS API base. Credentials remain in `.env` and are excluded from Git.

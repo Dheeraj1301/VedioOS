@@ -224,10 +224,10 @@ class CommerceTests(TestCase):
         call_command(
             "configure_test_quotation",
             confirm_test_only=True,
-            base_minor=10000,
-            point_minor=1000,
-            minimum_minor=10000,
-            maximum_minor=100000,
+            base_minor=75000,
+            point_minor=15000,
+            minimum_minor=100000,
+            maximum_minor=800000,
             verbosity=0,
         )
         self.policy.refresh_from_db()
@@ -236,7 +236,7 @@ class CommerceTests(TestCase):
         estimate = custom_estimate_result(
             {"reel_duration": "30_50", "song_choice": "suggest"}
         )
-        self.assertGreater(estimate["total_minor"], 0)
+        self.assertEqual(estimate["total_minor"], 156000)
         self.assertEqual(estimate["quotation"]["model"], "weighted_heuristic_v1")
         self.client.force_login(self.user)
         response = self.client.post(
@@ -251,7 +251,7 @@ class CommerceTests(TestCase):
         project = Project.objects.get(title="Test-only quotation handoff")
         checkout_url = f"/client/checkout/{project.id}/"
         self.assertRedirects(response, checkout_url, fetch_redirect_response=False)
-        self.assertContains(self.client.get(checkout_url), "TEST QUOTATION")
+        self.assertContains(self.client.get(checkout_url), "Market-reference estimate")
         self.assertEqual(project.order.quotes.count(), 1)
         with self.settings(DEBUG=False, PAYMENT_MODE="disabled"):
             with self.assertRaisesMessage(ValidationError, "Test-only pricing is unavailable"):
@@ -384,6 +384,48 @@ class CommerceTests(TestCase):
         self.client.post(checkout_url, {"agree": "yes"})
         self.assertFalse(project.order.payments.exists())
 
+    def test_client_can_refresh_an_unpaid_quote_without_rewriting_history(self):
+        self.enable_weighted_engine()
+        self.client.force_login(self.user)
+        response = self.client.post(
+            "/client/new-order/?new=1",
+            {
+                "title": "Market rate refresh",
+                "order_choice": "custom",
+                "reel_duration": "30_50",
+                "song_choice": "suggest",
+            },
+        )
+        project = Project.objects.get(title="Market rate refresh")
+        checkout_url = f"/client/checkout/{project.id}/"
+        self.assertRedirects(response, checkout_url, fetch_redirect_response=False)
+        old_quote = project.order.quotes.get()
+        self.client.post(checkout_url, {"agree": "yes"})
+        old_payment = project.order.payments.get()
+        CommercePolicy.objects.filter(pk=1).update(quotation_point_minor=1000)
+
+        refreshed = self.client.post(f"{checkout_url}refresh/")
+        self.assertRedirects(refreshed, checkout_url)
+        project.refresh_from_db()
+        project.order.refresh_from_db()
+        old_quote.refresh_from_db()
+        old_payment.refresh_from_db()
+        new_quote = project.order.quotes.first()
+        self.assertNotEqual(new_quote.id, old_quote.id)
+        self.assertIsNotNone(old_quote.accepted_at)
+        self.assertEqual(old_payment.status, "cancelled")
+        self.assertEqual(project.order.terms_snapshot, {})
+        self.assertEqual(new_quote.total_minor, 15400)
+        self.assertEqual(project.quotation_snapshot["total_minor"], 15400)
+
+        restarted = self.client.post(checkout_url, {"agree": "yes"})
+        self.assertRedirects(restarted, f"/orders/{project.id}/")
+        self.assertEqual(project.order.payments.count(), 2)
+        self.assertEqual(project.order.payments.filter(status="pending").get().amount_minor, 15400)
+
+        self.client.force_login(self.other)
+        self.assertEqual(self.client.post(f"{checkout_url}refresh/").status_code, 404)
+
     @override_settings(
         PAYMENT_MODE="razorpay_test",
         RAZORPAY_KEY_ID="rzp_test_synthetic",
@@ -424,7 +466,7 @@ class CommerceTests(TestCase):
 
         self.client.force_login(self.user)
         page = self.client.get(f"/payments/{payment.id}/razorpay/")
-        self.assertContains(page, "Razorpay checkout")
+        self.assertContains(page, "Secure checkout")
         self.assertContains(page, "rzp_test_synthetic")
         self.assertNotContains(page, RAZORPAY_SECRET)
 
@@ -459,7 +501,7 @@ class CommerceTests(TestCase):
         self.assertEqual(self.order.payment_status, "confirmed")
         self.assertEqual(self.project.status, "payment_completed")
         self.assertEqual(PaymentEvent.objects.filter(provider="razorpay_test").count(), 1)
-        self.assertContains(self.client.get(f"/payments/{payment.id}/receipt/"), "TEST RECEIPT")
+        self.assertContains(self.client.get(f"/payments/{payment.id}/receipt/"), "PREVIEW RECEIPT")
 
     @override_settings(
         PAYMENT_MODE="razorpay_test",
@@ -931,4 +973,4 @@ class CommerceTests(TestCase):
             HTTP_X_SANDBOX_SIGNATURE=signature,
         )
         self.assertEqual(response.status_code, 200)
-        self.assertContains(self.client.get(f"/payments/{payment.id}/receipt/"), "TEST RECEIPT")
+        self.assertContains(self.client.get(f"/payments/{payment.id}/receipt/"), "PREVIEW RECEIPT")

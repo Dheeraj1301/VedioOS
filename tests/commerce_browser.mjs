@@ -94,7 +94,7 @@ try {
   }
   await page.reload();
   await page.getByRole('link', {name:'View receipt'}).click();
-  await page.getByRole('heading', {name:'TEST RECEIPT — no money received'}).waitFor();
+  await page.getByRole('heading', {name:'PREVIEW RECEIPT — no funds collected'}).waitFor();
   await page.screenshot({path:'.runtime/screenshots/phase3-receipt.png',fullPage:true});
   assert.deepEqual(errors,[]);
   console.log('PASS: admin catalog forms → custom quote → mobile acceptance → signed gateway → duplicate callback → protected receipt. No page errors or mobile overflow.');
