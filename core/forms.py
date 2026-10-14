@@ -170,6 +170,7 @@ class ProjectForm(forms.ModelForm):
             "wording_direction",
             "font_name",
             "requirements",
+            "inspiration_link",
             "reference_notes",
             "song_choice",
             "song_information",
@@ -185,6 +186,7 @@ class ProjectForm(forms.ModelForm):
             "wording_direction": "Font selection",
             "font_name": "Font style or name",
             "requirements": "Describe the edit",
+            "inspiration_link": "Inspiration link",
             "reference_notes": "Other Instructions",
             "song_choice": "Music preference",
             "song_information": "Song Name or Link",
@@ -193,3 +195,6 @@ class ProjectForm(forms.ModelForm):
             name: forms.Textarea(attrs={"rows": 3})
             for name in ["requirements", "reference_notes", "song_information"]
         }
+        widgets["inspiration_link"] = forms.URLInput(
+            attrs={"placeholder": "https://youtube.com/…"}
+        )

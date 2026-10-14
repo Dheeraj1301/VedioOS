@@ -424,10 +424,11 @@ def _project_form(request, project=None, *, create_new=False):
         active_inspiration_count = project.files.filter(category="reference").filter(
             Q(state="ready") | Q(state="pending", expires_at__gt=timezone.now())
         ).count()
-        existing_brief_files = visible_files(request.user, project).filter(
+        existing_brief_files = project.files.filter(
+            uploader=request.user,
             original__isnull=True,
             category__in=["source", "image", "audio", "reference", "font_reference", "asset"],
-        )
+        ).filter(Q(state="ready") | Q(state="pending", expires_at__gt=timezone.now()))
     upload_policy = UploadPolicy.objects.filter(pk=1, enabled=True).first()
     return render(
         request,
@@ -722,6 +723,39 @@ def complete_upload(request, file_id):
         response["version"] = version.number
         response["available_to_client"] = True
     return JsonResponse(response)
+
+
+@require_POST
+@role_required("client")
+def remove_brief_file(request, file_id):
+    file = get_object_or_404(
+        File.objects.select_related("project__order"),
+        pk=file_id,
+        uploader=request.user,
+        project__client__user=request.user,
+        original__isnull=True,
+        category__in=["source", "image", "audio", "reference", "font_reference", "asset"],
+        state__in=["pending", "ready"],
+    )
+    project = file.project
+    if (
+        project.status != Project.Status.PENDING
+        or project.order.payment_status != "pending"
+        or project.order.terms_snapshot
+        or hasattr(file, "projectversion")
+    ):
+        raise PermissionDenied
+    updated = File.objects.filter(pk=file.pk, state__in=["pending", "ready"]).update(
+        state="removed", updated_at=timezone.now()
+    )
+    if updated:
+        audit(
+            request.user,
+            "file.removed_from_brief",
+            file.id,
+            {"project": str(project.id), "category": file.category},
+        )
+    return JsonResponse({"file_id": str(file.id), "state": "removed"})
 
 
 @require_POST

@@ -184,6 +184,7 @@ class Project(Record):
     )
     font_name = models.CharField(max_length=120, blank=True)
     reference_notes = models.TextField(blank=True, max_length=5000)
+    inspiration_link = models.URLField(blank=True, max_length=1000)
     song_choice = models.CharField(
         max_length=20,
         choices=[
@@ -271,7 +272,12 @@ class File(Record):
     category = models.CharField(max_length=20, choices=Category.choices)
     state = models.CharField(
         max_length=12,
-        choices=[("pending", "Pending"), ("ready", "Ready"), ("rejected", "Rejected")],
+        choices=[
+            ("pending", "Pending"),
+            ("ready", "Ready"),
+            ("rejected", "Rejected"),
+            ("removed", "Removed"),
+        ],
         default="pending",
     )
     expires_at = models.DateTimeField()

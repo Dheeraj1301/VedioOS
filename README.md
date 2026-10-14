@@ -262,7 +262,12 @@ With storage running and initialized in terminals A/B:
 ```powershell
 $env:RUN_STORAGE_TESTS='1'
 .venv/Scripts/python.exe manage.py test tests.test_storage_live
+
+# Optional Edge check for custom-form validation, forced upload interruption, retry, limits and removal
+$env:RUN_CUSTOM_FORM_BROWSER='1'
+.venv/Scripts/python.exe manage.py test tests.test_custom_form_recovery_browser --settings=vedioos.test_settings
 Remove-Item Env:RUN_STORAGE_TESTS
+Remove-Item Env:RUN_CUSTOM_FORM_BROWSER
 ```
 
 These tests upload synthetic bytes to the local private bucket, verify exact downloads, rejection of altered uploads, URL expiry and unauthorized access, then remove their test objects. They do not use client media.

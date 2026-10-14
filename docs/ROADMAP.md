@@ -228,3 +228,7 @@ The browser now accepts the locked custom-checkout redirect as a valid saved-pro
 ### 2026-10-14 client project communication evidence
 
 Client communication moved from project detail to dedicated list and project-scoped routes. The list is grouped into Ongoing and Completed history, and completed/cancelled projects are read-only in both the interface and transactional message service. The existing database-backed message model and project-ownership boundary are unchanged. Eleven focused tests and the full isolated suite (263 passing, 10 optional integration tests skipped) pass, along with Ruff, Django checks and migration drift checks. No schema migration is required.
+
+### 2026-10-14 custom-form reliability evidence
+
+Custom briefs now persist a validated inspiration URL, retain bound values and font choices on invalid submissions, focus the first invalid field, expose audited per-file removal for editable unpaid briefs, and enforce the three-reference cap against ready plus active pending files. Direct uploads retry transient PUT/verification failures and retain the remaining queue behind an explicit Retry action without duplicating completed files. The opt-in Edge recovery test passes with two forced connection failures, three-of-four selection enforcement and persisted-file removal. Additive migration `core.0015` is applied to the selected private Supabase schema after a verified 47-table/474-row ignored snapshot; RLS and browser-role isolation remain intact.

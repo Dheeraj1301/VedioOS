@@ -139,6 +139,7 @@ urlpatterns = [
     path("api/editor/availability/", ops.editor_availability_api, name="editor_availability_api"),
     path("api/projects/<uuid:project_id>/uploads/", views.request_upload),
     path("api/files/<uuid:file_id>/complete/", views.complete_upload),
+    path("api/files/<uuid:file_id>/remove/", views.remove_brief_file, name="remove_brief_file"),
     path("api/files/<uuid:file_id>/download/", views.request_download),
     path("api/areas/<str:area>/", views.area_api),
 ]

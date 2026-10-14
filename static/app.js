@@ -18,17 +18,27 @@ function announce(status, message, isError = false) {
   status.style.color = isError ? '#a1352d' : '';
   status.textContent = message;
 }
-function uploadOriginal(permission, file, progress) {
-  return new Promise((resolve, reject) => {
-    const xhr = new XMLHttpRequest();
-    xhr.open(permission.method, permission.url);
-    Object.entries(permission.headers).forEach(([key, value]) => xhr.setRequestHeader(key, value));
-    xhr.upload.onprogress = event => {if (event.lengthComputable) progress.value = Math.round(event.loaded / event.total * 100);};
-    xhr.onload = () => xhr.status >= 200 && xhr.status < 300 ? resolve() : reject(new Error('Storage rejected the upload. Please retry with a new upload permission.'));
-    xhr.onerror = () => reject(new Error('Upload connection interrupted. Please try again.'));
-    xhr.onabort = () => reject(new Error('Upload cancelled.'));
-    xhr.send(file);
-  });
+async function uploadOriginal(permission, file, progress, attempts = 2) {
+  let lastError;
+  for (let attempt = 1; attempt <= attempts; attempt += 1) {
+    try {
+      await new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.open(permission.method, permission.url);
+        Object.entries(permission.headers).forEach(([key, value]) => xhr.setRequestHeader(key, value));
+        xhr.upload.onprogress = event => {if (event.lengthComputable) progress.value = Math.round(event.loaded / event.total * 100);};
+        xhr.onload = () => xhr.status >= 200 && xhr.status < 300 ? resolve() : reject(new Error('Storage rejected the upload.'));
+        xhr.onerror = () => reject(new Error('Upload connection interrupted.'));
+        xhr.onabort = () => reject(new Error('Upload cancelled.'));
+        xhr.send(file);
+      });
+      return;
+    } catch (error) {
+      lastError = error;
+      if (attempt < attempts) await new Promise(resolve => window.setTimeout(resolve, 750));
+    }
+  }
+  throw new Error(`${lastError.message} Please retry this file.`);
 }
 document.querySelectorAll('.upload-form').forEach(uploadForm => {
   const input = uploadForm.querySelector('.upload-files');
@@ -105,6 +115,7 @@ if (newOrderForm) {
   const briefFields = newOrderForm.querySelector('[data-brief-fields]');
   const submitRow = newOrderForm.querySelector('[data-submit-row]');
   const submitButton = submitRow.querySelector('[type="submit"]');
+  const retryButton = submitRow.querySelector('.upload-retry-button');
   const submitStatus = submitRow.querySelector('.form-submit-status');
   const wordingDirection = newOrderForm.querySelector('[data-wording-direction]');
   const fontName = newOrderForm.querySelector('[data-font-name]');
@@ -206,7 +217,7 @@ if (newOrderForm) {
   const clipStatus = newOrderForm.querySelector('.brief-upload-status');
   const inspirationInput = newOrderForm.querySelector('.brief-inspiration-files');
   const inspirationStatus = newOrderForm.querySelector('.brief-inspiration-status');
-  const existingInspirationFiles = Number(inspirationBox.dataset.existingFiles || 0);
+  let existingInspirationFiles = Number(inspirationBox.dataset.existingFiles || 0);
   const inspirationUploadLimit = 3;
   const uploadsEnabled = newOrderForm.dataset.uploadEnabled === 'true';
   const fileKey = file => `${file.name}:${file.size}:${file.lastModified}:${file.type}`;
@@ -257,7 +268,7 @@ if (newOrderForm) {
     if (!uploadsEnabled && selectedInspirationFiles.length) {
       announce(inspirationStatus, 'File uploads are temporarily unavailable. Your project has not been saved.', true);
     } else if (rejected) {
-      announce(inspirationStatus, 'Max uploads: 3', true);
+      announce(inspirationStatus, 'Max uploads: 3.', true);
     } else if (selectedInspirationFiles.length) {
       announce(
         inspirationStatus,
@@ -282,6 +293,41 @@ if (newOrderForm) {
     if (error) announce(fontInspirationStatus, error, true);
     else if (fontInspirationStatus.getAttribute('role') === 'alert') announce(fontInspirationStatus, '');
   });
+  newOrderForm.querySelectorAll('.brief-file-remove').forEach(button => {
+    button.addEventListener('click', async () => {
+      const row = button.closest('[data-brief-file]');
+      const removalStatus = newOrderForm.querySelector('.brief-file-remove-status');
+      button.disabled = true;
+      try {
+        await postJSON(`/api/files/${row.dataset.fileId}/remove/`);
+        if (row.dataset.fileCategory === 'reference') {
+          existingInspirationFiles = Math.max(0, existingInspirationFiles - 1);
+          inspirationBox.dataset.existingFiles = String(existingInspirationFiles);
+        }
+        const filename = row.querySelector('strong').textContent;
+        row.remove();
+        announce(removalStatus, `${filename} removed from this brief.`);
+      } catch (error) {
+        announce(removalStatus, error.message, true);
+        button.disabled = false;
+      }
+    });
+  });
+  retryButton.addEventListener('click', () => {
+    retryButton.hidden = true;
+    newOrderForm.requestSubmit(submitButton);
+  });
+  newOrderForm.addEventListener('invalid', event => {
+    event.target.setAttribute('aria-invalid', 'true');
+    window.setTimeout(() => {
+      const firstInvalid = newOrderForm.querySelector(':invalid');
+      firstInvalid?.scrollIntoView({behavior: 'smooth', block: 'center'});
+      firstInvalid?.focus({preventScroll: true});
+    }, 0);
+  }, true);
+  newOrderForm.querySelectorAll('[aria-invalid="true"]').forEach(field => {
+    field.addEventListener('input', () => field.removeAttribute('aria-invalid'), {once: true});
+  });
   submitButton.addEventListener('click', () => {
     const invalidField = newOrderForm.querySelector(':invalid');
     if (!invalidField) return;
@@ -289,6 +335,7 @@ if (newOrderForm) {
     announce(submitStatus, `Complete ${label} before saving.`, true);
   });
   newOrderForm.addEventListener('submit', async event => {
+    retryButton.hidden = true;
     const clipFiles = [...(selectedClipFiles.length ? selectedClipFiles : clipInput.files)];
     const inspirationFiles = [
       ...(selectedInspirationFiles.length ? selectedInspirationFiles : inspirationInput.files),
@@ -352,9 +399,25 @@ if (newOrderForm) {
           });
           progress.hidden = false; progress.value = 0;
           announce(status, `Uploading ${file.name}…`);
-          await uploadOriginal(result.upload, file, progress);
-          announce(status, `Verifying ${file.name}…`);
-          await postJSON(`/api/files/${result.file_id}/complete/`);
+          try {
+            await uploadOriginal(result.upload, file, progress);
+            announce(status, `Verifying ${file.name}…`);
+            let verificationError;
+            for (let attempt = 1; attempt <= 2; attempt += 1) {
+              try {
+                await postJSON(`/api/files/${result.file_id}/complete/`);
+                verificationError = null;
+                break;
+              } catch (error) {
+                verificationError = error;
+                if (attempt < 2) await new Promise(resolve => window.setTimeout(resolve, 750));
+              }
+            }
+            if (verificationError) throw verificationError;
+          } catch (error) {
+            await postJSON(`/api/files/${result.file_id}/remove/`).catch(() => {});
+            throw error;
+          }
           uploadedFileIds.push(result.file_id);
           onUploaded(file);
         }
@@ -380,10 +443,16 @@ if (newOrderForm) {
       const activeStatus = clipFiles.length ? clipStatus : inspirationFiles.length ? inspirationStatus : fontInspirationStatus;
       announce(activeStatus, error.message, true);
       announce(submitStatus, error.message, true);
+      retryButton.hidden = false;
       button.disabled = false;
     }
   });
   updateOrderFields();
+  const serverInvalidField = newOrderForm.querySelector('[aria-invalid="true"]');
+  if (serverInvalidField) {
+    serverInvalidField.scrollIntoView({behavior: 'smooth', block: 'center'});
+    serverInvalidField.focus({preventScroll: true});
+  }
 }
 
 const pricingCurrency = document.querySelector('#id_currency');

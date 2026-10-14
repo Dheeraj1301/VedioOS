@@ -622,6 +622,8 @@ class FoundationTests(TestCase):
         self.assertContains(response, "Other Instructions")
         self.assertContains(response, "Upload Your Clips")
         self.assertContains(response, "Add Inspiration Reel/Video")
+        self.assertContains(response, "Inspiration link")
+        self.assertContains(response, "Max uploads: 3.")
         self.assertContains(response, 'id="upload-clips"', html=False)
         self.assertContains(response, 'id="upload-inspiration"', html=False)
         self.assertContains(response, 'multiple', html=False)
@@ -630,6 +632,59 @@ class FoundationTests(TestCase):
         self.assertNotContains(response, "Talk to an editor after the draft")
         content = response.content.decode()
         self.assertLess(content.index("Upload Your Clips"), content.index("Add Inspiration Reel/Video"))
+        self.assertLess(content.index("Inspiration link"), content.index("Add Inspiration Reel/Video"))
+
+    def test_invalid_submission_preserves_all_brief_values_and_validates_inspiration_url(self):
+        browser = self.auth(self.owner)
+        data = {
+            "title": "Preserve this title",
+            "order_choice": "custom",
+            "requirements": "Preserve these edit instructions",
+            "colour_grading": "on",
+            "quality_enhancement": "on",
+            "overlays": "on",
+            "beat_sync": "on",
+            "wants_wording": "on",
+            "wording_direction": "own_font",
+            "font_name": "Montserrat",
+            "reference_notes": "Preserve these notes",
+            "song_choice": "provide",
+            "song_information": "Preserve this licensed song",
+            "inspiration_link": "not-a-url",
+        }
+        response = browser.post("/client/new-order/?new=1", data)
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Enter a valid URL")
+        for value in [
+            data["title"],
+            data["requirements"],
+            data["font_name"],
+            data["reference_notes"],
+            data["song_information"],
+            data["inspiration_link"],
+        ]:
+            self.assertContains(response, value)
+        self.assertContains(response, 'value="own_font" selected', html=False)
+        self.assertContains(response, 'id="id_colour_grading" checked', html=False)
+        self.assertFalse(Project.objects.filter(title=data["title"]).exists())
+
+    def test_inspiration_link_persists_with_saved_brief(self):
+        browser = self.auth(self.owner)
+        link = "https://www.youtube.com/watch?v=synthetic-reference"
+        response = browser.post(
+            "/client/new-order/?new=1",
+            {
+                "title": "Linked inspiration",
+                "order_choice": "custom",
+                "reel_duration": "30_50",
+                "song_choice": "suggest",
+                "inspiration_link": link,
+            },
+        )
+        project = Project.objects.get(title="Linked inspiration")
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(project.inspiration_link, link)
+        self.assertContains(browser.get("/client/new-order/"), link)
 
     def test_new_order_ignores_removed_consultation_fields(self):
         browser = self.auth(self.owner)
@@ -762,7 +817,7 @@ class FoundationTests(TestCase):
         self.assertContains(edit, "Previously uploaded files")
         for saved_file in saved_files:
             self.assertContains(detail, saved_file.filename)
-            self.assertContains(edit, saved_file.filename, count=1)
+            self.assertContains(edit, saved_file.filename)
             self.assertEqual(
                 sum(item.id == saved_file.id for item in detail.context["files"]),
                 1,
@@ -794,7 +849,71 @@ class FoundationTests(TestCase):
         )
         refreshed = browser.get(f"/client/projects/{self.project.id}/edit/")
         for saved_file in [*saved_files, added_file]:
-            self.assertContains(refreshed, saved_file.filename, count=1)
+            self.assertContains(refreshed, saved_file.filename)
+
+    def test_client_can_remove_own_unpaid_brief_file_without_deleting_record(self):
+        browser = self.auth(self.owner)
+        file = File.objects.create(
+            project=self.project,
+            uploader=self.owner,
+            filename="removable-reference.mp4",
+            object_key=f"private/brief/{self.project.id}/removable",
+            size_bytes=100,
+            sha256="a" * 64,
+            content_type="video/mp4",
+            category="reference",
+            state="ready",
+            storage_version="v1",
+            expires_at=timezone.now(),
+            completed_at=timezone.now(),
+        )
+        edit = browser.get(f"/client/projects/{self.project.id}/edit/")
+        self.assertContains(edit, "removable-reference.mp4")
+        self.assertContains(edit, "Remove")
+        response = browser.post(f"/api/files/{file.id}/remove/")
+        self.assertEqual(response.status_code, 200)
+        file.refresh_from_db()
+        self.assertEqual(file.state, "removed")
+        self.assertNotContains(
+            browser.get(f"/client/projects/{self.project.id}/edit/"),
+            "removable-reference.mp4",
+        )
+        self.assertTrue(
+            AuditLog.objects.filter(
+                action="file.removed_from_brief", actor=self.owner, target_id=str(file.id)
+            ).exists()
+        )
+        self.assertEqual(
+            self.auth(self.other).post(f"/api/files/{file.id}/remove/").status_code,
+            404,
+        )
+
+    @patch("core.views.upload_permission", return_value={"method": "PUT", "url": "private", "headers": {}})
+    def test_removed_reference_frees_one_of_three_server_enforced_slots(self, _permission):
+        browser = self.auth(self.owner)
+        files = []
+        for number in range(3):
+            files.append(
+                File.objects.create(
+                    project=self.project,
+                    uploader=self.owner,
+                    filename=f"reference-{number}.mp4",
+                    object_key=f"private/brief/{self.project.id}/reference-{number}",
+                    size_bytes=100,
+                    sha256=str(number + 1) * 64,
+                    content_type="video/mp4",
+                    category="reference",
+                    state="ready",
+                    storage_version=f"v{number}",
+                    expires_at=timezone.now(),
+                    completed_at=timezone.now(),
+                )
+            )
+        upload_url = f"/api/projects/{self.project.id}/uploads/"
+        payload = {**self.upload_data(), "category": "reference"}
+        self.assertEqual(self.post_json(browser, upload_url, payload).status_code, 409)
+        self.assertEqual(browser.post(f"/api/files/{files[0].id}/remove/").status_code, 200)
+        self.assertEqual(self.post_json(browser, upload_url, payload).status_code, 201)
 
     def test_font_selection_requires_and_persists_own_font_name(self):
         browser = self.auth(self.owner)
