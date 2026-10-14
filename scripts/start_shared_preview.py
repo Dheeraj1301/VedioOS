@@ -1,4 +1,4 @@
-"""Verify the shared Supabase binding, then start the team preview.
+"""Verify the shared Supabase and private-storage bindings, then start the team preview.
 
 This is deliberately separate from the offline ``vedioos.local_settings`` flow.
 It exits before starting Django when the environment points at SQLite, another
@@ -34,6 +34,7 @@ def main():
 
     run_manage("check_shared_preview")
     run_manage("check_database")
+    run_manage("check_private_storage")
     if not args.check_only:
         run_manage("runserver", args.address, "--noreload")
 
