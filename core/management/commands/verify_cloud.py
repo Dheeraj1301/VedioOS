@@ -57,7 +57,8 @@ def run_cloud_checks(write):
                 reverse("verify_email_otp"), {"email": email, "code": "123456"}
             )
             require(
-                verification.status_code == 302 and verification.url == reverse("client_dashboard"),
+                verification.status_code == 302
+                and verification.url == reverse("verification_success"),
                 "client email verification activates account",
             )
             require(client.get("/client/").status_code == 200, "client dashboard")

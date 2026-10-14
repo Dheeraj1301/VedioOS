@@ -9,7 +9,7 @@ from pathlib import PurePath
 from botocore.exceptions import BotoCoreError, ClientError
 from django.conf import settings
 from django.contrib import messages
-from django.contrib.auth import login, logout
+from django.contrib.auth import logout
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import IntegrityError, transaction
 from django.db.models import F, Q
@@ -38,6 +38,13 @@ from .models import (
 )
 from .payment_history import PAYMENT_STATUSES, payment_page
 from .permissions import can_upload, project_for, role_required, visible_files, visible_projects
+from .sessions import (
+    active_session_exists,
+    clear_pending_login,
+    establish_session,
+    pending_login,
+    remember_pending_login,
+)
 from .storage import download_permission, inspect_object, upload_permission
 
 FONT_REFERENCE_MAX_BYTES = 1024 * 1024
@@ -149,18 +156,28 @@ def resend_verification(request):
         is_active=False,
         email_verified_at__isnull=True,
     ).first()
+    known_email = request.session.get("verification_email", "").lower() == email
+    resend_state = "sent"
     if user:
         try:
             send_verification_email(user.email)
         except VerificationCooldown:
-            pass
+            resend_state = "cooldown"
         except Exception:
-            pass
+            resend_state = "unavailable"
     request.session["verification_email"] = email
-    messages.success(
-        request,
-        "If an eligible unverified client account matches that email, a verification code has been sent.",
-    )
+    if known_email and resend_state == "cooldown":
+        messages.info(
+            request,
+            "A code was requested recently. Wait a moment, then check your inbox again.",
+        )
+    elif known_email and resend_state == "unavailable":
+        messages.error(request, "We could not send a new code right now. Please try again shortly.")
+    else:
+        messages.success(
+            request,
+            "If an eligible unverified client account matches that email, a verification code has been sent.",
+        )
     return redirect("verification_pending")
 
 
@@ -219,10 +236,16 @@ def verify_email_otp(request):
         messages.error(request, detail)
         return redirect("verification_pending")
 
-    login(request, user)
+    establish_session(request, user)
     request.session.pop("verification_email", None)
-    messages.success(request, "Email verified. Your client workspace is ready.")
-    return redirect("client_dashboard")
+    return redirect("verification_success")
+
+
+@require_GET
+def verification_success(request):
+    if not request.user.is_authenticated:
+        return redirect("login")
+    return render(request, "verification_success.html", {"title": "Email verified"})
 
 
 def _login_view(request, *, editor_only=False):
@@ -244,7 +267,16 @@ def _login_view(request, *, editor_only=False):
                 "This sign-in is for editor accounts. Use the regular sign-in page for this account.",
             )
         else:
-            login(request, user)
+            if active_session_exists(user) and user.active_session_key != request.session.session_key:
+                destination = "editor_dashboard" if editor_only else "dashboard"
+                remember_pending_login(request, user, destination)
+                return render(
+                    request,
+                    "session_conflict.html",
+                    {"title": "Account already in use", "editor_only": editor_only},
+                    status=409,
+                )
+            establish_session(request, user)
             return redirect("editor_dashboard" if editor_only else "dashboard")
     return render(
         request,
@@ -272,7 +304,28 @@ def editor_login_view(request):
 
 
 @require_POST
+def session_decision(request):
+    user, destination = pending_login(request)
+    action = request.POST.get("action")
+    if action == "keep" or user is None:
+        clear_pending_login(request)
+        messages.info(request, "The other device remains signed in. No changes were made.")
+        return redirect("login")
+    if action != "replace":
+        raise PermissionDenied("Choose a valid session option.")
+    establish_session(request, user)
+    audit(user, "account.session_replaced", user.pk)
+    messages.success(request, "This device is now signed in. The previous session has ended.")
+    return redirect(destination)
+
+
+@require_POST
 def logout_view(request):
+    if request.user.is_authenticated:
+        User.objects.filter(
+            pk=request.user.pk,
+            active_session_key=request.session.session_key,
+        ).update(active_session_key="")
     logout(request)
     return redirect("landing")
 

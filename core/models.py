@@ -35,6 +35,7 @@ class User(AbstractUser):
     role = models.CharField(max_length=10, choices=Role.choices, default=Role.CLIENT)
     email_verified_at = models.DateTimeField(null=True, blank=True)
     supabase_auth_user_id = models.UUIDField(null=True, blank=True, unique=True)
+    active_session_key = models.CharField(max_length=40, blank=True, default="")
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = ["name"]
     objects = UserManager()

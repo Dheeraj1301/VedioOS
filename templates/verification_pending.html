@@ -1,18 +1,24 @@
 {% extends 'base.html' %}{% block content %}
-<section class="section error-page" aria-labelledby="verification-heading">
-  <p class="eyebrow">One secure step</p>
-  <h1 id="verification-heading">Verify your email.</h1>
-  <p class="error-detail">We sent a six digit code{% if verification_email %} to <strong>{{ verification_email }}</strong>{% endif %}. Enter it below to activate your client workspace.</p>
-  <form class="form-stack verification-form" method="post" action="{% url 'verify_email_otp' %}">{% csrf_token %}
-    <div><label for="verification-code-email">Email address</label><input id="verification-code-email" name="email" type="email" autocomplete="email" maxlength="254" value="{{ verification_email }}" required></div>
-    <div><label for="verification-code">Verification code</label><input id="verification-code" name="code" type="text" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" minlength="6" maxlength="6" required></div>
-    <button class="button" type="submit">Verify email <span>↗</span></button>
-  </form>
-  <p>Codes expire after ten minutes. In local console-email mode, the code appears in the runserver terminal.</p>
-  <form class="form-stack verification-form" method="post" action="{% url 'resend_verification' %}">{% csrf_token %}
-    <div><label for="verification-email">Email address</label><input id="verification-email" name="email" type="email" autocomplete="email" maxlength="254" value="{{ verification_email }}" required></div>
-    <button class="button secondary" type="submit">Resend verification code <span>↗</span></button>
-  </form>
-  <p><a class="text-link" href="{% url 'login' %}">Return to login</a></p>
-</section>
+<div class="verification-layout">
+  <section class="verification-card" aria-labelledby="verification-heading">
+    <div class="verification-icon" aria-hidden="true">✉</div>
+    <p class="eyebrow">Secure account setup</p>
+    <h1 id="verification-heading">Check your email</h1>
+    <p class="verification-lead">Enter the six-digit code sent{% if verification_email %} to <strong>{{ verification_email }}</strong>{% endif %}. This confirms your email and protects your workspace.</p>
+    {% for message in messages %}<div class="auth-alert{% if message.tags %} {{ message.tags }}{% endif %}" role="status" aria-live="polite">{{ message }}</div>{% endfor %}
+    <form class="form-stack verification-form" method="post" action="{% url 'verify_email_otp' %}">{% csrf_token %}
+      <div><label for="verification-code-email">Email address</label><input id="verification-code-email" name="email" type="email" autocomplete="email" maxlength="254" value="{{ verification_email }}" required></div>
+      <div><label for="verification-code">Verification code</label><input class="verification-code" id="verification-code" name="code" type="text" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" minlength="6" maxlength="6" placeholder="000000" aria-describedby="code-help" required></div>
+      <p id="code-help" class="field-note">The code expires after 10 minutes.</p>
+      <button class="button" type="submit">Verify and continue <span>↗</span></button>
+    </form>
+    <div class="verification-divider"><span>Didn’t receive it?</span></div>
+    <form class="verification-resend" method="post" action="{% url 'resend_verification' %}">{% csrf_token %}
+      <input name="email" type="hidden" value="{{ verification_email }}">
+      <button class="button secondary" type="submit"{% if not verification_email %} disabled{% endif %}>Send a new code</button>
+    </form>
+    <p class="verification-help">Check spam or promotions, confirm the email above, and allow a minute before requesting another code.</p>
+    <a class="text-link" href="{% url 'login' %}">Return to login</a>
+  </section>
+</div>
 {% endblock %}

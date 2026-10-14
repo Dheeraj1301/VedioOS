@@ -143,7 +143,7 @@ class FoundationTests(TestCase):
                     "/verify-email/code/",
                     {"email": "NEW@example.test", "code": "123456"},
                 ),
-                "/client/",
+                "/verify-email/success/",
             )
         verify_code.assert_called_once_with("new@example.test", "123456")
         user.refresh_from_db()
@@ -199,7 +199,7 @@ class FoundationTests(TestCase):
                 browser.post(
                     "/verify-email/code/", {"email": user.email, "code": "222222"}
                 ),
-                "/client/",
+                "/verify-email/success/",
             )
         self.assertEqual(verify_code.call_count, 2)
         self.assertFalse(EmailVerificationChallenge.objects.filter(user=user).exists())

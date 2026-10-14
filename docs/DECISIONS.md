@@ -200,6 +200,16 @@ Migration `core.0014` adds the nullable unique Auth UUID link. This does not exp
 
 Verification required: valid confirmed Auth login and first-login provisioning, immutable UUID linking, duplicate/race safety, invalid-password and provider-outage handling, admin/editor collision denial, token non-persistence, shared PostgreSQL migration/security checks, and unchanged existing login/role isolation.
 
+## 2026-10-14 — One active application session per account
+
+Status: approved and implemented for all VedioOS roles
+
+Owner / source of explicit decision: Hamsa requested that an account cannot remain logged in on two devices and that a second-device login receive a clear explanation and session-management choices.
+
+Decision: retain the existing Django session system and store only the currently approved session key on the private application user. A second valid credential submission does not immediately take over the account. It presents two server-controlled choices: keep the existing device signed in, or continue on the new device. Continuing atomically designates the new session; the previous browser is signed out on its next request and receives an explanation. Pending takeover authorization expires after five minutes, invalid actions fail closed, logout clears only the matching active key, and session replacement is audit logged. No Supabase access or refresh token is persisted.
+
+Verification required: the first device remains active when takeover is cancelled; the second device becomes active when replacement is selected; the previous browser is rejected and informed; direct replacement without a recent valid credential submission fails; APIs return an authenticated-session error; client, editor and admin login continue using the shared identity model.
+
 ## 2026-10-09 — Test-only quotation fallback
 
 Status: approved for shared workflow testing only; D04 and D08 remain open for production

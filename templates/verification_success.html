@@ -1,0 +1,11 @@
+{% extends 'base.html' %}{% block content %}
+<div class="verification-layout">
+  <section class="verification-card verification-success" aria-labelledby="verification-success-heading">
+    <div class="verification-icon success" aria-hidden="true">✓</div>
+    <p class="eyebrow">Verification complete</p>
+    <h1 id="verification-success-heading">Your email is verified</h1>
+    <p class="verification-lead">Your VedioOS client workspace is ready. You can now create projects and manage your private files.</p>
+    <a class="button" href="{% url 'client_dashboard' %}">Continue to workspace <span>↗</span></a>
+  </section>
+</div>
+{% endblock %}
