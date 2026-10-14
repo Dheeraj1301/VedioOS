@@ -4,7 +4,7 @@ from core import commerce_views as commerce
 from core import views
 from core.delivery_views import delivery_action, mark_notification_read, notifications
 from core.health import liveness, readiness
-from core.message_views import message_post
+from core.message_views import client_communication, client_project_communication, message_post
 from operations import assignment_views as assignments
 from operations import audit_views, earning_views, support_views
 from operations import views as ops
@@ -35,6 +35,12 @@ urlpatterns = [
     path("client/new-order/", views.new_order, name="new_order"),
     path("client/projects/<uuid:project_id>/edit/", views.edit_project, name="edit_project"),
     path("client/projects/", views.my_projects, name="my_projects"),
+    path("client/communication/", client_communication, name="client_communication"),
+    path(
+        "client/communication/<uuid:project_id>/",
+        client_project_communication,
+        name="client_project_communication",
+    ),
     path(
         "client/projects/<uuid:project_id>/", views.project_detail, {"area": "client"}, name="client_project"
     ),

@@ -34,5 +34,5 @@
   {% if upload_policy %}{% include 'partials/upload_panels.html' %}{% endif %}
   <div class="order-aside"><h3>Assigned editor</h3><p>{{ current_assignment.editor.user.name|default:"Awaiting assignment" }}</p><h3>Delivery date</h3><p>{% if project.expected_delivery_at %}{{ project.expected_delivery_at|date:"M j, Y H:i" }} UTC{% else %}Awaiting confirmed delivery rules.{% endif %}</p>{% if request.user.role == 'admin' %}<p><a class="button" href="{% url 'assignment_detail' project.id %}">Manage assignment ↗</a></p>{% endif %}<h3>What's next?</h3><p>{% if project.status == 'payment_pending' %}Your project is a draft. Editing starts only after confirmed payment. Choose a package and review your quote below.{% else %}Review submitted versions and follow revision progress here.{% endif %}</p>{% if request.user.role == 'client' %}<p><a class="button" href="{% url 'quote_select' project.id %}">Choose package / quote ↗</a></p>{% endif %}{% if request.user.role != 'editor' %}<p><a class="text-link" href="{% url 'order_summary' project.id %}">View order & payment →</a></p>{% endif %}</div>
 </aside>{% endif %}</div>
-{% include 'project_messages.html' %}
+{% if request.user.role != 'client' %}{% include 'project_messages.html' %}{% endif %}
 {% endblock %}

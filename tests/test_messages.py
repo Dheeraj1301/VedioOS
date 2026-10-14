@@ -37,7 +37,7 @@ class ProjectMessageTests(TestCase):
         )
         self.assertFalse(Notification.objects.filter(message__contains="secret").exists())
         self.client.force_login(self.client_user)
-        page = self.client.get(f"/client/projects/{self.project.id}/")
+        page = self.client.get(f"/client/communication/{self.project.id}/")
         self.assertContains(page, "Please trim at 00:03")
         self.assertNotContains(page, "secret")
         self.client.force_login(self.editors[0].user)
@@ -113,7 +113,7 @@ class ProjectMessageTests(TestCase):
                     request_key=uuid.uuid4(),
                 )
         self.client.force_login(self.client_user)
-        path = f"/client/projects/{self.project.id}/"
+        path = f"/client/communication/{self.project.id}/"
         newest = self.client.get(path)
         self.assertEqual(len(newest.context["project_messages"]), 50)
         self.assertContains(newest, "shared-54")

@@ -224,3 +224,7 @@ Next task:
 ### 2026-10-08 custom-brief upload handoff evidence
 
 The browser now accepts the locked custom-checkout redirect as a valid saved-project destination, uploads selected originals and references against that project, verifies their persisted file metadata, and then continues to the quotation. This code-only fix requires no database migration; connected-environment storage verification remains dependent on valid private database and storage configuration.
+
+### 2026-10-14 client project communication evidence
+
+Client communication moved from project detail to dedicated list and project-scoped routes. The list is grouped into Ongoing and Completed history, and completed/cancelled projects are read-only in both the interface and transactional message service. The existing database-backed message model and project-ownership boundary are unchanged. Eleven focused tests and the full isolated suite (263 passing, 10 optional integration tests skipped) pass, along with Ruff, Django checks and migration drift checks. No schema migration is required.

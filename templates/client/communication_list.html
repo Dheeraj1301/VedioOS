@@ -1,0 +1,26 @@
+{% extends 'workspace.html' %}
+{% block workspace_content %}
+<div class="page-heading"><div><p class="eyebrow">Client workspace</p><h1>Project Communication</h1><p class="muted">Choose a project to view its conversation with the current project team.</p></div></div>
+
+<section class="panel communication-group" aria-labelledby="ongoing-projects-title">
+  <div class="panel-heading"><h2 id="ongoing-projects-title">Ongoing</h2><span>{{ ongoing_projects|length }} project{{ ongoing_projects|length|pluralize }}</span></div>
+  {% for project in ongoing_projects %}
+  <a class="project-row" href="{% url 'client_project_communication' project.id %}">
+    <span class="project-icon" aria-hidden="true">↗</span>
+    <div><h3>{{ project.title }}</h3><p>{% if project.latest_message %}{{ project.latest_message|truncatechars:110 }}{% else %}No messages yet.{% endif %}{% if project.latest_message_at %} · {{ project.latest_message_at|date:"M j, Y H:i" }} UTC{% endif %}</p></div>
+    <span class="badge">{{ project.get_status_display }}</span>
+  </a>
+  {% empty %}<div class="empty-state"><div class="empty-icon" aria-hidden="true">○</div><h3>No ongoing projects</h3><p>Active projects will appear here when they are ready for communication.</p></div>{% endfor %}
+</section>
+
+<section class="panel communication-group" style="margin-top:28px" aria-labelledby="completed-projects-title">
+  <div class="panel-heading"><h2 id="completed-projects-title">Completed</h2><span>{{ completed_projects|length }} project{{ completed_projects|length|pluralize }}</span></div>
+  {% for project in completed_projects %}
+  <a class="project-row" href="{% url 'client_project_communication' project.id %}">
+    <span class="project-icon" aria-hidden="true">✓</span>
+    <div><h3>{{ project.title }}</h3><p>{% if project.latest_message %}{{ project.latest_message|truncatechars:110 }}{% else %}No messages were sent.{% endif %}{% if project.latest_message_at %} · {{ project.latest_message_at|date:"M j, Y H:i" }} UTC{% endif %}</p></div>
+    <span class="badge">{{ project.get_status_display }}</span>
+  </a>
+  {% empty %}<div class="empty-state"><div class="empty-icon" aria-hidden="true">✓</div><h3>No completed projects</h3><p>Finished project conversations will remain available here as read-only history.</p></div>{% endfor %}
+</section>
+{% endblock %}

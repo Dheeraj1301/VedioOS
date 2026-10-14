@@ -1,11 +1,64 @@
+import uuid
+
 from django.contrib import messages
 from django.core.exceptions import ValidationError
-from django.shortcuts import redirect
-from django.views.decorators.http import require_POST
+from django.db.models import OuterRef, Subquery
+from django.shortcuts import redirect, render
+from django.views.decorators.http import require_GET, require_POST
 
-from operations.messages import post_message
+from operations.messages import message_page, messaging_enabled, post_message
+from operations.models import ProjectMessage
 
-from .permissions import role_required
+from .models import Project
+from .permissions import project_for, role_required, visible_projects
+
+
+@require_GET
+@role_required("client")
+def client_communication(request):
+    latest_shared = ProjectMessage.objects.filter(
+        project_id=OuterRef("pk"), audience=ProjectMessage.Audience.SHARED
+    ).order_by("-created_at", "-id")
+    projects = list(
+        visible_projects(request.user)
+        .annotate(
+            latest_message=Subquery(latest_shared.values("body")[:1]),
+            latest_message_at=Subquery(latest_shared.values("created_at")[:1]),
+        )
+        .order_by("-updated_at", "-created_at")
+    )
+    closed = {Project.Status.COMPLETED, Project.Status.CANCELLED}
+    return render(
+        request,
+        "client/communication_list.html",
+        {
+            "title": "Project Communication",
+            "ongoing_projects": [project for project in projects if project.status not in closed],
+            "completed_projects": [project for project in projects if project.status in closed],
+        },
+    )
+
+
+@require_GET
+@role_required("client")
+def client_project_communication(request, project_id):
+    project = project_for(request.user, project_id)
+    project_messages, older_cursor = message_page(
+        request.user, project, request.GET.get("messages_before")
+    )
+    return render(
+        request,
+        "client/project_communication.html",
+        {
+            "title": f"Communication — {project.title}",
+            "project": project,
+            "project_messages": project_messages,
+            "older_message_cursor": older_cursor,
+            "is_older_message_page": bool(request.GET.get("messages_before")),
+            "message_request_key": uuid.uuid4(),
+            "messaging_enabled": messaging_enabled(project),
+        },
+    )
 
 
 @require_POST
@@ -23,4 +76,6 @@ def message_post(request, project_id):
         messages.error(request, " ".join(exc.messages))
     else:
         messages.success(request, "Message saved.")
+    if request.user.role == "client":
+        return redirect("client_project_communication", project_id=project_id)
     return redirect(f"{request.user.role}_project", project_id=project_id)

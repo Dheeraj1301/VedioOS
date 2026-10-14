@@ -9,7 +9,8 @@
     <p>{{ item.created_at|date:"M j, Y H:i" }} UTC</p>
     <p class="preserve-lines">{{ item.body }}</p>
   </div></article>
-  {% empty %}<p>{% if is_older_message_page %}No older messages on this page.{% else %}No messages yet. Use the form below to start a conversation.{% endif %}</p>{% endfor %}
+  {% empty %}<p>{% if is_older_message_page %}No older messages on this page.{% elif messaging_enabled %}No messages yet. Use the form below to start a conversation.{% else %}No messages were sent for this project.{% endif %}</p>{% endfor %}
+  {% if messaging_enabled %}
   <h3>Send a message</h3>
   <form class="form-stack" method="post" action="{% url 'message_post' project.id %}">
     {% csrf_token %}<input type="hidden" name="request_key" value="{{ message_request_key }}">
@@ -27,5 +28,8 @@
     <textarea id="internal-message" name="body" rows="4" maxlength="5000" required></textarea>
     <button type="submit" class="button">Save internal note</button>
   </form>
+  {% endif %}
+  {% else %}
+  <div class="notice" role="status">{% if project.status == 'completed' %}This project is complete. Messaging is disabled.{% else %}This project is closed. Messaging is disabled.{% endif %}</div>
   {% endif %}
 </section>

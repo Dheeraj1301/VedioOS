@@ -476,7 +476,7 @@ def project_detail(request, project_id, area):
         else [("draft", "Edited draft"), ("final", "Final video")]
     )
     allowed = [(key, label) for key, label in categories if can_upload(request.user, project, key)]
-    from operations.messages import message_page
+    from operations.messages import message_page, messaging_enabled
 
     project_messages, older_cursor = message_page(request.user, project, request.GET.get("messages_before"))
     active_inspiration_count = project.files.filter(category="reference").filter(
@@ -493,6 +493,7 @@ def project_detail(request, project_id, area):
             "older_message_cursor": older_cursor,
             "is_older_message_page": bool(request.GET.get("messages_before")),
             "message_request_key": uuid.uuid4(),
+            "messaging_enabled": messaging_enabled(project),
             "title": project.title,
             "files": visible_files(request.user, project).filter(original__isnull=True),
             "versions": project.versions.select_related("file").order_by("-number"),

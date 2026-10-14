@@ -16,6 +16,12 @@ from core.views import audit
 from .calls import notify
 from .models import EditorAssignment, ProjectMessage
 
+CLOSED_MESSAGE_STATUSES = {Project.Status.COMPLETED, Project.Status.CANCELLED}
+
+
+def messaging_enabled(project):
+    return project.status not in CLOSED_MESSAGE_STATUSES
+
 
 def visible_messages(user, project):
     if not visible_projects(user).filter(pk=project.pk).exists():
@@ -78,6 +84,8 @@ def post_message(user, project_id, body, audience, request_key):
         ):
             return existing
         raise ValidationError("This message request was already used. Reload and try again.")
+    if not messaging_enabled(project):
+        raise ValidationError("This project is complete. Messaging is disabled.")
     try:
         with transaction.atomic():
             message = ProjectMessage.objects.create(

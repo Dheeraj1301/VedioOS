@@ -4,6 +4,7 @@ NAV = {
         ("Plan a new edit", "/client/new-order/"),
         ("My projects", "/client/projects/"),
         ("Payment history", "/client/payments/"),
+        ("Project Communication", "/client/communication/"),
         ("Support", "/client/support/"),
     ],
     "editor": [
@@ -37,7 +38,12 @@ def navigation(request):
         return {}
     return {
         "navigation": [
-            {"label": label, "url": url, "active": request.path == url}
+            {
+                "label": label,
+                "url": url,
+                "active": request.path == url
+                or (url == "/client/communication/" and request.path.startswith(url)),
+            }
             for label, url in NAV.get(request.user.role, []) + [("Notifications", "/orders/notifications/")]
         ]
     }
