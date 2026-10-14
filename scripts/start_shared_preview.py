@@ -10,6 +10,8 @@ import subprocess
 import sys
 from pathlib import Path
 
+from dotenv import load_dotenv
+
 ROOT = Path(__file__).resolve().parents[1]
 MANAGE = ROOT / "manage.py"
 
@@ -23,6 +25,10 @@ def run_manage(*arguments):
 
 
 def main():
+    # This developer-only launcher intentionally uses the repository's private
+    # shared-preview configuration instead of unrelated inherited shell values.
+    load_dotenv(ROOT / ".env", override=True)
+
     parser = argparse.ArgumentParser(description="Start a verified shared Supabase preview.")
     parser.add_argument("--address", default="127.0.0.1:8000")
     parser.add_argument(
