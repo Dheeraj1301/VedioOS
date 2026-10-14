@@ -13,6 +13,14 @@ class DatabaseConfigurationTests(SimpleTestCase):
         self.assertEqual(config["OPTIONS"]["sslmode"], "verify-full")
         self.assertIn("search_path=vedioos", config["OPTIONS"]["options"])
         self.assertIsNone(config["OPTIONS"]["prepare_threshold"])
+        self.assertEqual(config["CONN_MAX_AGE"], 0)
+
+    def test_connection_persistence_requires_an_explicit_value(self):
+        config = postgres_database(
+            "postgresql://app.project:synthetic@pooler.example.com:5432/postgres",
+            conn_max_age=30,
+        )
+        self.assertEqual(config["CONN_MAX_AGE"], 30)
 
     def test_bad_url_never_leaks_credentials_in_errors(self):
         for url in [

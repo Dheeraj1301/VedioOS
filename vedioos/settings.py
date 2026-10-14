@@ -79,6 +79,7 @@ if os.getenv("DATABASE_URL") and not ISOLATED_SQLITE_SETTINGS:
             os.environ["DATABASE_URL"],
             schema=os.getenv("DATABASE_SCHEMA", "vedioos"),
             sslrootcert=os.getenv("POSTGRES_SSLROOTCERT"),
+            conn_max_age=int(os.getenv("DATABASE_CONN_MAX_AGE", "0")),
         )
     }
 elif os.getenv("POSTGRES_DB") and not ISOLATED_SQLITE_SETTINGS:

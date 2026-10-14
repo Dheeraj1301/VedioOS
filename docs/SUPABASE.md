@@ -19,6 +19,8 @@ Django connects through the Supabase session pooler on port 5432 using the dedic
 
 `DATABASE_URL`, `DATABASE_SCHEMA`, and `POSTGRES_SSLROOTCERT` configure the backend. No database credentials or privileged API keys are delivered to the browser. The role owns only the application schema, has no superuser/create-role/create-database/bypass-RLS privileges, and has a connection limit of eight. The existing project administrator retains management access.
 
+Shared previews close their database connection after each request so simultaneous developer machines do not retain all eight session-pooler slots. `DATABASE_CONN_MAX_AGE` defaults to `0`; only set a positive value for a deployment with an explicitly sized connection pool.
+
 The schema is not granted to `PUBLIC`, `anon`, or `authenticated`. Django's migration hook enables RLS on its tables and revokes browser API role access. Application queries run as the table owner and rely on the existing Django role/project checks. This is deliberately a server-owned data model, not Supabase Auth JWT policies.
 
 In the Supabase Table Editor, select the **vedioos** schema. The empty `public` schema is not where this application's tables live.

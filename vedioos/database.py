@@ -7,7 +7,7 @@ import certifi
 from django.core.exceptions import ImproperlyConfigured
 
 
-def postgres_database(url, schema="vedioos", sslrootcert=None):
+def postgres_database(url, schema="vedioos", sslrootcert=None, conn_max_age=0):
     try:
         parsed = urlsplit(url)
         port = parsed.port or 5432
@@ -34,7 +34,11 @@ def postgres_database(url, schema="vedioos", sslrootcert=None):
         "PASSWORD": unquote(parsed.password),
         "HOST": parsed.hostname,
         "PORT": port,
-        "CONN_MAX_AGE": 60,
+        # The shared Supabase session-pooler role has a deliberately small
+        # connection allowance. Closing connections after each request keeps
+        # several developer previews from exhausting that shared allowance.
+        # A deployment with a right-sized pool may opt into persistence.
+        "CONN_MAX_AGE": conn_max_age,
         "CONN_HEALTH_CHECKS": True,
         "DISABLE_SERVER_SIDE_CURSORS": True,
         "OPTIONS": {
