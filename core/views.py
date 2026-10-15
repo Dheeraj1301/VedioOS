@@ -46,6 +46,7 @@ from .sessions import (
     remember_pending_login,
 )
 from .storage import download_permission, inspect_object, upload_permission
+from .v1 import v1_status
 
 FONT_REFERENCE_MAX_BYTES = 1024 * 1024
 FONT_IMAGE_EXTENSIONS = {".avif", ".bmp", ".gif", ".heic", ".heif", ".jpeg", ".jpg", ".png", ".tif", ".tiff", ".webp"}
@@ -537,6 +538,7 @@ def project_detail(request, project_id, area):
         Q(state="ready") | Q(state="pending", expires_at__gt=timezone.now())
     ).count()
 
+    version_status = v1_status(project)
     return render(
         request,
         "project_detail.html",
@@ -580,6 +582,7 @@ def project_detail(request, project_id, area):
             "open_revision_count": project.revisions.filter(
                 status__in=["requested", "in_progress"]
             ).count(),
+            **version_status,
         },
     )
 

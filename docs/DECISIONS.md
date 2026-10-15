@@ -235,3 +235,13 @@ Technical choice: use prospective fixed whole-coin awards as an optional admin-c
 Technical choice within the authorized Phase 5 scope: serialize review with allocation, attribute each submitted version to its assignment, and persist one explicit acceptance per project. Keep historical file objects and release workload through terminal project status. Acceptance creates a pending-policy earning record; D10 coin amounts/splits remain unresolved.
 
 Supported proposed D11 option `latest_request_v1` requires explicit admin selection for new quote snapshots: one request consumes one revision, only latest submissions can be accepted, acceptance completes the project, and additional revisions require another agreement. No production default or existing-order backfill was enabled. See [Phase 5](PHASE_5.md).
+
+## 2026-10-15 — V1 draft timing and ongoing client visibility
+
+Status: approved and implemented for paid assigned projects using existing order terms
+
+Owner / source of explicit decision: Hamsa requested a required V1 submission after the specified initial editing hours, ongoing client access to V1, and a direct editor-dashboard V1 option.
+
+Decision: the first client-visible deliverable must be uploaded as an edited draft and is labelled V1; a final-labelled upload cannot become version 1. When editing starts, the existing server-owned `delivery_hours` value in the accepted order snapshot is displayed as the V1 target measured from the attributable editing-start audit event. Missing timing terms remain explicit rather than receiving an invented default. V1 remains privately downloadable by the owning client and assigned editor while later editing or revision work continues. This does not change acceptance, revision allowances, payment gates, assignment access, or the unresolved working/calendar-hour and pause rules in D06.
+
+Verification required: reject a final-labelled first submission; accept an edited draft as version 1; show its saved timing target to the assigned editor; keep V1 visible to the client during later revision work; expose the editor-dashboard V1 link; preserve role/project/file authorization.

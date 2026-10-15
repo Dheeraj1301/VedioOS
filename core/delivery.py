@@ -114,6 +114,8 @@ def transition(
             return existing
         if project.status not in {"editing", "revision_in_progress", "awaiting_review"}:
             raise ValidationError("Start editing or the requested revision before submitting.")
+        if latest is None and (file.category != "draft" or final):
+            raise ValidationError("Submit the first edited deliverable as the V1 draft.")
         if not use_latest and str(latest.pk if latest else "") != str(version_id or ""):
             raise ValidationError("The version history changed. Reload the project.")
         if len(note.strip()) > 5000:

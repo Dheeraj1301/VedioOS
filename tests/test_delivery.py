@@ -19,7 +19,11 @@ def delivery_fixture(client, editor):
     project = paid_project(client)
     project.status = "editor_assigned"
     project.save()
-    project.order.terms_snapshot = {"review_rule": "latest_request_v1", "revision_limit": 1}
+    project.order.terms_snapshot = {
+        "review_rule": "latest_request_v1",
+        "revision_limit": 1,
+        "delivery_hours": 24,
+    }
     project.order.save()
     EditorAssignment.objects.create(project=project, editor=editor)
     return project
@@ -88,10 +92,68 @@ class DeliveryTests(TestCase):
         self.assertEqual(self.project.acceptance.version.file_id, self.file.pk)
 
     def test_final_flag_does_not_complete(self):
-        self.submit(final=True)
+        first = self.submit()
+        self.file = ready_output(self.project, self.editor)
+        transition(
+            self.editor,
+            self.project.pk,
+            "submit",
+            file_id=self.file.pk,
+            version_id=first.pk,
+            final=True,
+        )
         self.project.refresh_from_db()
         self.assertEqual(self.project.status, "awaiting_review")
         self.assertFalse(DeliveryAcceptance.objects.exists())
+
+    def test_first_submission_must_be_v1_draft(self):
+        transition(self.editor, self.project.pk, "start")
+        self.file.category = "final"
+        self.file.save(update_fields=["category", "updated_at"])
+
+        with self.assertRaisesMessage(
+            ValidationError,
+            "Submit the first edited deliverable as the V1 draft.",
+        ):
+            transition(
+                self.editor,
+                self.project.pk,
+                "submit",
+                file_id=self.file.pk,
+                final=True,
+            )
+        self.assertFalse(ProjectVersion.objects.exists())
+
+    def test_v1_stays_visible_during_later_editing_and_on_editor_dashboard(self):
+        first = self.submit()
+        transition(
+            self.buyer.user,
+            self.project.pk,
+            "revise",
+            version_id=first.pk,
+            note="Tighten the opening.",
+        )
+        transition(self.editor, self.project.pk, "start")
+
+        self.client.force_login(self.buyer.user)
+        client_page = self.client.get(f"/client/projects/{self.project.pk}/")
+        self.assertContains(client_page, "First draft available")
+        self.assertContains(client_page, "View V1 Draft")
+        self.assertContains(client_page, "while editing and revision work continues")
+
+        self.client.force_login(self.editor)
+        editor_page = self.client.get("/editor/")
+        self.assertContains(editor_page, "View V1 Draft")
+        self.assertContains(editor_page, f"/editor/projects/{self.project.pk}/#v1-draft")
+
+    def test_editor_sees_saved_v1_editing_hours_target(self):
+        transition(self.editor, self.project.pk, "start")
+        self.client.force_login(self.editor)
+
+        response = self.client.get(f"/editor/projects/{self.project.pk}/")
+
+        self.assertContains(response, "V1 draft required")
+        self.assertContains(response, "24 editing hours after work started")
 
     def test_start_actions_are_attributable_and_retry_safe(self):
         transition(self.editor, self.project.pk, "start")

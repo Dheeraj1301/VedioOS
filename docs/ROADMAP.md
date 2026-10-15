@@ -85,6 +85,8 @@ Unpaid custom orders can refresh an older quotation against current rates withou
 
 **2026-10-03: immediate deliverable availability verified.** A successfully verified editor draft/final upload is atomically recorded as the next immutable project version and becomes downloadable by the owning client without administrator action. Multiple uploads retain filenames, categories, timestamps and version order; rejected or disallowed completions create no client-visible entry. Existing private signed-download and project-access checks remain in force.
 
+**2026-10-15: explicit V1 workflow added.** The first deliverable must be an edited draft, displays the accepted order's saved editing-hours target from the attributable editing-start event, remains available to the client while later work continues, and has a direct editor-dashboard link. No timing default or new commercial term was invented; D06 still governs calendar/working-hour and pause details.
+
 ## Phase 6 — Earnings and payout administration
 
 **Development flow verified 2026-09-17; production activation and database-level ledger immutability remain open.** See [Phase 6 evidence](PHASE_6.md). The connected project's coin settings remain disabled.

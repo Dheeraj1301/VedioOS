@@ -12,6 +12,7 @@ from django.views.decorators.http import require_GET, require_POST
 from core.models import Order
 from core.payment_history import PAYMENT_STATUSES, payment_page
 from core.permissions import role_required, visible_projects
+from core.v1 import attach_v1_status
 
 from .analytics import operational_analytics
 from .assignments import EDITOR_SORTS, approve_proficiency, editor_roster, open_workload
@@ -76,7 +77,7 @@ def editor_dashboard(request):
             "editor": editor,
             "active_count": active_count,
             "availability": availability_state(editor),
-            "projects": visible_projects(request.user),
+            "projects": attach_v1_status(visible_projects(request.user)),
         },
     )
 
