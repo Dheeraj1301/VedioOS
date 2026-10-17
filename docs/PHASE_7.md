@@ -1,5 +1,14 @@
 # Phase 7 — Operations and notifications
 
+## Notification center restructure — 2026-10-17
+
+- Notifications now live behind a global top-navigation bell on every authenticated dashboard. The badge is omitted at zero, the keyboard-accessible dropdown shows the ten newest authorized notices with unread state and optional poster thumbnails, and it closes on toggle, outside click, or Escape.
+- Client and editor sidebars no longer contain a Notifications entry. Admin keeps a dedicated Notifications management entry for drafts, audience targeting, publishing/unpublishing, archiving, deletion of drafts, and read counts.
+- Additive migration `operations.0015` introduces admin-authored notification campaigns and links their recipient-scoped delivery/read records. Campaigns support all users, clients, editors, or one active user. Publishing creates idempotent per-user records; authorization remains enforced on every list, detail, read, and poster request.
+- Optional JPG, PNG, WEBP, and GIF posters are signature-checked, limited to 5 MB, stored in the private application database, and served only through authenticated permission checks. The admin form supports preview, replacement, and removal.
+- Focused notification tests cover publish targeting, detail-read behavior, unpublishing, cross-role management denial, recipient-scoped mark-all, poster validation, and private poster access. The full suite currently retains four unrelated delivery-page failures because the committed `templates/delivery.html` contains only an earlier tool-timeout message; notification tests and existing notification-history tests pass.
+- Before applying `operations.0015`, the connected Supabase project was exported to ignored snapshot `database-snapshot-20261017T165348222771Z.json` with its integrity manifest. The migration is applied on project `lmwvoniiykmfzuxigzqf`; the post-change inventory reports 48 private tables, zero browser/public grants, RLS protection through the configured database guard, and an overall security PASS.
+
 Status: in progress, operations and project communication slices verified on 2026-09-18. The full Phase 7 gate remains open.
 
 ## Available now

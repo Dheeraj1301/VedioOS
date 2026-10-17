@@ -181,12 +181,68 @@ class CallRequest(Record):
         ]
 
 
+class NotificationCampaign(Record):
+    class Status(models.TextChoices):
+        DRAFT = "draft", "Draft"
+        PUBLISHED = "published", "Published"
+        ARCHIVED = "archived", "Archived"
+
+    class Audience(models.TextChoices):
+        ALL = "all", "All users"
+        CLIENTS = "clients", "Clients only"
+        EDITORS = "editors", "Editors only"
+        USER = "user", "Specific user"
+
+    title = models.CharField(max_length=160)
+    body = models.TextField(max_length=10000)
+    status = models.CharField(max_length=20, choices=Status.choices, default=Status.DRAFT)
+    audience = models.CharField(max_length=20, choices=Audience.choices, default=Audience.ALL)
+    target_user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        blank=True,
+        on_delete=models.PROTECT,
+        related_name="targeted_notification_campaigns",
+    )
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.PROTECT,
+        related_name="authored_notification_campaigns",
+    )
+    published_at = models.DateTimeField(null=True, blank=True)
+    poster = models.BinaryField(null=True, blank=True, editable=False)
+    poster_content_type = models.CharField(max_length=100, blank=True)
+    poster_filename = models.CharField(max_length=255, blank=True)
+
+    class Meta:
+        db_table = "notification_campaigns"
+        ordering = ["-created_at", "-id"]
+        constraints = [
+            models.CheckConstraint(
+                condition=(models.Q(audience="user", target_user__isnull=False)
+                | (~models.Q(audience="user") & models.Q(target_user__isnull=True))),
+                name="notice_campaign_target_matches_audience",
+            ),
+            models.CheckConstraint(
+                condition=models.Q(status__in=["draft", "published", "archived"]),
+                name="valid_notice_campaign_status",
+            ),
+        ]
+
+
 class Notification(Record):
     recipient = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT)
     project = models.ForeignKey(Project, null=True, blank=True, on_delete=models.PROTECT)
     event_key = models.CharField(max_length=200, unique=True)
     message = models.CharField(max_length=500)
     read_at = models.DateTimeField(null=True, blank=True)
+    campaign = models.ForeignKey(
+        NotificationCampaign,
+        null=True,
+        blank=True,
+        on_delete=models.PROTECT,
+        related_name="notifications",
+    )
 
     class Meta:
         db_table = "notifications"

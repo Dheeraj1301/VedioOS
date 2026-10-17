@@ -55,12 +55,13 @@ def _notice_cursor(raw):
 @require_GET
 @role_required("client", "editor", "admin")
 def notifications(request):
-    from operations.models import Notification
+    from operations.models import Notification, NotificationCampaign
 
     before = request.GET.get("before")
     notices = (
         Notification.objects.filter(recipient=request.user)
         .filter(Q(project__isnull=True) | Q(project__in=visible_projects(request.user)))
+        .filter(Q(campaign__isnull=True) | Q(campaign__status=NotificationCampaign.Status.PUBLISHED))
         .select_related("project")
         .order_by("-created_at", "-id")
     )
@@ -87,7 +88,7 @@ def notifications(request):
 @require_POST
 @role_required("client", "editor", "admin")
 def mark_notification_read(request, notice_id):
-    from operations.models import Notification
+    from operations.models import Notification, NotificationCampaign
 
     before = request.POST.get("before")
     if before is not None:
@@ -96,7 +97,8 @@ def mark_notification_read(request, notice_id):
         notice = get_object_or_404(
             Notification.objects.select_for_update()
             .filter(recipient=request.user)
-            .filter(Q(project__isnull=True) | Q(project__in=visible_projects(request.user))),
+            .filter(Q(project__isnull=True) | Q(project__in=visible_projects(request.user)))
+            .filter(Q(campaign__isnull=True) | Q(campaign__status=NotificationCampaign.Status.PUBLISHED)),
             pk=notice_id,
         )
         if notice.read_at is None:

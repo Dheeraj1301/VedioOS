@@ -27,6 +27,7 @@ NAV = {
         ("Calls", "/admin/calls/"),
         ("Payouts", "/admin/payouts/"),
         ("Support", "/admin/support/"),
+        ("Notifications", "/admin/notifications/"),
         ("Audit", "/admin/audit/"),
         ("Analytics", "/admin/analytics/"),
     ],
@@ -44,6 +45,29 @@ def navigation(request):
                 "active": request.path == url
                 or (url == "/client/communication/" and request.path.startswith(url)),
             }
-            for label, url in NAV.get(request.user.role, []) + [("Notifications", "/orders/notifications/")]
+            for label, url in NAV.get(request.user.role, [])
         ]
+    }
+
+
+def notification_menu(request):
+    if not request.user.is_authenticated:
+        return {}
+    from django.db.models import Q
+
+    from operations.models import Notification, NotificationCampaign
+
+    from .permissions import visible_projects
+
+    notices = (
+        Notification.objects.filter(recipient=request.user)
+        .filter(Q(project__isnull=True) | Q(project__in=visible_projects(request.user)))
+        .filter(Q(campaign__isnull=True) | Q(campaign__status=NotificationCampaign.Status.PUBLISHED))
+        .select_related("campaign", "project")
+        .order_by("-created_at", "-id")
+    )
+    menu_items = [] if request.path == "/orders/notifications/" else notices[:10]
+    return {
+        "notification_menu_items": menu_items,
+        "notification_unread_count": notices.filter(read_at__isnull=True).count(),
     }

@@ -110,6 +110,8 @@ Unpaid custom orders can refresh an older quotation against current rates withou
 
 **2026-09-18: protected notification history verified.** Recipients can page through older notices; current project access still controls each page and read action after editor reassignment. See [Phase 7 evidence](PHASE_7.md).
 
+**2026-10-17: notification center and admin publishing implemented.** Authenticated workspaces use a global bell/dropdown and detailed notice pages; admins can manage targeted, persistent campaigns with private poster attachments and read counts. See [Phase 7 evidence](PHASE_7.md).
+
 **2026-09-19: lifecycle audit inventory completed.** Initial editing and requested-revision starts now join the existing attributable lifecycle audit trail and repeated starts do not duplicate events. The full gate remains open; see [Phase 7 evidence](PHASE_7.md).
 
 **2026-09-19: safe error recovery verified.** Browser and API permission, missing-resource and server-error responses provide actionable recovery without rendering private exception details. The full gate remains open; see [Phase 7 evidence](PHASE_7.md).

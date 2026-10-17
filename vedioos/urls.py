@@ -6,7 +6,7 @@ from core.delivery_views import delivery_action, mark_notification_read, notific
 from core.health import liveness, readiness
 from core.message_views import client_communication, client_project_communication, message_post
 from operations import assignment_views as assignments
-from operations import audit_views, earning_views, support_views
+from operations import audit_views, earning_views, notification_views, support_views
 from operations import views as ops
 
 urlpatterns = [
@@ -18,6 +18,9 @@ urlpatterns = [
     path("admin/payouts/", earning_views.payouts, name="payouts"),
     path("admin/payouts/action/", earning_views.earning_action, name="earning_action"),
     path("orders/notifications/", notifications, name="notifications"),
+    path("notifications/<uuid:notice_id>/", notification_views.notification_detail, name="notification_detail"),
+    path("notifications/mark-all-read/", notification_views.mark_all_notifications_read, name="mark_all_notifications_read"),
+    path("notifications/posters/<uuid:campaign_id>/", notification_views.notification_poster, name="notification_poster"),
     path("orders/notifications/<uuid:notice_id>/read/", mark_notification_read, name="mark_notification_read"),
     path("orders/<uuid:project_id>/delivery/", delivery_action, name="delivery_action"),
     path("orders/<uuid:project_id>/messages/", message_post, name="message_post"),
@@ -87,6 +90,10 @@ urlpatterns = [
     ),
     path("editor/<str:page>/", ops.editor_page),
     path("admin/", ops.admin_dashboard, name="admin_dashboard"),
+    path("admin/notifications/", notification_views.admin_notifications, name="admin_notifications"),
+    path("admin/notifications/new/", notification_views.admin_notification_form, name="admin_notification_new"),
+    path("admin/notifications/<uuid:campaign_id>/edit/", notification_views.admin_notification_form, name="admin_notification_edit"),
+    path("admin/notifications/<uuid:campaign_id>/action/", notification_views.admin_notification_action, name="admin_notification_action"),
     path("admin/audit/", audit_views.audit_timeline, name="audit_timeline"),
     path("admin/support/", support_views.admin_support, name="admin_support"),
     path("support/<uuid:request_id>/", support_views.support_detail, name="support_detail"),

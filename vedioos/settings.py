@@ -67,6 +67,7 @@ TEMPLATES = [
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
                 "core.context.navigation",
+                "core.context.notification_menu",
             ]
         },
     }

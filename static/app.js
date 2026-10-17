@@ -480,3 +480,33 @@ if (pricingCurrency && majorUnitInputs.length) {
   pricingCurrency.addEventListener('change', updateMoneyInputs);
   updateMoneyInputs();
 }
+
+const notificationMenu = document.querySelector('[data-notification-menu]');
+if (notificationMenu) {
+  const toggle = notificationMenu.querySelector('[data-notification-toggle]');
+  const dropdown = notificationMenu.querySelector('[data-notification-dropdown]');
+  const close = () => { dropdown.hidden = true; toggle.setAttribute('aria-expanded', 'false'); };
+  toggle.addEventListener('click', event => {
+    event.stopPropagation();
+    dropdown.hidden = !dropdown.hidden;
+    toggle.setAttribute('aria-expanded', String(!dropdown.hidden));
+  });
+  document.addEventListener('click', event => { if (!notificationMenu.contains(event.target)) close(); });
+  document.addEventListener('keydown', event => { if (event.key === 'Escape') { close(); toggle.focus(); } });
+}
+
+const notificationForm = document.querySelector('[data-notification-form]');
+if (notificationForm) {
+  const audience = notificationForm.querySelector('#id_audience');
+  const target = notificationForm.querySelector('[data-target-user-field]');
+  const upload = notificationForm.querySelector('#id_poster_upload');
+  const preview = notificationForm.querySelector('[data-poster-preview]');
+  const syncTarget = () => { target.hidden = audience.value !== 'user'; };
+  audience.addEventListener('change', syncTarget); syncTarget();
+  upload.addEventListener('change', () => {
+    if (preview.src.startsWith('blob:')) URL.revokeObjectURL(preview.src);
+    const file = upload.files[0];
+    preview.hidden = !file;
+    if (file) preview.src = URL.createObjectURL(file);
+  });
+}
