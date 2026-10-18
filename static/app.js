@@ -382,7 +382,7 @@ if (newOrderForm) {
       }
       const savedPath = new URL(response.url).pathname;
       const projectMatch = savedPath.match(
-        /^\/client\/(?:projects|checkout)\/([0-9a-f-]+)(?:\/edit)?\/$/i,
+        /^\/(?:client\/(?:projects|checkout)|orders)\/([0-9a-f-]+)(?:\/edit)?\/$/i,
       );
       if (!projectMatch) throw new Error('The saved project could not be identified. Please upload your files from the project page.');
       const projectId = projectMatch[1];

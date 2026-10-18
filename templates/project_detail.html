@@ -9,7 +9,7 @@
   <section class="panel detail-panel">
     <div class="panel-heading"><div><p class="eyebrow">Next step</p><h2>Complete your order</h2></div><span class="badge">Payment pending</span></div>
     {% if project.order.kind == 'custom' %}
-      {% if project.order.quotes.exists %}<p>Your customized quotation is ready. Review the saved amount and terms, then continue to payment.</p><p><a class="button" href="{% url 'custom_checkout' project.id %}">Review quotation &amp; continue to payment <span>↗</span></a></p>
+      {% if project.order.quotes.exists %}<p>Your customized quotation is ready. Review the saved amount and terms, then continue to payment.</p><p><a class="button" href="{% url 'order_summary' project.id %}">Review quotation &amp; continue to payment <span>↗</span></a></p>
       {% else %}<p>Complete the customization form to generate your quotation.</p><p><a class="button" href="{% url 'edit_project' project.id %}">Complete customization <span>↗</span></a></p>{% endif %}
     {% elif project.order.terms_snapshot %}
       <p>Your selected package and saved terms are ready for payment.</p><p><a class="button" href="{% url 'order_summary' project.id %}">Continue to payment <span>↗</span></a></p>

@@ -20,6 +20,10 @@ async function login(email, value) {
   await page.getByLabel('Email').fill(email);
   await page.getByLabel('Password', {exact: true}).fill(value);
   await page.getByRole('button', {name: 'Log in'}).click();
+  const replaceSession = page.getByRole('button', {name: 'Sign out other device'});
+  if (await replaceSession.isVisible()) {
+    await replaceSession.click();
+  }
   await page.waitForURL(/\/(client|editor|admin)\/$/);
 }
 async function logout() {
@@ -54,15 +58,16 @@ try {
   await page.getByText('Customize my edit', {exact: true}).click();
   await page.getByLabel('Reel duration').selectOption('30_50');
   await page.getByLabel('Project name').fill(`My first reel ${runId}`);
-  await page.getByLabel('What would you like us to edit?').fill('Synthetic browser test: clean cuts, captions, and warm colors.');
-  await page.getByLabel('Inspiration and reference notes').fill('A calm, story-led reel.');
-  await page.getByRole('button', {name: 'Save & add files'}).click();
-  await page.waitForURL(/\/client\/projects\/[a-f0-9-]+\/$/);
+  await page.getByLabel('Describe the edit').fill('Synthetic browser test: clean cuts, captions, and warm colors.');
+  await page.getByLabel('Other Instructions').fill('A calm, story-led reel.');
+  const bytes = Buffer.concat([Buffer.from('00000018ftypmp42'), Buffer.alloc(5 * 1024 * 1024, 73)]);
+  await page.locator('#upload-clips').setInputFiles({name: 'browser-original.mp4', mimeType: 'video/mp4', buffer: bytes});
+  await page.getByRole('button', {name: 'Save and Proceed'}).click();
+  await page.waitForURL(/\/orders\/[a-f0-9-]+\/$/);
   const projectUrl = page.url();
   const projectId = projectUrl.split('/').filter(Boolean).at(-1);
-  const bytes = Buffer.concat([Buffer.from('00000018ftypmp42'), Buffer.alloc(5 * 1024 * 1024, 73)]);
-  await page.locator('#upload-files').setInputFiles({name: 'browser-original.mp4', mimeType: 'video/mp4', buffer: bytes});
-  await page.getByRole('button', {name: 'Upload source files'}).click();
+  await page.getByRole('heading', {name: 'Quotation details'}).waitFor();
+  await page.goto(`${base}/client/projects/${projectId}/`);
   await page.getByText('browser-original.mp4', {exact: true}).waitFor({timeout: 60000});
   const [download] = await Promise.all([page.waitForEvent('download'), page.getByRole('button', {name: 'Download'}).click()]);
   const downloaded = await readFile(await download.path());
@@ -91,7 +96,7 @@ try {
   await login(fixture.admin.email, fixture.password);
   await page.screenshot({path: '.runtime/screenshots/admin-desktop.png', fullPage: true});
   await page.goto(`${base}/admin/editors/`);
-  const application = page.locator('.data-list > li').filter({hasText: fixture.editor.email});
+  const application = page.locator('.data-list > li').filter({hasText: 'Browser Test Editor'}).filter({hasText: 'Awaiting review'}).first();
   await application.getByRole('combobox').selectOption('intermediate');
   await application.getByRole('button', {name: 'Approve level'}).click();
   await page.getByText('Browser Test Editor approved as Intermediate.').waitFor();

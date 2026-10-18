@@ -16,7 +16,7 @@ Before applying `core.0013` to Supabase project `lmwvoniiykmfzuxigzqf`, a verifi
 
 The initial ₹100–₹1,000 preview clamp was later replaced after reviewing published Indian market references. The active preview policy uses a ₹750 base, ₹150 per weighted point and a ₹1,000–₹8,000 clamp. That places colour grading at ₹600, a 30–50 second edit with suggested music at ₹1,560, and the full seven-feature selection at ₹4,320. Client wording now presents this as a market-reference estimate and keeps a single clear no-live-charge disclosure at payment boundaries, without exposing technical environment names or provider identifiers.
 
-Accepted quotations remain immutable. An unpaid custom order can now use **Refresh quotation with current rates**: the backend locks the order, cancels only pending payment sessions, preserves prior quote/payment records for audit, rebuilds the server-owned estimate from the saved brief and creates a new immutable quote. Paid orders and cross-client requests remain denied, and a cancelled Razorpay session cannot later activate the project.
+Accepted quotations remain immutable. An unpaid custom order can use **Edit details** from its existing order summary. Saving a revised brief locks the order, cancels only pending payment sessions, preserves prior quote/payment records for audit, and creates a new immutable quote from the revised inputs. Paid orders and cross-client requests remain denied, and a cancelled payment session cannot later activate the project. The former current-rate refresh control and endpoint have been removed.
 
 ## 2026-10-09 Razorpay Test Mode
 

@@ -1,0 +1,10 @@
+{% load money %}
+<section class="panel detail-panel">
+  <div class="panel-heading"><div><h2>Quotation details</h2><p class="muted">Saved from your customization choices.</p></div><span class="badge">CUSTOM</span></div>
+  <div class="file-row"><strong>Project name</strong><span>{{ project.title }}</span></div>
+  <div class="file-row"><strong>Selected plan</strong><span>Customize my edit</span></div>
+  <h3>Selected options</h3>
+  {% if custom_features %}<ul>{% for feature in custom_features %}<li>{{ feature }}</li>{% endfor %}</ul>{% else %}<p class="muted">No optional editing features selected.</p>{% endif %}
+  {% if custom_breakdown %}<h3>Quotation breakdown</h3>{% for item in custom_breakdown %}<div class="file-row"><span>{{ item.name }}</span><strong>{{ item.amount_minor|money:snapshot.currency }}</strong></div>{% endfor %}{% endif %}
+  <div class="file-row"><h2>Total estimated price</h2><strong>{{ snapshot.total_minor|money:snapshot.currency }}</strong></div>
+</section>

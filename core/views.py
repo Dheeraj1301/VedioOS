@@ -383,7 +383,8 @@ def edit_project(request, project_id):
     if (
         project.status != "payment_pending"
         or project.order.payment_status != "pending"
-        or project.order.terms_snapshot
+        or project.order.payments.filter(status="confirmed").exists()
+        or (project.order.terms_snapshot and project.order.kind != "custom")
     ):
         raise PermissionDenied
     return _project_form(request, project)
@@ -419,9 +420,26 @@ def _project_form(request, project=None, *, create_new=False):
                 if (
                     locked_project.status != "payment_pending"
                     or existing_order.payment_status != "pending"
-                    or existing_order.terms_snapshot
+                    or existing_order.payments.filter(status="confirmed").exists()
                 ):
                     raise PermissionDenied
+                if existing_order.terms_snapshot:
+                    if existing_order.kind != "custom":
+                        raise PermissionDenied
+                    for payment in existing_order.payments.select_for_update().filter(
+                        status="pending"
+                    ):
+                        payment.status = "cancelled"
+                        payment.save(update_fields=["status", "updated_at"])
+                        audit(
+                            request.user,
+                            "payment.cancelled_for_brief_edit",
+                            payment.id,
+                            {"order": str(existing_order.id)},
+                        )
+                    existing_order.terms_snapshot = {}
+                    existing_order.total_minor = None
+                    existing_order.currency = ""
             if is_new:
                 saved_project.client = request.user.client_profile
             saved_project.save()
@@ -443,7 +461,15 @@ def _project_form(request, project=None, *, create_new=False):
                 existing_order.plan = selected_plan
                 existing_order.pricing_period = pricing_period
                 existing_order.save(
-                    update_fields=["kind", "plan", "pricing_period", "updated_at"]
+                    update_fields=[
+                        "kind",
+                        "plan",
+                        "pricing_period",
+                        "terms_snapshot",
+                        "total_minor",
+                        "currency",
+                        "updated_at",
+                    ]
                 )
                 action = "project.brief_updated"
             if not selected_plan and saved_project.quotation_snapshot:
@@ -456,15 +482,13 @@ def _project_form(request, project=None, *, create_new=False):
             audit(request.user, action, saved_project.pk)
         request.session["active_project_draft_id"] = str(saved_project.pk)
         if not selected_plan:
-            if quote:
-                messages.success(request, "Creative brief and quotation saved.")
-            else:
+            if not quote:
                 messages.error(
                     request,
                     quote_error
                     or "A valid quotation could not be generated. Review the pricing configuration and try again.",
                 )
-            return redirect("custom_checkout", project_id=saved_project.pk)
+            return redirect("order_summary", project_id=saved_project.pk)
         messages.success(request, "Creative brief saved. Add or review your private files below.")
         return redirect("client_project", project_id=saved_project.pk)
     slots = {plan.slot: plan for plan in Plan.objects.order_by("slot")}

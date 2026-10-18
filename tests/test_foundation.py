@@ -702,7 +702,7 @@ class FoundationTests(TestCase):
         project = Project.objects.get(title="No consultation options")
         self.assertRedirects(
             response,
-            f"/client/checkout/{project.id}/",
+            f"/orders/{project.id}/",
             fetch_redirect_response=False,
         )
         self.assertFalse(project.call_before)
@@ -727,7 +727,7 @@ class FoundationTests(TestCase):
         project = Project.objects.get(title="Suggested music brief")
         self.assertRedirects(
             saved,
-            f"/client/checkout/{project.id}/",
+            f"/orders/{project.id}/",
             fetch_redirect_response=False,
         )
         self.assertEqual(project.song_information, "")
@@ -749,7 +749,7 @@ class FoundationTests(TestCase):
         project = Project.objects.get(title="Persistent brief")
         self.assertRedirects(
             response,
-            f"/client/checkout/{project.id}/",
+            f"/orders/{project.id}/",
             fetch_redirect_response=False,
         )
 
@@ -933,7 +933,7 @@ class FoundationTests(TestCase):
         project = Project.objects.get(title="Typography brief")
         self.assertRedirects(
             saved,
-            f"/client/checkout/{project.id}/",
+            f"/orders/{project.id}/",
             fetch_redirect_response=False,
         )
         self.assertEqual(project.font_name, "Montserrat")
@@ -963,7 +963,7 @@ class FoundationTests(TestCase):
         )
         self.assertRedirects(
             response,
-            f"/client/checkout/{self.project.id}/",
+            f"/orders/{self.project.id}/",
             fetch_redirect_response=False,
         )
         self.project.refresh_from_db()
@@ -1112,7 +1112,7 @@ class FoundationTests(TestCase):
         custom_project = Project.objects.get(title="Custom ignores toggle")
         self.assertRedirects(
             custom,
-            f"/client/checkout/{custom_project.id}/",
+            f"/orders/{custom_project.id}/",
             fetch_redirect_response=False,
         )
         self.assertEqual(custom_project.order.kind, "custom")

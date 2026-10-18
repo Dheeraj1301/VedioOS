@@ -249,9 +249,9 @@ class CommerceTests(TestCase):
             },
         )
         project = Project.objects.get(title="Test-only quotation handoff")
-        checkout_url = f"/client/checkout/{project.id}/"
-        self.assertRedirects(response, checkout_url, fetch_redirect_response=False)
-        self.assertContains(self.client.get(checkout_url), "Market-reference estimate")
+        summary_url = f"/orders/{project.id}/"
+        self.assertRedirects(response, summary_url, fetch_redirect_response=False)
+        self.assertContains(self.client.get(summary_url), "Market-reference estimate")
         self.assertEqual(project.order.quotes.count(), 1)
         with self.settings(DEBUG=False, PAYMENT_MODE="disabled"):
             with self.assertRaisesMessage(ValidationError, "Test-only pricing is unavailable"):
@@ -279,7 +279,7 @@ class CommerceTests(TestCase):
         project = Project.objects.get(title="Weighted snapshot")
         self.assertRedirects(
             response,
-            f"/client/checkout/{project.id}/",
+            f"/orders/{project.id}/",
             fetch_redirect_response=False,
         )
         self.assertEqual(project.quotation_snapshot["total_minor"], 12380)
@@ -322,11 +322,12 @@ class CommerceTests(TestCase):
             expires_at=timezone.now() + timedelta(hours=1),
             completed_at=timezone.now(),
         )
+        summary_url = f"/orders/{project.id}/"
         checkout_url = f"/client/checkout/{project.id}/"
-        self.assertRedirects(response, checkout_url, fetch_redirect_response=False)
+        self.assertRedirects(response, summary_url, fetch_redirect_response=False)
 
-        page = self.client.get(checkout_url)
-        self.assertContains(page, "Your customized quotation")
+        page = self.client.get(summary_url)
+        self.assertContains(page, "Quotation details")
         self.assertContains(page, "Customize my edit")
         self.assertContains(page, "Colour grading")
         self.assertContains(page, "Beat sync")
@@ -335,15 +336,22 @@ class CommerceTests(TestCase):
         self.assertContains(page, "Edit details")
         self.assertContains(page, "checkout-reference.jpg")
         self.assertContains(page, "Reference")
+        self.assertContains(page, "Additional terms")
+        self.assertNotContains(page, "Refresh quotation with current rates")
+        self.assertNotContains(page, "Creative brief and quotation saved")
+        content = page.content.decode()
+        payment_heading = content.index("<h2>Payment</h2>")
+        self.assertLess(content.index("Quotation details"), payment_heading)
+        self.assertLess(payment_heading, content.index("Additional terms"))
 
         project_detail = self.client.get(f"/client/projects/{project.id}/")
         self.assertContains(project_detail, "Complete your order")
         self.assertContains(project_detail, "Review quotation &amp; continue to payment")
-        self.assertContains(project_detail, checkout_url)
+        self.assertContains(project_detail, summary_url)
 
         CommercePolicy.objects.filter(pk=1).update(quotation_point_minor=999)
         QuotationFeature.objects.filter(code="beat_sync").update(complexity_score=1)
-        unchanged = self.client.get(checkout_url)
+        unchanged = self.client.get(summary_url)
         self.assertContains(unchanged, format_money(12380, "INR"))
 
         paid = self.client.post(checkout_url, {"agree": "yes"})
@@ -356,12 +364,13 @@ class CommerceTests(TestCase):
         self.assertEqual(payment.currency, "INR")
 
         apply_sandbox_event(*self.event(payment))
-        completed = self.client.get(checkout_url)
-        self.assertContains(completed, "Payment already completed")
+        completed = self.client.get(summary_url)
+        self.assertContains(completed, "Payment recorded")
+        self.assertContains(completed, "Quotation details")
         self.assertNotContains(completed, "Make Payment")
 
         self.client.force_login(self.other)
-        self.assertEqual(self.client.get(checkout_url).status_code, 404)
+        self.assertEqual(self.client.get(summary_url).status_code, 404)
 
     def test_custom_checkout_redirects_missing_quote_and_blocks_invalid_total(self):
         self.client.force_login(self.user)
@@ -383,34 +392,45 @@ class CommerceTests(TestCase):
         broken = {**quote.snapshot, "total_minor": 0}
         OrderQuote.objects.filter(pk=quote.pk).update(snapshot=broken, total_minor=0)
         checkout_url = f"/client/checkout/{project.id}/"
-        page = self.client.get(checkout_url)
+        page = self.client.get(f"/orders/{project.id}/")
         self.assertContains(page, "Payment is blocked")
         self.assertNotContains(page, "Make Payment")
         self.client.post(checkout_url, {"agree": "yes"})
         self.assertFalse(project.order.payments.exists())
 
-    def test_client_can_refresh_an_unpaid_quote_without_rewriting_history(self):
+    def test_client_can_edit_an_unpaid_quote_without_rewriting_history(self):
         self.enable_weighted_engine()
         self.client.force_login(self.user)
         response = self.client.post(
             "/client/new-order/?new=1",
             {
-                "title": "Market rate refresh",
+                "title": "Editable quotation",
                 "order_choice": "custom",
                 "reel_duration": "30_50",
                 "song_choice": "suggest",
             },
         )
-        project = Project.objects.get(title="Market rate refresh")
+        project = Project.objects.get(title="Editable quotation")
+        summary_url = f"/orders/{project.id}/"
         checkout_url = f"/client/checkout/{project.id}/"
-        self.assertRedirects(response, checkout_url, fetch_redirect_response=False)
+        self.assertRedirects(response, summary_url, fetch_redirect_response=False)
         old_quote = project.order.quotes.get()
         self.client.post(checkout_url, {"agree": "yes"})
         old_payment = project.order.payments.get()
-        CommercePolicy.objects.filter(pk=1).update(quotation_point_minor=1000)
 
-        refreshed = self.client.post(f"{checkout_url}refresh/")
-        self.assertRedirects(refreshed, checkout_url)
+        edit_url = f"/client/projects/{project.id}/edit/"
+        self.assertEqual(self.client.get(edit_url).status_code, 200)
+        edited = self.client.post(
+            edit_url,
+            {
+                "title": "Edited quotation",
+                "order_choice": "custom",
+                "reel_duration": "20_30",
+                "song_choice": "suggest",
+                "colour_grading": "on",
+            },
+        )
+        self.assertRedirects(edited, summary_url, fetch_redirect_response=False)
         project.refresh_from_db()
         project.order.refresh_from_db()
         old_quote.refresh_from_db()
@@ -420,16 +440,23 @@ class CommerceTests(TestCase):
         self.assertIsNotNone(old_quote.accepted_at)
         self.assertEqual(old_payment.status, "cancelled")
         self.assertEqual(project.order.terms_snapshot, {})
-        self.assertEqual(new_quote.total_minor, 15400)
-        self.assertEqual(project.quotation_snapshot["total_minor"], 15400)
+        self.assertEqual(project.title, "Edited quotation")
+        self.assertEqual(new_quote.total_minor, project.quotation_snapshot["total_minor"])
+        revised_summary = self.client.get(summary_url)
+        self.assertContains(revised_summary, "Edited quotation")
+        self.assertContains(revised_summary, "Colour grading")
+        self.assertNotContains(revised_summary, "Refresh quotation with current rates")
 
         restarted = self.client.post(checkout_url, {"agree": "yes"})
         self.assertRedirects(restarted, f"/orders/{project.id}/")
         self.assertEqual(project.order.payments.count(), 2)
-        self.assertEqual(project.order.payments.filter(status="pending").get().amount_minor, 15400)
+        self.assertEqual(
+            project.order.payments.filter(status="pending").get().amount_minor,
+            new_quote.total_minor,
+        )
 
         self.client.force_login(self.other)
-        self.assertEqual(self.client.post(f"{checkout_url}refresh/").status_code, 404)
+        self.assertEqual(self.client.get(edit_url).status_code, 404)
 
     @override_settings(
         PAYMENT_MODE="razorpay_test",
@@ -567,7 +594,7 @@ class CommerceTests(TestCase):
         project = Project.objects.get(title="Razorpay custom checkout")
         self.assertRedirects(
             saved,
-            f"/client/checkout/{project.id}/",
+            f"/orders/{project.id}/",
             fetch_redirect_response=False,
         )
         gateway_order = Mock()

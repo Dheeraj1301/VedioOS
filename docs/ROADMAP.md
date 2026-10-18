@@ -57,6 +57,8 @@ Unpaid custom orders can refresh an older quotation against current rates withou
 
 **2026-10-09: shared preview and payment-path guard.** Client project details now expose the correct next action for incomplete briefs, saved custom quotations and plan orders, restoring a visible path from quotation to payment. The team launcher verifies the selected Supabase database, private schema, Auth project, security posture and migration state before starting; it refuses an isolated SQLite preview so account and project writes cannot be mistaken for shared data.
 
+**2026-10-18: custom quotation summary navigation restored.** Custom briefs now return to the existing order-summary page, where the complete saved breakdown, private-file list, payment action and additional terms remain in their established order before and after payment navigation. The redundant saved-quotation banner and current-rate refresh action are removed. Edit Details safely reopens only unpaid custom orders, cancels pending payment sessions, preserves history and creates a new immutable quote from the revised brief.
+
 - Implement admin management of three plans and custom services with validated configuration.
 - Build plan/custom selection, backend price calculation, term snapshots, payment adapter, verified payment events, invoices/history foundations, and unique paid projects.
 - Show paid/unpaid queues in the presenter dashboard. Persist delivery timestamps under decided rules.

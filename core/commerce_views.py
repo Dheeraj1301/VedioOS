@@ -14,7 +14,6 @@ from .commerce import (
     check_policy,
     create_quote,
     custom_estimate_result,
-    refresh_custom_quote,
 )
 from .commerce_forms import (
     CustomEstimateForm,
@@ -264,6 +263,9 @@ def custom_checkout(request, project_id):
         )
         return redirect("edit_project", project_id=project.id)
 
+    if request.method != "POST":
+        return redirect("order_summary", project_id=project.id)
+
     total = snapshot.get("total_minor")
     currency = snapshot.get("currency")
     valid_total = (
@@ -273,80 +275,70 @@ def custom_checkout(request, project_id):
         and isinstance(currency, str)
         and currency == quote.currency
     )
-    if request.method == "POST":
-        if set(request.POST) - {"csrfmiddlewaretoken", "agree"}:
-            raise PermissionDenied
-        if order.payment_status == "confirmed":
-            messages.info(request, "Payment has already been completed for this project.")
-        elif not valid_total:
-            messages.error(request, "This quotation has an invalid total and cannot be paid.")
-        elif request.POST.get("agree") != "yes":
-            messages.error(request, "Accept the displayed quotation and terms before payment.")
-        else:
-            try:
-                with transaction.atomic():
-                    accept_quote(request.user, project.id, quote.id)
-                    payment = start_checkout(request.user, project.id)
-                messages.success(
-                    request,
-                    "Payment was started using the saved quotation amount and currency.",
-                )
-                if payment.provider == "razorpay_test":
-                    return redirect("razorpay_checkout", payment_id=payment.id)
-                return redirect("order_summary", project_id=project.id)
-            except ValidationError as exc:
-                messages.error(request, " ".join(exc.messages))
-
-    features = snapshot.get("features", [])
-    if not isinstance(features, list):
-        features = []
-    breakdown = snapshot.get("estimate_breakdown", [])
-    if not isinstance(breakdown, list):
-        breakdown = []
-    return render(
-        request,
-        "commerce/custom_checkout.html",
-        {
-            "title": "Custom quotation and payment",
-            "project": project,
-            "order": order,
-            "quote": quote,
-            "snapshot": snapshot,
-            "features": features,
-            "breakdown": breakdown,
-            "files": visible_files(request.user, project),
-            "valid_total": valid_total,
-            "sandbox": sandbox_enabled(),
-            "razorpay_test": razorpay_test_enabled(),
-        },
-    )
-
-
-@require_POST
-@role_required("client")
-def refresh_quote(request, project_id):
-    project = project_for(request.user, project_id)
-    if set(request.POST) - {"csrfmiddlewaretoken"}:
+    if set(request.POST) - {"csrfmiddlewaretoken", "agree"}:
         raise PermissionDenied
-    try:
-        refresh_custom_quote(request.user, project.id)
-        messages.success(request, "Your quotation was refreshed using the current rates.")
-    except ValidationError as exc:
-        messages.error(request, " ".join(exc.messages))
-    return redirect("custom_checkout", project_id=project.id)
+    if order.payment_status == "confirmed":
+        messages.info(request, "Payment has already been completed for this project.")
+    elif not valid_total:
+        messages.error(request, "This quotation has an invalid total and cannot be paid.")
+    elif request.POST.get("agree") != "yes":
+        messages.error(request, "Accept the displayed quotation and terms before payment.")
+    else:
+        try:
+            with transaction.atomic():
+                accept_quote(request.user, project.id, quote.id)
+                payment = start_checkout(request.user, project.id)
+            messages.success(
+                request,
+                "Payment was started using the saved quotation amount and currency.",
+            )
+            if payment.provider == "razorpay_test":
+                return redirect("razorpay_checkout", payment_id=payment.id)
+        except ValidationError as exc:
+            messages.error(request, " ".join(exc.messages))
+    return redirect("order_summary", project_id=project.id)
 
 
 @role_required("client", "admin")
 def order_summary(request, project_id):
     project = project_for(request.user, project_id)
+    order = project.order
+    quote = None
+    snapshot = order.terms_snapshot
+    if order.kind == "custom":
+        if snapshot:
+            quote = order.quotes.filter(pk=snapshot.get("quote_id")).first()
+        else:
+            quote = order.quotes.first()
+            snapshot = quote.snapshot if quote else {}
+    custom_features = snapshot.get("features", []) if isinstance(snapshot, dict) else []
+    if not isinstance(custom_features, list):
+        custom_features = []
+    custom_breakdown = (
+        snapshot.get("estimate_breakdown", []) if isinstance(snapshot, dict) else []
+    )
+    if not isinstance(custom_breakdown, list):
+        custom_breakdown = []
+    valid_custom_total = bool(
+        quote
+        and type(snapshot.get("total_minor")) is int
+        and snapshot["total_minor"] > 0
+        and snapshot["total_minor"] == quote.total_minor
+        and snapshot.get("currency") == quote.currency
+    )
     return render(
         request,
         "commerce/order.html",
         {
             "title": "Order summary",
             "project": project,
-            "order": project.order,
-            "snapshot": project.order.terms_snapshot,
+            "order": order,
+            "snapshot": snapshot,
+            "quote": quote,
+            "custom_features": custom_features,
+            "custom_breakdown": custom_breakdown,
+            "valid_custom_total": valid_custom_total,
+            "files": visible_files(request.user, project),
             "sandbox": sandbox_enabled(),
             "razorpay_test": razorpay_test_enabled(),
             "payments": project.order.payments.order_by("-created_at"),

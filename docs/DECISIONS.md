@@ -245,3 +245,13 @@ Owner / source of explicit decision: Hamsa requested a required V1 submission af
 Decision: the first client-visible deliverable must be uploaded as an edited draft and is labelled V1; a final-labelled upload cannot become version 1. When editing starts, the existing server-owned `delivery_hours` value in the accepted order snapshot is displayed as the V1 target measured from the attributable editing-start audit event. Missing timing terms remain explicit rather than receiving an invented default. V1 remains privately downloadable by the owning client and assigned editor while later editing or revision work continues. This does not change acceptance, revision allowances, payment gates, assignment access, or the unresolved working/calendar-hour and pause rules in D06.
 
 Verification required: reject a final-labelled first submission; accept an edited draft as version 1; show its saved timing target to the assigned editor; keep V1 visible to the client during later revision work; expose the editor-dashboard V1 link; preserve role/project/file authorization.
+
+## 2026-10-18 — Canonical custom quotation summary
+
+Status: approved and implemented
+
+Owner / source of explicit decision: owner request to restore the original project summary and payment navigation.
+
+Decision: use the existing protected order-summary page as the single custom quotation summary before and after payment navigation. Keep the immutable saved breakdown, private-file list, payment action and additional terms on that page; remove the redundant saved-quotation banner and current-rate refresh action. Edit Details may reopen only an unpaid custom order. Saving revisions cancels pending payment sessions, clears the previously accepted order snapshot without deleting history, and creates a new server-owned immutable quote. Paid and cross-client edits remain denied.
+
+Verification required: summary section order, persistent custom detail after payment starts, no refresh action or saved banner, functioning unpaid Edit Details, cancelled pending payment, preserved quote history, new quote from edited inputs, paid/cross-client denial and unchanged plan-order behavior.
