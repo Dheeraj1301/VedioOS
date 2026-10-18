@@ -1032,7 +1032,7 @@ class FoundationTests(TestCase):
         )
         self.assertEqual(generated_project.order.plan, plan)
 
-    def test_plan_pricing_periods_render_validate_and_persist(self):
+    def test_monthly_and_yearly_pricing_are_locked_to_per_reel(self):
         plan = Plan.objects.create(
             slot=1,
             name="Period plan",
@@ -1047,64 +1047,60 @@ class FoundationTests(TestCase):
             priority=1,
             active=True,
         )
-        unavailable_monthly = Plan.objects.create(
-            slot=2,
-            name="Per-reel only",
-            price_minor=15000,
-            currency="INR",
-            features=["Cuts"],
-            revision_limit=1,
-            delivery_hours=24,
-            duration_limit_seconds=60,
-            priority=2,
-            active=True,
-        )
         browser = self.auth(self.owner)
         form_page = browser.get("/client/new-order/?new=1")
         self.assertContains(form_page, "Per Reel")
         self.assertContains(form_page, "Monthly")
         self.assertContains(form_page, "Yearly")
+        self.assertContains(form_page, "Upcoming", count=2)
         self.assertContains(form_page, 'value="per_reel" checked', html=False)
         self.assertContains(form_page, 'data-price-per-reel="₹100.00"', html=False)
-        self.assertContains(form_page, 'data-price-monthly="₹900.00"', html=False)
-        self.assertContains(form_page, 'data-price-yearly="₹9,000.00"', html=False)
+        self.assertNotContains(form_page, 'value="monthly"', html=False)
+        self.assertNotContains(form_page, 'value="yearly"', html=False)
+        self.assertNotContains(form_page, "Monthly creator plans")
+        self.assertNotContains(form_page, "Recurring editing packages")
+        self.assertNotContains(form_page, "Monthly plans are being configured")
 
-        rejected = browser.post(
-            "/client/new-order/?new=1",
-            {
-                "title": "Unavailable period",
-                "order_choice": f"plan:{unavailable_monthly.id}",
-                "pricing_period": "monthly",
-                "song_choice": "suggest",
-            },
-        )
-        self.assertEqual(rejected.status_code, 200)
-        self.assertContains(rejected, "Monthly pricing is coming soon for this plan")
+        for period in [Plan.PricingPeriod.MONTHLY, Plan.PricingPeriod.YEARLY]:
+            with self.subTest(period=period):
+                forged_title = f"Forged {period} period"
+                rejected = browser.post(
+                    "/client/new-order/?new=1",
+                    {
+                        "title": forged_title,
+                        "order_choice": f"plan:{plan.id}",
+                        "pricing_period": period,
+                        "song_choice": "suggest",
+                    },
+                )
+                self.assertEqual(rejected.status_code, 200)
+                self.assertContains(rejected, "Monthly and yearly pricing are upcoming")
+                self.assertFalse(Project.objects.filter(title=forged_title).exists())
 
         saved = browser.post(
             "/client/new-order/?new=1",
             {
-                "title": "Monthly plan brief",
+                "title": "Per reel plan brief",
                 "order_choice": f"plan:{plan.id}",
-                "pricing_period": "monthly",
+                "pricing_period": "per_reel",
                 "song_choice": "suggest",
             },
         )
-        project = Project.objects.get(title="Monthly plan brief")
+        project = Project.objects.get(title="Per reel plan brief")
         self.assertRedirects(saved, f"/client/projects/{project.id}/")
         self.assertEqual(project.order.plan, plan)
-        self.assertEqual(project.order.pricing_period, Plan.PricingPeriod.MONTHLY)
+        self.assertEqual(project.order.pricing_period, Plan.PricingPeriod.PER_REEL)
         detail = browser.get(f"/client/projects/{project.id}/")
-        self.assertContains(detail, "Period plan · Monthly")
+        self.assertContains(detail, "Period plan · Per Reel")
         edit = browser.get(f"/client/projects/{project.id}/edit/")
-        self.assertContains(edit, 'value="monthly" checked', html=False)
+        self.assertContains(edit, 'value="per_reel" checked', html=False)
 
         custom = browser.post(
             "/client/new-order/?new=1",
             {
                 "title": "Custom ignores toggle",
                 "order_choice": "custom",
-                "pricing_period": "yearly",
+                "pricing_period": "per_reel",
                 "reel_duration": "30_50",
                 "song_choice": "suggest",
             },

@@ -32,7 +32,6 @@ from .models import (
     AuthAttempt,
     Client,
     File,
-    InfluencerPackage,
     Order,
     Plan,
     Project,
@@ -705,14 +704,10 @@ def _project_form(request, project=None, *, create_new=False):
             "project": project,
             "create_new": create_new,
             "selected_choice": form["order_choice"].value() or "",
-            "selected_pricing_period": (
-                form["pricing_period"].value() or Plan.PricingPeriod.PER_REEL
-            ),
             "plan_slots": plan_slots,
             "active_inspiration_count": active_inspiration_count,
             "existing_brief_files": existing_brief_files,
             "upload_policy": upload_policy,
-            "monthly_packages": InfluencerPackage.objects.filter(active=True).order_by("name"),
         },
     )
 

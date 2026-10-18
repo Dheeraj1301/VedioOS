@@ -128,13 +128,12 @@ if (newOrderForm) {
   const songDetails = newOrderForm.querySelector('[data-song-details]');
   const estimate = newOrderForm.querySelector('#custom-estimate');
   const pricingPeriodFields = [...newOrderForm.querySelectorAll('[name="pricing_period"]')];
-  const pricingPeriodLabels = {per_reel: '/reel', monthly: '/month', yearly: '/year'};
+  const lockedPricingPeriods = [...newOrderForm.querySelectorAll('[data-pricing-period-locked]')];
+  const pricingPeriodUpcoming = newOrderForm.querySelector('#pricing-period-upcoming');
   let estimateRequest = 0;
   const updatePlanPricing = () => {
-    const period = pricingPeriodFields.find(field => field.checked)?.value || 'per_reel';
-    const dataKey = period === 'per_reel' ? 'pricePerReel' : `price${period[0].toUpperCase()}${period.slice(1)}`;
     newOrderForm.querySelectorAll('[data-plan-card]').forEach(card => {
-      const price = card.dataset[dataKey] || '';
+      const price = card.dataset.pricePerReel || '';
       const available = card.dataset.planActive === 'true' && Boolean(price);
       const input = card.querySelector('[name="order_choice"]');
       card.classList.toggle('unavailable', !available);
@@ -144,9 +143,15 @@ if (newOrderForm) {
         if (!available && input.checked) input.checked = false;
       }
       card.querySelector('[data-plan-price]').textContent = price || 'Coming soon';
-      card.querySelector('[data-plan-period-label]').textContent = price ? pricingPeriodLabels[period] : '';
+      card.querySelector('[data-plan-period-label]').textContent = price ? '/reel' : '';
     });
   };
+  lockedPricingPeriods.forEach(option => option.addEventListener('click', () => {
+    pricingPeriodFields.forEach(field => { field.checked = field.value === 'per_reel'; });
+    pricingPeriodUpcoming.hidden = false;
+    announce(pricingPeriodUpcoming, 'Upcoming');
+    updatePlanPricing();
+  }));
   updatePlanPricing();
   [...newOrderForm.querySelectorAll('[name="order_choice"]')]
     .find(field => field.value === newOrderForm.dataset.selectedChoice)?.click();

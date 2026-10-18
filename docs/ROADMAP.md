@@ -135,6 +135,8 @@ Unpaid custom orders can revise project details without mutating history. Pendin
 
 **2026-09-24: operational analytics, client/order/project operations, client support, feature-control inventory and protected payment history verified.** Admin tools reconcile operational counts, per-client work/payment/support status, order and project workflow, deadline queues and payment records, provide a private audited support workflow, and show actual platform-control state. Undefined financial metrics, tax invoices, package sales and AI remain locked pending their owner decisions; see [Phase 8 evidence](PHASE_8.md).
 
+**2026-10-19: recurring pricing remains client-locked.** Monthly and Yearly pricing periods are visible only as locked **Upcoming** controls on the new-order page, forged selection is rejected, and the client-facing recurring-package sections are removed. Per Reel and the existing four-card/custom-order flow remain unchanged; D13 still gates recurring package sales.
+
 - Complete premium landing-page content and approved public claims, support workflows, call scheduling/completion, and optional calling-provider integration.
 - Build configurable monthly influencer packages, purchases, allowance accounting, dedicated-editor behavior, and renewal/expiry handling.
 - Finish advanced analytics, feature administration, payment/invoice history, and customer retention reporting.

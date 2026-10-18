@@ -120,6 +120,9 @@ class ProjectForm(forms.ModelForm):
         data = super().clean()
         choice = data.get("order_choice", "")
         pricing_period = data.get("pricing_period") or Plan.PricingPeriod.PER_REEL
+        if pricing_period != Plan.PricingPeriod.PER_REEL:
+            self.add_error("pricing_period", "Monthly and yearly pricing are upcoming.")
+            pricing_period = Plan.PricingPeriod.PER_REEL
         data["pricing_period"] = pricing_period
         if choice.startswith("plan:"):
             plan_id = choice.partition(":")[2]

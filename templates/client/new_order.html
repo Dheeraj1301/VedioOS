@@ -6,16 +6,17 @@
   {% if form.non_field_errors %}{{ form.non_field_errors }}{% endif %}
   <section class="order-choice-fieldset" aria-labelledby="editing-options-title"><div class="order-choice-header"><h2 id="editing-options-title">Choose one of four editing options</h2>
     <div class="pricing-period-toggle" role="radiogroup" aria-label="Plan pricing period">
-      <label><input type="radio" name="pricing_period" value="per_reel" {% if selected_pricing_period == 'per_reel' %}checked{% endif %}><span>Per Reel</span></label>
-      <label><input type="radio" name="pricing_period" value="monthly" {% if selected_pricing_period == 'monthly' %}checked{% endif %}><span>Monthly</span></label>
-      <label><input type="radio" name="pricing_period" value="yearly" {% if selected_pricing_period == 'yearly' %}checked{% endif %}><span>Yearly</span></label>
+      <label><input type="radio" name="pricing_period" value="per_reel" checked><span>Per Reel</span></label>
+      <button class="pricing-period-locked" type="button" aria-disabled="true" aria-describedby="pricing-period-upcoming" data-pricing-period-locked><span aria-hidden="true">&#128274;</span> Monthly <small>Upcoming</small></button>
+      <button class="pricing-period-locked" type="button" aria-disabled="true" aria-describedby="pricing-period-upcoming" data-pricing-period-locked><span aria-hidden="true">&#128274;</span> Yearly <small>Upcoming</small></button>
     </div>
   </div>
+    <p id="pricing-period-upcoming" class="pricing-period-upcoming" role="status" aria-live="polite" hidden></p>
     {% if form.pricing_period.errors %}{{ form.pricing_period.errors }}{% endif %}
     {% if form.order_choice.errors %}{{ form.order_choice.errors }}{% endif %}
     <div class="order-choice-grid">
       {% for slot,plan,choice_value in plan_slots %}
-      <label class="order-choice-card{% if not plan or not plan.active or not plan.price_minor %} unavailable{% endif %}" data-plan-card data-plan-active="{% if plan and plan.active %}true{% else %}false{% endif %}" data-price-per-reel="{% if plan and plan.price_minor %}{{ plan.price_minor|money:plan.currency }}{% endif %}" data-price-monthly="{% if plan and plan.monthly_price_minor %}{{ plan.monthly_price_minor|money:plan.currency }}{% endif %}" data-price-yearly="{% if plan and plan.yearly_price_minor %}{{ plan.yearly_price_minor|money:plan.currency }}{% endif %}">
+      <label class="order-choice-card{% if not plan or not plan.active or not plan.price_minor %} unavailable{% endif %}" data-plan-card data-plan-active="{% if plan and plan.active %}true{% else %}false{% endif %}" data-price-per-reel="{% if plan and plan.price_minor %}{{ plan.price_minor|money:plan.currency }}{% endif %}">
         {% if plan %}<input type="radio" name="order_choice" value="{{ choice_value }}" required {% if not plan.active or not plan.price_minor %}disabled{% endif %} {% if selected_choice == choice_value %}checked{% endif %}>{% else %}<input type="radio" disabled>{% endif %}
         <span class="eyebrow">Plan {{ slot }}</span><strong>{% if plan %}{{ plan.name }}{% else %}Coming soon{% endif %}</strong>
         {% if plan and plan.active %}<span class="plan-price" data-plan-price>{% if plan.price_minor %}{{ plan.price_minor|money:plan.currency }}{% else %}Coming soon{% endif %}</span><small class="plan-period-label" data-plan-period-label>{% if plan.price_minor %}/reel{% endif %}</small><small>{{ plan.features|join:", " }}</small>{% else %}<span class="plan-price" data-plan-price>Coming soon</span><small class="plan-period-label" data-plan-period-label></small><small>The team has not published this plan yet.</small>{% endif %}
@@ -40,5 +41,4 @@
   </section>
   <div class="form-submit-row{% if not selected_choice %} is-hidden{% endif %}" data-submit-row{% if not selected_choice %} hidden{% endif %}><p class="form-submit-status" role="status" aria-live="polite"></p><button class="text-button upload-retry-button" type="button" hidden>Retry failed upload</button><button class="button" type="submit"{% if not selected_choice %} disabled{% endif %}>Save and Proceed <span>↗</span></button></div>
 </form>
-<section class="panel detail-panel monthly-plans"><p class="eyebrow">Monthly creator plans</p><h2>Recurring editing packages</h2>{% for package in monthly_packages %}<div class="file-row"><div><strong>{{ package.name }}</strong><p>{{ package.price_minor|money:package.currency }} · {{ package.video_allowance }} videos</p></div><span class="badge">Monthly</span></div>{% empty %}<p class="muted">Monthly plans are being configured. Sales stay closed until allowance, renewal, expiry and rollover terms are approved.</p>{% endfor %}</section>
 {% endblock %}
