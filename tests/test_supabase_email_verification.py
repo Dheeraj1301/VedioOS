@@ -8,10 +8,8 @@ from core.email_verification import (
     VerificationServiceUnavailable,
     check_password_reset_code,
     check_verification_code,
-    open_password_reset_grant,
     send_password_reset_email,
     send_verification_email,
-    update_recovered_password,
 )
 
 
@@ -31,7 +29,7 @@ class SupabaseEmailVerificationTests(SimpleTestCase):
         self.assertEqual(post.call_args.kwargs["json"], {"email": "client@example.com"})
 
     @patch("core.email_verification.requests.post")
-    def test_password_reset_code_uses_recovery_type_and_seals_provider_session(self, post):
+    def test_password_reset_code_uses_recovery_type_and_discards_provider_session(self, post):
         post.return_value = Mock(
             status_code=200,
             json=lambda: {
@@ -40,33 +38,27 @@ class SupabaseEmailVerificationTests(SimpleTestCase):
                 "user": {"email": "client@example.com"},
             },
         )
-        result, grant = check_password_reset_code("CLIENT@example.com", "654321")
+        result = check_password_reset_code("CLIENT@example.com", "654321")
 
         self.assertEqual(result, "verified")
         self.assertEqual(
             post.call_args.kwargs["json"],
             {"email": "CLIENT@example.com", "token": "654321", "type": "recovery"},
         )
-        self.assertEqual(open_password_reset_grant(grant), "discarded-access-token")
 
-    @patch("core.email_verification.requests.put")
-    def test_chosen_password_is_applied_with_recovery_session(self, put):
-        put.return_value = Mock(status_code=200)
-        grant = (
-            __import__("core.email_verification", fromlist=["_recovery_cipher"])
-            ._recovery_cipher()
-            .encrypt(b"discarded-access-token")
-            .decode("ascii")
+    @patch("core.email_verification.requests.post")
+    def test_editor_reset_code_uses_email_type(self, post):
+        post.return_value = Mock(
+            status_code=200,
+            json=lambda: {"user": {"email": "editor@example.com"}},
         )
 
-        self.assertTrue(update_recovered_password(grant, "New-Password-83!Tree"))
-
-        self.assertEqual(put.call_args.args[0], "https://project.supabase.co/auth/v1/user")
-        self.assertEqual(put.call_args.kwargs["json"]["password"], "New-Password-83!Tree")
-        self.assertEqual(
-            put.call_args.kwargs["headers"]["Authorization"],
-            "Bearer discarded-access-token",
+        result = check_password_reset_code(
+            "editor@example.com", "654321", code_type="email"
         )
+
+        self.assertEqual(result, "verified")
+        self.assertEqual(post.call_args.kwargs["json"]["type"], "email")
 
     @patch("core.email_verification.requests.post")
     def test_send_requests_a_supabase_email_otp(self, post):

@@ -101,6 +101,26 @@ class SupabasePasswordLoginTests(TestCase):
         )
 
     @patch("core.supabase_auth.requests.post")
+    def test_reset_client_cannot_fall_back_to_old_supabase_password(self, post):
+        user = User.objects.create_user(
+            "reset@example.test", "New-Local-83!Tree", name="Reset client"
+        )
+        Client.objects.create(user=user)
+        AuditLog.objects.create(
+            actor=user,
+            action="client.password_reset",
+            target_id=str(user.pk),
+        )
+
+        rejected = self.client.post(
+            "/login/", {"username": user.email, "password": PASSWORD}
+        )
+
+        self.assertEqual(rejected.status_code, 200)
+        self.assertContains(rejected, "Please enter a correct email and password")
+        post.assert_not_called()
+
+    @patch("core.supabase_auth.requests.post")
     def test_invalid_password_does_not_create_an_application_user(self, post):
         post.return_value = response(400, {"code": "invalid_credentials"})
 

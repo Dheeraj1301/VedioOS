@@ -16,12 +16,12 @@
       {{ form.as_div }}
       <button class="button" type="submit">{{ button }} <span>↗</span></button>
     </form>
-    {% if mode == 'login' %}<p class="auth-switch"><a href="{% url 'password_reset_request' %}">Forgot password?</a></p>{% endif %}
+    {% if mode == 'login' %}<p class="auth-switch"><a href="{% url 'password_reset_request' %}">Forgot password?</a></p>{% elif mode == 'editor_login' %}<p class="auth-switch"><a href="{% url 'password_reset_request' %}?from=editor">Forgot password?</a></p>{% endif %}
     <p class="auth-switch">
       {% if mode == 'editor_login' %}
-        Client or administrator? <a href="{% url 'login' %}">Use regular sign in</a>
+        <a href="{% url 'login' %}">Sign in as a client</a>
       {% elif mode == 'login' %}
-        New client? <a href="{% url 'register' %}">Create an account</a>
+        New client? <a href="{% url 'register' %}">Create an account</a><br><a href="{% url 'editor_login' %}">Sign in as an editor</a>
       {% else %}
         Already registered? <a href="{% url 'login' %}">Log in</a>
       {% endif %}

@@ -49,35 +49,52 @@ class PasswordResetWorkflowTests(TestCase):
         self.reset_rate_limit()
         with patch(
             "core.views.check_password_reset_code",
-            return_value=("verified", "encrypted-recovery-grant"),
+            return_value="verified",
         ) as verify:
             response = browser.post("/password-reset/code/", {"code": "123456"})
         self.assertRedirects(response, "/password-reset/new/")
-        verify.assert_called_once_with(self.user.email, "123456")
+        verify.assert_called_once_with(self.user.email, "123456", code_type="recovery")
 
     def test_login_links_to_three_step_client_reset(self):
         login = Browser().get("/login/")
         self.assertContains(login, "Forgot password?")
-        self.assertNotContains(Browser().get("/editor/signin/"), "Forgot password?")
+        self.assertContains(login, "Sign in as an editor")
+        editor_login = Browser().get("/editor/signin/")
+        self.assertContains(editor_login, "Forgot password?")
+        self.assertContains(editor_login, "Sign in as a client")
+        self.assertNotContains(editor_login, "administrator sign in")
+        editor_reset = Browser().get("/password-reset/?from=editor")
+        self.assertContains(editor_reset, "Back to editor login")
+        self.assertNotContains(editor_reset, "client account")
         request_page = Browser().get("/password-reset/")
         self.assertContains(request_page, "Step 1 of 3")
         self.assertContains(request_page, 'autocomplete="email"')
 
-    def test_request_is_non_enumerating_and_excludes_editor_accounts(self):
-        for email in ["missing@example.test", self.editor_user.email]:
-            browser = Browser()
-            with patch("core.views.send_password_reset_email") as send:
-                response = browser.post("/password-reset/", {"email": email}, follow=True)
-            self.assertContains(response, "If an eligible client account matches that email")
-            send.assert_not_called()
-            self.reset_rate_limit()
+    def test_request_is_non_enumerating_and_supports_editor_accounts(self):
+        browser = Browser()
+        with patch("core.views.send_password_reset_email") as send:
+            response = browser.post(
+                "/password-reset/", {"email": "missing@example.test"}, follow=True
+            )
+        self.assertContains(response, "If an eligible account matches that email")
+        send.assert_not_called()
+        self.reset_rate_limit()
+
+        browser = Browser()
+        with patch("core.views.send_verification_email") as send:
+            response = browser.post(
+                "/password-reset/", {"email": self.editor_user.email}, follow=True
+            )
+        self.assertRedirects(response, "/password-reset/code/")
+        send.assert_called_once_with(self.editor_user.email)
+        self.reset_rate_limit()
 
         with patch(
             "core.views.send_password_reset_email",
             side_effect=VerificationServiceUnavailable("provider unavailable"),
         ):
             response = Browser().post("/password-reset/", {"email": self.user.email}, follow=True)
-        self.assertContains(response, "If an eligible client account matches that email")
+        self.assertContains(response, "If an eligible account matches that email")
 
     def test_invalid_expired_and_unavailable_codes_do_not_create_grant(self):
         for result, text in [
@@ -87,7 +104,7 @@ class PasswordResetWorkflowTests(TestCase):
         ]:
             browser = self.request_code()
             self.reset_rate_limit()
-            with patch("core.views.check_password_reset_code", return_value=(result, None)):
+            with patch("core.views.check_password_reset_code", return_value=result):
                 response = browser.post("/password-reset/code/", {"code": "123456"}, follow=True)
             self.assertContains(response, text)
             self.assertNotIn("password_reset_user_id", browser.session)
@@ -110,13 +127,11 @@ class PasswordResetWorkflowTests(TestCase):
         self.assertContains(page, "Step 3 of 3")
         self.assertContains(page, "Confirm new password")
         self.reset_rate_limit()
-        with patch("core.views.update_recovered_password", return_value=True) as update_provider:
-            response = reset.post(
-                "/password-reset/new/",
-                {"new_password1": NEW_PASSWORD, "new_password2": NEW_PASSWORD},
-                follow=True,
-            )
-        update_provider.assert_called_once_with("encrypted-recovery-grant", NEW_PASSWORD)
+        response = reset.post(
+            "/password-reset/new/",
+            {"new_password1": NEW_PASSWORD, "new_password2": NEW_PASSWORD},
+            follow=True,
+        )
         self.assertContains(response, "Your password has been reset")
         self.user.refresh_from_db()
         self.assertTrue(self.user.check_password(NEW_PASSWORD))
@@ -156,19 +171,35 @@ class PasswordResetWorkflowTests(TestCase):
         expired = browser.get("/password-reset/new/", follow=True)
         self.assertContains(expired, "verified reset session expired")
 
-    def test_provider_failure_does_not_change_local_password(self):
-        browser = self.request_code()
-        self.verify_code(browser)
+    def test_editor_can_complete_same_reset_workflow(self):
+        browser = Browser()
+        with patch("core.views.send_verification_email") as send:
+            response = browser.post(
+                "/password-reset/", {"email": self.editor_user.email}
+            )
+        self.assertRedirects(response, "/password-reset/code/")
+        send.assert_called_once_with(self.editor_user.email)
         self.reset_rate_limit()
         with patch(
-            "core.views.update_recovered_password",
-            side_effect=VerificationServiceUnavailable("provider unavailable"),
-        ):
-            response = browser.post(
-                "/password-reset/new/",
-                {"new_password1": NEW_PASSWORD, "new_password2": NEW_PASSWORD},
-                follow=True,
-            )
-        self.assertContains(response, "Password recovery is temporarily unavailable")
-        self.user.refresh_from_db()
-        self.assertTrue(self.user.check_password(OLD_PASSWORD))
+            "core.views.check_password_reset_code", return_value="verified"
+        ) as verify:
+            response = browser.post("/password-reset/code/", {"code": "123456"})
+        self.assertRedirects(response, "/password-reset/new/")
+        verify.assert_called_once_with(
+            self.editor_user.email, "123456", code_type="email"
+        )
+        self.reset_rate_limit()
+        response = browser.post(
+            "/password-reset/new/",
+            {"new_password1": NEW_PASSWORD, "new_password2": NEW_PASSWORD},
+            follow=True,
+        )
+        self.assertContains(response, "Your password has been reset")
+        self.assertRedirects(response, "/editor/signin/", status_code=302)
+        self.editor_user.refresh_from_db()
+        self.assertTrue(self.editor_user.check_password(NEW_PASSWORD))
+        self.assertTrue(
+            AuditLog.objects.filter(
+                action="editor.password_reset", actor=self.editor_user
+            ).exists()
+        )

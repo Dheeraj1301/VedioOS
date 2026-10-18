@@ -276,12 +276,12 @@ Every assignment creates separate durable confirmations for the client and assig
 
 D05 and D11 remain open. No cancellation deadline, refund amount, eligibility rule or processing promise was invented; those financial policies require the owner's exact approval record before real checkout or public terms can be activated.
 
-## 2026-10-18 — Client password recovery
+## 2026-10-18 — Client and editor password recovery
 
-Status: approved and implemented for active client accounts
+Status: approved and implemented for active client and editor accounts
 
-Owner / source of explicit decision: owner request for an email OTP password-recovery flow from the regular login page.
+Owner / source of explicit decision: owner request for an email OTP password-recovery flow from both client and editor sign-in pages.
 
-Decision: the regular client/administrator login page links to a client-only three-step recovery flow: request an email, verify a six-digit recovery OTP, then set and confirm a validated new password. Requests do not reveal whether an account exists. Supabase Auth sends and validates a recovery-specific OTP. Its short-lived recovery token is encrypted with an application-specific key before it enters the server-side session and is never stored in plaintext. On the final step the same validated password is applied to Supabase Auth first and then to Django, so shared-preview login cannot drift between the two identity stores. The encrypted grant expires after fifteen minutes, the application grant after ten minutes, the previous application session is revoked, and the reset is audit logged.
+Decision: active clients and administrator-issued editors use the same existing three-step recovery pages: request an email, verify a six-digit OTP, then set and confirm a validated new password. Requests do not reveal whether an account exists. Supabase Auth sends and validates a recovery OTP for clients and an email-ownership OTP for editors; returned provider sessions are discarded and no provider token is retained in the Django session. After verification, the new password is written under a database lock to the authoritative private application identity, the previous application session is revoked, and the reset is audit logged. Once a client has completed recovery, Supabase password fallback is disabled for that profile so an older provider password cannot bypass the new application password.
 
-Administrator-issued editor accounts remain excluded because the approved editor-access decision has no self-service password-change route. Production delivery requires the Supabase Recovery email template to include the six-digit `{{ .Token }}` value and an approved custom SMTP provider/domain; the default sender is suitable only for limited development testing.
+The editor and client entry screens link only to each other; the editor page does not advertise administrator sign-in, and the existing routes are reused without intermediate login pages. Production delivery requires the relevant Supabase templates to include the six-digit `{{ .Token }}` value and an approved custom SMTP provider/domain; the default sender is suitable only for limited development testing.

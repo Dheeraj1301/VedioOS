@@ -162,6 +162,16 @@ def authenticate_supabase_client(email, password):
     existing = User.objects.filter(email__iexact=normalized_email).first()
     if existing and existing.role != User.Role.CLIENT:
         return None
+    if existing and existing.has_usable_password():
+        from operations.models import AuditLog
+
+        if AuditLog.objects.filter(
+            actor=existing,
+            action__in=["client.password_reset", "editor.password_reset"],
+        ).exists():
+            # A recovered local password is authoritative. Never let an older
+            # provider password bypass the completed password change.
+            return None
     identity = verify_password(normalized_email, password)
     if not identity:
         return None

@@ -26,7 +26,6 @@ from .email_verification import (
     check_verification_code,
     send_password_reset_email,
     send_verification_email,
-    update_recovered_password,
 )
 from .forms import LoginForm, PasswordResetSetForm, ProjectForm, RegistrationForm
 from .models import (
@@ -265,7 +264,11 @@ def _password_reset_user(request):
         return None
     if verified < timezone.now() - timedelta(minutes=PASSWORD_RESET_GRANT_MINUTES):
         return None
-    return User.objects.filter(pk=user_id, role="client", is_active=True).first()
+    return User.objects.filter(
+        pk=user_id,
+        role__in=[User.Role.CLIENT, User.Role.EDITOR],
+        is_active=True,
+    ).first()
 
 
 def _clear_password_reset(request):
@@ -273,7 +276,8 @@ def _clear_password_reset(request):
         "password_reset_email",
         "password_reset_user_id",
         "password_reset_verified_at",
-        "password_reset_grant",
+        "password_reset_role",
+        "password_reset_origin",
     ]:
         request.session.pop(key, None)
 
@@ -290,21 +294,41 @@ def password_reset_request(request):
         )
     if request.method == "POST":
         email = request.POST.get("email", "").strip().lower()[:254]
-        user = User.objects.filter(email__iexact=email, role="client", is_active=True).first()
+        origin = "editor" if request.POST.get("origin") == "editor" else "client"
+        user = User.objects.filter(
+            email__iexact=email,
+            role__in=[User.Role.CLIENT, User.Role.EDITOR],
+            is_active=True,
+        ).first()
         _clear_password_reset(request)
         request.session["password_reset_email"] = email
+        request.session["password_reset_origin"] = origin
         if user:
             try:
-                send_password_reset_email(user.email)
+                if user.role == User.Role.EDITOR:
+                    send_verification_email(user.email)
+                else:
+                    send_password_reset_email(user.email)
             except (VerificationCooldown, VerificationServiceUnavailable):
                 # Keep the response identical so provider state cannot reveal account existence.
                 pass
         messages.success(
             request,
-            "If an eligible client account matches that email, a six-digit reset code has been sent.",
+            "If an eligible account matches that email, a six-digit reset code has been sent.",
         )
         return redirect("password_reset_verify")
-    return render(request, "password_reset_request.html", {"title": "Reset your password"})
+    origin = (
+        "editor"
+        if request.GET.get("from") == "editor"
+        or request.session.get("password_reset_origin") == "editor"
+        else "client"
+    )
+    request.session["password_reset_origin"] = origin
+    return render(
+        request,
+        "password_reset_request.html",
+        {"title": "Reset your password", "password_reset_origin": origin},
+    )
 
 
 def password_reset_verify(request):
@@ -325,10 +349,20 @@ def password_reset_verify(request):
         if not re.fullmatch(r"\d{6}", code):
             messages.error(request, "Enter the six digit code from your email.")
             return redirect("password_reset_verify")
-        user = User.objects.filter(email__iexact=email, role="client", is_active=True).first()
+        user = User.objects.filter(
+            email__iexact=email,
+            role__in=[User.Role.CLIENT, User.Role.EDITOR],
+            is_active=True,
+        ).first()
         try:
-            result, grant = (
-                check_password_reset_code(email, code) if user else ("invalid", None)
+            result = (
+                check_password_reset_code(
+                    email,
+                    code,
+                    code_type="email" if user.role == User.Role.EDITOR else "recovery",
+                )
+                if user
+                else "invalid"
             )
         except VerificationServiceUnavailable:
             messages.error(request, "Password recovery is temporarily unavailable. Try again shortly.")
@@ -336,7 +370,7 @@ def password_reset_verify(request):
         if result == "verified" and user:
             request.session["password_reset_user_id"] = str(user.pk)
             request.session["password_reset_verified_at"] = timezone.now().isoformat()
-            request.session["password_reset_grant"] = grant
+            request.session["password_reset_role"] = user.role
             return redirect("password_reset_new")
         detail = {
             "expired": "That code has expired. Request a new code.",
@@ -347,7 +381,13 @@ def password_reset_verify(request):
     return render(
         request,
         "password_reset_verify.html",
-        {"title": "Enter your reset code", "password_reset_email": email},
+        {
+            "title": "Enter your reset code",
+            "password_reset_email": email,
+            "password_reset_origin": request.session.get(
+                "password_reset_origin", "client"
+            ),
+        },
     )
 
 
@@ -368,33 +408,28 @@ def password_reset_new(request):
         )
     form = PasswordResetSetForm(user, request.POST or None)
     if request.method == "POST" and form.is_valid():
-        try:
-            provider_updated = update_recovered_password(
-                request.session.get("password_reset_grant", ""),
-                form.cleaned_data["new_password1"],
-            )
-        except VerificationServiceUnavailable:
-            messages.error(
-                request,
-                "Password recovery is temporarily unavailable. Try again shortly.",
-            )
-            return redirect("password_reset_new")
-        if not provider_updated:
-            _clear_password_reset(request)
-            messages.error(request, "Your verified reset session expired. Request a new code.")
-            return redirect("password_reset_request")
         with transaction.atomic():
-            locked_user = User.objects.select_for_update().get(pk=user.pk, role="client", is_active=True)
+            locked_user = User.objects.select_for_update().get(
+                pk=user.pk,
+                role__in=[User.Role.CLIENT, User.Role.EDITOR],
+                is_active=True,
+            )
             previous_session_key = locked_user.active_session_key
             locked_user.set_password(form.cleaned_data["new_password1"])
             locked_user.active_session_key = ""
             locked_user.save(update_fields=["password", "active_session_key"])
             if previous_session_key:
                 Session.objects.filter(session_key=previous_session_key).delete()
-            audit(locked_user, "client.password_reset", locked_user.pk, {"method": "supabase_recovery_otp"})
+            audit(
+                locked_user,
+                f"{locked_user.role}.password_reset",
+                locked_user.pk,
+                {"method": "supabase_email_otp"},
+            )
+        destination = "editor_login" if locked_user.role == User.Role.EDITOR else "login"
         _clear_password_reset(request)
         messages.success(request, "Your password has been reset. Log in with your new password.")
-        return redirect("login")
+        return redirect(destination)
     return render(
         request,
         "password_reset_new.html",
