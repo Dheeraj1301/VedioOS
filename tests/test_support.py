@@ -37,7 +37,6 @@ class SupportWorkflowTests(TestCase):
         response = self.browser(self.client_user).post(
             "/client/support/create/",
             {
-                "subject": "Help with my edit",
                 "category": "project",
                 "body": "Please check the project status.",
                 "project": self.project.id,
@@ -52,6 +51,7 @@ class SupportWorkflowTests(TestCase):
         support_request = self.open_request()
         self.assertEqual(support_request.client, self.client_profile)
         self.assertEqual(support_request.project, self.project)
+        self.assertEqual(support_request.subject, "Project help: Client project")
         self.assertEqual(support_request.messages.count(), 1)
         self.assertTrue(
             Notification.objects.filter(
@@ -76,10 +76,11 @@ class SupportWorkflowTests(TestCase):
         self.assertContains(admin_detail, "Send reply")
 
         client_list = self.browser(self.client_user).get("/client/support/")
+        self.assertNotContains(client_list, 'name="subject"')
         self.assertContains(client_list, ">View</a>")
-        self.assertNotContains(client_list, "Help with my edit")
+        self.assertNotContains(client_list, "Project help: Client project")
         admin_list = self.browser(self.admin).get("/admin/support/?status=all")
-        self.assertContains(admin_list, "Help with my edit")
+        self.assertContains(admin_list, "Project help: Client project")
 
     def test_cross_client_case_and_project_are_denied(self):
         support_request = self.open_request()
@@ -89,7 +90,6 @@ class SupportWorkflowTests(TestCase):
             other.post(
                 "/client/support/create/",
                 {
-                    "subject": "Invalid project",
                     "category": "project",
                     "body": "Trying another project.",
                     "project": self.project.id,

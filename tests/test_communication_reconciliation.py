@@ -31,7 +31,6 @@ class CommunicationReconciliationTests(TestCase):
         )
         self.support_request = create_support_request(
             self.client_profile.user,
-            "Project help",
             "project",
             "Please check the current status.",
             self.project.pk,

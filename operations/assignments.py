@@ -262,12 +262,17 @@ def write_assignment(user, project, editor, policy, reason, current=None, automa
             "mode": snapshot["mode"],
         },
     )
-    notify(editor.user, project, f"assignment:{assignment.pk}:editor", "A project has been assigned to you.")
+    notify(
+        editor.user,
+        project,
+        f"assignment:{assignment.pk}:editor",
+        "Assignment confirmed. Review the project workspace for the saved delivery terms and your privacy, file-handling, communication, and delivery responsibilities.",
+    )
     notify(
         project.client.user,
         project,
         f"assignment:{assignment.pk}:client",
-        "An editor has been assigned to your project.",
+        "Project assignment confirmed. Review the project workspace for the assigned-editor update and the saved service, delivery, cancellation, and refund terms.",
     )
     return assignment
 

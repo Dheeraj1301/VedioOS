@@ -39,7 +39,6 @@ def client_support(request):
 def create_support(request):
     if set(request.POST) - {
         "csrfmiddlewaretoken",
-        "subject",
         "category",
         "body",
         "project",
@@ -51,7 +50,6 @@ def create_support(request):
     try:
         support_request = create_support_request(
             request.user,
-            request.POST.get("subject"),
             request.POST.get("category"),
             request.POST.get("body"),
             request.POST.get("project"),

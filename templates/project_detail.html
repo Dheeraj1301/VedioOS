@@ -27,6 +27,16 @@
     <h3>Music</h3><p>{{ project.get_song_choice_display }}</p><p class="preserve-lines">{{ project.song_information }}</p>
     {% if project.call_before or project.call_after %}<h3>Consultation preferences</h3><p>{% if project.call_before %}Before editing. {% endif %}{% if project.call_after %}After the draft.{% endif %} Consultation requests are created after confirmed payment. {% for call in calls %}<br>{{ call.get_stage_display }}: {{ call.status }}{% if call.scheduled_at %} on {{ call.scheduled_at|date:"M j, Y H:i" }} UTC{% endif %}.{% empty %}No paid consultation request yet.{% endfor %}</p>{% endif %}
   </section>
+  {% if project.status != 'payment_pending' and project.order.terms_snapshot %}
+  <section class="panel detail-panel"><h2>Confirmation &amp; responsibilities</h2>
+    {% if request.user.role == 'editor' %}<p>This assignment is confirmed for your account. Keep project files private, preserve originals, communicate through the protected workspace, and deliver only against the saved scope and delivery terms.</p>
+    {% elif request.user.role == 'client' %}<p>Your project agreement remains the accepted quotation below. Use the protected workspace for project communication and support.</p>
+    {% else %}<p>The participants are working under this project's accepted, immutable agreement.</p>{% endif %}
+    <h3>Service agreement</h3><p class="preserve-lines">{{ project.order.terms_snapshot.terms.terms }}</p>
+    <h3>Delivery</h3><p class="preserve-lines">{{ project.order.terms_snapshot.terms.delivery_terms }}</p>
+    <h3>Cancellation &amp; refunds</h3><p class="preserve-lines">{{ project.order.terms_snapshot.terms.refund_terms }}</p>
+  </section>
+  {% endif %}
   <section class="panel detail-panel"><div class="panel-heading"><h2>Project files</h2><span class="muted">Original quality</span></div><div id="file-list">{% for file in files %}<div class="file-row"><div><strong>{{ file.filename }}</strong><p>{{ file.get_category_display }} · {{ file.size_bytes|filesizeformat }}</p></div><button class="text-button download-button" data-file-id="{{ file.id }}" aria-label="Download {{ file.filename }} in original quality">Download ↓</button></div>{% empty %}<p class="muted">No files uploaded yet. Add your footage below.</p>{% endfor %}</div><p id="download-status" role="status" aria-live="polite"></p></section>
   {% if project.status != 'payment_pending' %}{% include 'delivery.html' %}{% endif %}
 </div>{% if request.user.role != 'client' %}<aside>

@@ -260,8 +260,45 @@ class AssignmentTests(TestCase):
         self.assertEqual(process_queue(self.admin), (1, 0))
         self.assertTrue(AuditLog.objects.filter(action="project.assigned", target_id=project.id).exists())
         self.assertTrue(
+            Notification.objects.filter(
+                project=project,
+                recipient=project.client.user,
+                message__startswith="Project assignment confirmed.",
+            ).exists()
+        )
+        self.assertTrue(
+            Notification.objects.filter(
+                project=project,
+                message__startswith="Assignment confirmed.",
+                delivery__state="held",
+            ).exists()
+        )
+        self.assertTrue(
             AuditLog.objects.filter(action="project.complexity_reviewed", target_id=project.id).exists()
         )
+
+    def test_assigned_participants_see_saved_terms_and_responsibilities(self):
+        project = self.queue()
+        project.order.terms_snapshot = {
+            "terms": {
+                "terms": "Synthetic service responsibilities.",
+                "delivery_terms": "Synthetic delivery responsibilities.",
+                "refund_terms": "Synthetic cancellation and refund terms.",
+            }
+        }
+        project.order.save(update_fields=["terms_snapshot", "updated_at"])
+        assignment = assign_next(project.id)
+
+        self.client.force_login(project.client.user)
+        client_page = self.client.get(f"/client/projects/{project.id}/")
+        self.assertContains(client_page, "Confirmation &amp; responsibilities")
+        self.assertContains(client_page, "Synthetic cancellation and refund terms.")
+
+        self.client.force_login(assignment.editor.user)
+        editor_page = self.client.get(f"/editor/projects/{project.id}/")
+        self.assertContains(editor_page, "Confirmation &amp; responsibilities")
+        self.assertContains(editor_page, "Keep project files private")
+        self.assertContains(editor_page, "Synthetic delivery responsibilities.")
 
     def test_availability_page_and_api_are_read_only_and_derived(self):
         editor = self.editors[0]

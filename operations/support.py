@@ -60,11 +60,10 @@ def _text(raw, label, limit):
 
 
 @transaction.atomic
-def create_support_request(user, subject, category, body, project_id, request_key):
+def create_support_request(user, category, body, project_id, request_key):
     if user.role != "client" or not user.is_active:
         raise PermissionDenied
     key = _key(request_key)
-    subject = _text(subject, "a subject", 160)
     body = _text(body, "a message", 5000)
     if category not in SupportRequest.Category.values:
         raise ValidationError("Choose a valid support category.")
@@ -74,6 +73,8 @@ def create_support_request(user, subject, category, body, project_id, request_ke
             project = Project.objects.get(pk=project_id, client=user.client_profile)
         except (Project.DoesNotExist, ValueError, TypeError):
             raise PermissionDenied from None
+    category_label = dict(SupportRequest.Category.choices)[category]
+    subject = f"{category_label}: {project.title}" if project else category_label
     existing = SupportRequest.objects.filter(request_key=key).first()
     if existing:
         first_message = existing.messages.order_by("created_at", "id").first()

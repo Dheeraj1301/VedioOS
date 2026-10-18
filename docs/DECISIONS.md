@@ -263,3 +263,15 @@ Status: approved and implemented
 Owner / source of explicit decision: owner request to simplify Payment History and add search and date filtering.
 
 Decision: remove the customer-facing payment-status tab row while retaining status badges, protected status filtering for existing deep links, and the separate administrator reconciliation controls. Client Payment History provides server-side search by project/payment reference and date ranges for 5, 10, 30, 90 and 365 days. Version History is hidden while a project remains payment-pending, but preserved after payment when delivery and revisions are relevant.
+
+## 2026-10-18 — Support intake and assignment confirmations
+
+Status: support workflow approved and implemented; production email and financial policies remain open
+
+Owner / source of explicit decision: owner request to remove the support Subject field, verify the client/team conversation, and confirm assignments and applicable responsibilities.
+
+Decision: clients select a support category, optionally select one of their own projects, and enter the request message. The server derives the durable request title from the category and project so removing the free-form Subject field does not weaken admin queues, idempotency, audit evidence, or reconciliation. Administrators remain the only users who can send shared replies or internal notes, and clients continue to see only their opening message and shared administrator replies.
+
+Every assignment creates separate durable confirmations for the client and assigned editor. The confirmation points each participant to the protected project workspace, where the immutable accepted service, delivery, cancellation/refund text and role responsibilities are visible. Each notification has an email-delivery record, but production email remains held until D12 supplies an approved provider, domain, templates, preferences and worker schedule.
+
+D05 and D11 remain open. No cancellation deadline, refund amount, eligibility rule or processing promise was invented; those financial policies require the owner's exact approval record before real checkout or public terms can be activated.
