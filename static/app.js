@@ -130,6 +130,7 @@ if (newOrderForm) {
   const pricingPeriodFields = [...newOrderForm.querySelectorAll('[name="pricing_period"]')];
   const lockedPricingPeriods = [...newOrderForm.querySelectorAll('[data-pricing-period-locked]')];
   const pricingPeriodUpcoming = newOrderForm.querySelector('#pricing-period-upcoming');
+  let selectedOrderChoice = newOrderForm.querySelector('[name="order_choice"]:checked')?.value || null;
   let estimateRequest = 0;
   const updatePlanPricing = () => {
     newOrderForm.querySelectorAll('[data-plan-card]').forEach(card => {
@@ -153,8 +154,6 @@ if (newOrderForm) {
     updatePlanPricing();
   }));
   updatePlanPricing();
-  [...newOrderForm.querySelectorAll('[name="order_choice"]')]
-    .find(field => field.value === newOrderForm.dataset.selectedChoice)?.click();
   const updateOrderFields = () => {
     const selectedChoice = newOrderForm.querySelector('[name="order_choice"]:checked')?.value || '';
     const custom = selectedChoice === 'custom';
@@ -176,7 +175,7 @@ if (newOrderForm) {
     const uploadsFontInspiration = wording && fontSelection.value === 'font_inspiration';
     fontInspiration.hidden = !uploadsFontInspiration;
     fontInspirationInput.disabled = !uploadsFontInspiration;
-    if (!uploadsFontInspiration) {
+    if (custom && !uploadsFontInspiration) {
       fontInspirationInput.value = '';
       announce(fontInspirationStatus, '');
     }
@@ -213,10 +212,27 @@ if (newOrderForm) {
       if (requestNumber === estimateRequest) announce(estimate, `Estimate unavailable: ${error.message}`);
     }
   };
+  newOrderForm.addEventListener('click', event => {
+    const choice = event.target.closest('[name="order_choice"]');
+    if (!choice || choice.disabled) return;
+    if (selectedOrderChoice === choice.value) {
+      window.setTimeout(() => {
+        choice.checked = false;
+        selectedOrderChoice = null;
+        updateOrderFields();
+      }, 0);
+      return;
+    }
+    selectedOrderChoice = choice.value;
+  });
   newOrderForm.addEventListener('change', event => {
     if (event.target.name === 'pricing_period') updatePlanPricing();
+    if (event.target.name === 'order_choice') {
+      selectedOrderChoice = event.target.checked ? event.target.value : null;
+    }
     updateOrderFields();
   });
+  updateOrderFields();
   const inspirationBox = newOrderForm.querySelector('.inspiration-upload-box');
   const clipInput = newOrderForm.querySelector('.brief-upload-files');
   const clipStatus = newOrderForm.querySelector('.brief-upload-status');
