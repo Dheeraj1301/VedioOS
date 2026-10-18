@@ -242,3 +242,7 @@ Client communication moved from project detail to dedicated list and project-sco
 ### 2026-10-14 custom-form reliability evidence
 
 Custom briefs now persist a validated inspiration URL, retain bound values and font choices on invalid submissions, focus the first invalid field, expose audited per-file removal for editable unpaid briefs, and enforce the three-reference cap against ready plus active pending files. Direct uploads retry transient PUT/verification failures and retain the remaining queue behind an explicit Retry action without duplicating completed files. The opt-in Edge recovery test passes with two forced connection failures, three-of-four selection enforcement and persisted-file removal. Additive migration `core.0015` is applied to the selected private Supabase schema after a verified 47-table/474-row ignored snapshot; RLS and browser-role isolation remain intact.
+
+### 2026-10-18 payment-history responsive evidence
+
+The client payment-history search and date-range controls now use a dedicated responsive layout. The expanded date menu remains inside the containing panel on desktop and stacks at full width on narrow screens, and the stylesheet cache key ensures the corrected layout replaces older cached CSS. The Edge lifecycle check asserts that the menu is visibly expanded and not clipped, captures desktop/mobile payment-history and quotation-summary views, verifies no horizontal page overflow, and completes the private upload/download integrity and role-isolation journey. No database migration is required.

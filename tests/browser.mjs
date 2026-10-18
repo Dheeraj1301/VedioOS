@@ -58,7 +58,19 @@ try {
   await page.getByLabel('Search payment history').waitFor();
   await page.getByText('Filter by date', {exact: true}).click();
   await page.getByText('Last 10 days', {exact: true}).waitFor();
+  const filterLayout = await page.locator('.payment-history-controls').evaluate(form => {
+    const menu = form.querySelector('.filter-popover').getBoundingClientRect();
+    const panel = form.getBoundingClientRect();
+    return {menuHeight: menu.height, menuBottom: menu.bottom, panelBottom: panel.bottom};
+  });
+  assert(filterLayout.menuHeight > 200, 'Payment date options should be visibly expanded');
+  assert(filterLayout.menuBottom <= filterLayout.panelBottom + 1, 'Payment date options should not be clipped');
   assert.equal(await page.locator('[aria-label="Filter payment history"]').count(), 0);
+  await page.screenshot({path: '.runtime/screenshots/payment-history-desktop.png', fullPage: true});
+  await page.setViewportSize({width: 390, height: 844});
+  await noOverflow();
+  await page.screenshot({path: '.runtime/screenshots/payment-history-mobile.png', fullPage: true});
+  await page.setViewportSize({width: 1440, height: 1000});
   await page.goto(`${base}/client/new-order/`);
   await page.getByText('Customize my edit', {exact: true}).click();
   await page.getByLabel('Reel duration').selectOption('30_50');
@@ -72,6 +84,11 @@ try {
   const projectUrl = page.url();
   const projectId = projectUrl.split('/').filter(Boolean).at(-1);
   await page.getByRole('heading', {name: 'Quotation details'}).waitFor();
+  await page.screenshot({path: '.runtime/screenshots/order-summary-desktop.png', fullPage: true});
+  await page.setViewportSize({width: 390, height: 844});
+  await noOverflow();
+  await page.screenshot({path: '.runtime/screenshots/order-summary-mobile.png', fullPage: true});
+  await page.setViewportSize({width: 1440, height: 1000});
   await page.goto(`${base}/client/projects/${projectId}/`);
   await page.getByText('browser-original.mp4', {exact: true}).waitFor({timeout: 60000});
   const [download] = await Promise.all([page.waitForEvent('download'), page.getByRole('button', {name: 'Download'}).click()]);

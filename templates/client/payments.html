@@ -4,9 +4,9 @@
 <div class="page-heading">
   <div><p class="eyebrow">Your account</p><h1>Payment history</h1><p class="muted">Search your payment records or narrow them by date. Receipts are available only after server-confirmed payment.</p></div>
 </div>
-<form class="panel detail-panel" method="get" role="search">
+<form class="panel detail-panel payment-history-controls" method="get" role="search">
   <label for="payment-search">Search payment history</label>
-  <div class="feature-row">
+  <div class="payment-history-toolbar">
     <input id="payment-search" name="q" type="search" maxlength="120" value="{{ payment_search }}" placeholder="Project name or payment reference">
     <button class="button" type="submit">Search</button>
     <details class="editor-filter">
