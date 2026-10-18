@@ -44,8 +44,8 @@ try {
   await page.getByLabel('Password confirmation').fill(password);
   await page.getByRole('button', {name: 'Create account'}).click();
   await page.waitForURL(`${base}/verify-email/`);
-  await page.getByRole('heading', {name: 'Verify your email.'}).waitFor();
-  await page.getByRole('button', {name: 'Resend verification link'}).waitFor();
+  await page.getByRole('heading', {name: 'Check your email'}).waitFor();
+  await page.getByRole('button', {name: 'Send a new code'}).waitFor();
   await login(fixture.client.email, fixture.password);
   await page.screenshot({path: '.runtime/screenshots/client-desktop.png', fullPage: true});
   assert.equal((await context.request.get(`${base}/api/areas/admin/`)).status(), 403);
