@@ -476,6 +476,28 @@ if (newOrderForm) {
   }
 }
 
+document.querySelectorAll('[data-project-filter]').forEach(panel => {
+  const select = panel.querySelector('[data-project-status-filter]');
+  const rows = [...panel.querySelectorAll('[data-project-row]')];
+  const empty = panel.querySelector('[data-project-filter-empty]');
+  const summary = panel.querySelector('[data-project-filter-summary]');
+  if (!select || !empty || !summary) return;
+  const applyProjectFilter = () => {
+    const selected = select.value;
+    let visibleCount = 0;
+    rows.forEach(row => {
+      const matches = selected === 'all' || row.dataset.statusGroup === selected;
+      row.hidden = !matches;
+      if (matches) visibleCount += 1;
+    });
+    empty.hidden = visibleCount !== 0 || rows.length === 0;
+    const label = select.options[select.selectedIndex].text;
+    summary.textContent = `${visibleCount} ${label === 'All' ? '' : `${label.toLowerCase()} `}project${visibleCount === 1 ? '' : 's'}`;
+  };
+  select.addEventListener('change', applyProjectFilter);
+  applyProjectFilter();
+});
+
 const pricingCurrency = document.querySelector('#id_currency');
 const majorUnitInputs = [...document.querySelectorAll('[data-money-input]')];
 if (pricingCurrency && majorUnitInputs.length) {

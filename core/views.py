@@ -714,8 +714,44 @@ def _project_form(request, project=None, *, create_new=False):
 
 @role_required("client")
 def my_projects(request):
+    status_groups = {
+        "pending": {
+            Project.Status.PENDING,
+            Project.Status.PAID,
+            Project.Status.WAITING,
+        },
+        "ongoing": {
+            Project.Status.ASSIGNED,
+            Project.Status.EDITING,
+            Project.Status.DRAFT,
+            Project.Status.REVIEW,
+            Project.Status.REVISION_REQUESTED,
+            Project.Status.REVISING,
+            Project.Status.FINAL,
+        },
+        "completed": {Project.Status.COMPLETED},
+        "cancelled": {Project.Status.CANCELLED},
+    }
+    projects = list(visible_projects(request.user))
+    for project in projects:
+        project.client_status_group = next(
+            (group for group, statuses in status_groups.items() if project.status in statuses),
+            "ongoing",
+        )
     return render(
-        request, "projects.html", {"projects": visible_projects(request.user), "title": "My projects"}
+        request,
+        "projects.html",
+        {
+            "projects": projects,
+            "title": "My projects",
+            "project_status_filters": (
+                ("all", "All"),
+                ("pending", "Pending"),
+                ("ongoing", "Ongoing"),
+                ("completed", "Completed"),
+                ("cancelled", "Cancelled"),
+            ),
+        },
     )
 
 
