@@ -26,6 +26,7 @@ from .email_verification import (
     check_verification_code,
     send_password_reset_email,
     send_verification_email,
+    update_recovered_password,
 )
 from .forms import LoginForm, PasswordResetSetForm, ProjectForm, RegistrationForm
 from .models import (
@@ -268,7 +269,12 @@ def _password_reset_user(request):
 
 
 def _clear_password_reset(request):
-    for key in ["password_reset_email", "password_reset_user_id", "password_reset_verified_at"]:
+    for key in [
+        "password_reset_email",
+        "password_reset_user_id",
+        "password_reset_verified_at",
+        "password_reset_grant",
+    ]:
         request.session.pop(key, None)
 
 
@@ -321,13 +327,16 @@ def password_reset_verify(request):
             return redirect("password_reset_verify")
         user = User.objects.filter(email__iexact=email, role="client", is_active=True).first()
         try:
-            result = check_password_reset_code(email, code) if user else "invalid"
+            result, grant = (
+                check_password_reset_code(email, code) if user else ("invalid", None)
+            )
         except VerificationServiceUnavailable:
             messages.error(request, "Password recovery is temporarily unavailable. Try again shortly.")
             return redirect("password_reset_verify")
         if result == "verified" and user:
             request.session["password_reset_user_id"] = str(user.pk)
             request.session["password_reset_verified_at"] = timezone.now().isoformat()
+            request.session["password_reset_grant"] = grant
             return redirect("password_reset_new")
         detail = {
             "expired": "That code has expired. Request a new code.",
@@ -359,6 +368,21 @@ def password_reset_new(request):
         )
     form = PasswordResetSetForm(user, request.POST or None)
     if request.method == "POST" and form.is_valid():
+        try:
+            provider_updated = update_recovered_password(
+                request.session.get("password_reset_grant", ""),
+                form.cleaned_data["new_password1"],
+            )
+        except VerificationServiceUnavailable:
+            messages.error(
+                request,
+                "Password recovery is temporarily unavailable. Try again shortly.",
+            )
+            return redirect("password_reset_new")
+        if not provider_updated:
+            _clear_password_reset(request)
+            messages.error(request, "Your verified reset session expired. Request a new code.")
+            return redirect("password_reset_request")
         with transaction.atomic():
             locked_user = User.objects.select_for_update().get(pk=user.pk, role="client", is_active=True)
             previous_session_key = locked_user.active_session_key

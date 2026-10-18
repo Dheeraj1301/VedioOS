@@ -1,9 +1,11 @@
 """Supabase Auth-backed client email verification."""
 
-import secrets
+import base64
+import hashlib
 from urllib.parse import urljoin
 
 import requests
+from cryptography.fernet import Fernet, InvalidToken
 from django.conf import settings
 
 
@@ -84,8 +86,41 @@ def send_password_reset_email(email, *, enforce_cooldown=True):
     )
 
 
+def _recovery_cipher():
+    key = hashlib.sha256(f"vedioos-password-recovery:{settings.SECRET_KEY}".encode("utf-8")).digest()
+    return Fernet(base64.urlsafe_b64encode(key))
+
+
+def open_password_reset_grant(grant):
+    """Open an encrypted provider token only during the short reset window."""
+    try:
+        return _recovery_cipher().decrypt(grant.encode("ascii"), ttl=15 * 60).decode("utf-8")
+    except (AttributeError, UnicodeError, InvalidToken, ValueError):
+        return None
+
+
+def update_recovered_password(grant, password):
+    """Apply the chosen password using the verified Supabase recovery session."""
+    access_token = open_password_reset_grant(grant)
+    if not access_token:
+        return False
+    base_url, key = _auth_configuration()
+    try:
+        response = requests.put(
+            urljoin(base_url, "auth/v1/user"),
+            json={"password": password},
+            headers={"apikey": key, "Authorization": f"Bearer {access_token}"},
+            timeout=settings.SUPABASE_AUTH_TIMEOUT_SECONDS,
+        )
+    except requests.RequestException as exc:
+        raise VerificationServiceUnavailable("Supabase Auth could not update the recovered account.") from exc
+    if not 200 <= response.status_code < 300:
+        raise VerificationServiceUnavailable("Supabase Auth could not update the recovered account.")
+    return True
+
+
 def check_password_reset_code(email, code):
-    """Validate a recovery OTP, rotate the provider password, and discard its tokens."""
+    """Validate a recovery OTP and return an encrypted, short-lived reset grant."""
     status, body = _post(
         "auth/v1/verify",
         {"email": email, "token": code, "type": "recovery"},
@@ -95,31 +130,15 @@ def check_password_reset_code(email, code):
         confirmed_email = str(user.get("email") or "").strip().lower()
         access_token = body.get("access_token")
         if confirmed_email != email.strip().lower():
-            return "invalid"
+            return "invalid", None
         if not isinstance(access_token, str) or not access_token:
             raise VerificationServiceUnavailable("Supabase Auth returned an incomplete recovery session.")
-        base_url, key = _auth_configuration()
-        provider_password = f"Reset-{secrets.token_urlsafe(48)}!9aA"
-        try:
-            update = requests.put(
-                urljoin(base_url, "auth/v1/user"),
-                json={"password": provider_password},
-                headers={"apikey": key, "Authorization": f"Bearer {access_token}"},
-                timeout=settings.SUPABASE_AUTH_TIMEOUT_SECONDS,
-            )
-        except requests.RequestException as exc:
-            raise VerificationServiceUnavailable(
-                "Supabase Auth could not secure the recovered account."
-            ) from exc
-        if not 200 <= update.status_code < 300:
-            raise VerificationServiceUnavailable(
-                "Supabase Auth could not secure the recovered account."
-            )
-        return "verified"
+        grant = _recovery_cipher().encrypt(access_token.encode("utf-8")).decode("ascii")
+        return "verified", grant
     if status == 429:
-        return "locked"
+        return "locked", None
     if body.get("code") in {"otp_expired", "expired_token"}:
-        return "expired"
+        return "expired", None
     if status in {400, 401, 403, 422}:
-        return "invalid"
+        return "invalid", None
     raise VerificationServiceUnavailable("Supabase Auth could not verify the recovery code.")

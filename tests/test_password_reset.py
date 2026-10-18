@@ -47,7 +47,10 @@ class PasswordResetWorkflowTests(TestCase):
 
     def verify_code(self, browser):
         self.reset_rate_limit()
-        with patch("core.views.check_password_reset_code", return_value="verified") as verify:
+        with patch(
+            "core.views.check_password_reset_code",
+            return_value=("verified", "encrypted-recovery-grant"),
+        ) as verify:
             response = browser.post("/password-reset/code/", {"code": "123456"})
         self.assertRedirects(response, "/password-reset/new/")
         verify.assert_called_once_with(self.user.email, "123456")
@@ -73,9 +76,7 @@ class PasswordResetWorkflowTests(TestCase):
             "core.views.send_password_reset_email",
             side_effect=VerificationServiceUnavailable("provider unavailable"),
         ):
-            response = Browser().post(
-                "/password-reset/", {"email": self.user.email}, follow=True
-            )
+            response = Browser().post("/password-reset/", {"email": self.user.email}, follow=True)
         self.assertContains(response, "If an eligible client account matches that email")
 
     def test_invalid_expired_and_unavailable_codes_do_not_create_grant(self):
@@ -86,7 +87,7 @@ class PasswordResetWorkflowTests(TestCase):
         ]:
             browser = self.request_code()
             self.reset_rate_limit()
-            with patch("core.views.check_password_reset_code", return_value=result):
+            with patch("core.views.check_password_reset_code", return_value=(result, None)):
                 response = browser.post("/password-reset/code/", {"code": "123456"}, follow=True)
             self.assertContains(response, text)
             self.assertNotIn("password_reset_user_id", browser.session)
@@ -109,19 +110,19 @@ class PasswordResetWorkflowTests(TestCase):
         self.assertContains(page, "Step 3 of 3")
         self.assertContains(page, "Confirm new password")
         self.reset_rate_limit()
-        response = reset.post(
-            "/password-reset/new/",
-            {"new_password1": NEW_PASSWORD, "new_password2": NEW_PASSWORD},
-            follow=True,
-        )
+        with patch("core.views.update_recovered_password", return_value=True) as update_provider:
+            response = reset.post(
+                "/password-reset/new/",
+                {"new_password1": NEW_PASSWORD, "new_password2": NEW_PASSWORD},
+                follow=True,
+            )
+        update_provider.assert_called_once_with("encrypted-recovery-grant", NEW_PASSWORD)
         self.assertContains(response, "Your password has been reset")
         self.user.refresh_from_db()
         self.assertTrue(self.user.check_password(NEW_PASSWORD))
         self.assertEqual(self.user.active_session_key, "")
         self.assertFalse(Session.objects.filter(session_key=previous_session_key).exists())
-        self.assertTrue(
-            AuditLog.objects.filter(action="client.password_reset", actor=self.user).exists()
-        )
+        self.assertTrue(AuditLog.objects.filter(action="client.password_reset", actor=self.user).exists())
         self.assertRedirects(
             signed_in.get("/dashboard/"),
             "/login/?next=%2Fdashboard%2F",
@@ -150,9 +151,24 @@ class PasswordResetWorkflowTests(TestCase):
         self.assertTrue(self.user.check_password(OLD_PASSWORD))
 
         session = browser.session
-        session["password_reset_verified_at"] = (
-            timezone.now() - timedelta(minutes=11)
-        ).isoformat()
+        session["password_reset_verified_at"] = (timezone.now() - timedelta(minutes=11)).isoformat()
         session.save()
         expired = browser.get("/password-reset/new/", follow=True)
         self.assertContains(expired, "verified reset session expired")
+
+    def test_provider_failure_does_not_change_local_password(self):
+        browser = self.request_code()
+        self.verify_code(browser)
+        self.reset_rate_limit()
+        with patch(
+            "core.views.update_recovered_password",
+            side_effect=VerificationServiceUnavailable("provider unavailable"),
+        ):
+            response = browser.post(
+                "/password-reset/new/",
+                {"new_password1": NEW_PASSWORD, "new_password2": NEW_PASSWORD},
+                follow=True,
+            )
+        self.assertContains(response, "Password recovery is temporarily unavailable")
+        self.user.refresh_from_db()
+        self.assertTrue(self.user.check_password(OLD_PASSWORD))
