@@ -75,7 +75,7 @@ The new-order customization controls now request a live server-authoritative est
 - Publishing validates required plan fields. Enabling quotes requires service, delivery, refund and tax terms. No commercial defaults or sample prices are seeded into the connected database.
 - Client → Project → Choose package / quote: select an active plan or custom base plus selected services. The server calculates the total and rejects submitted prices. Unavailable/mixed-currency items cannot be quoted.
 - Quote review displays itemized prices and commercial terms. Explicit acceptance saves a snapshot. Catalog changes cannot rewrite displayed quotes or accepted orders. A newer quote supersedes an older unaccepted review. Starting payment locks the agreement against repricing.
-- Protected order summaries, paid/unpaid admin filters, payment history and confirmed-payment receipts. Receipts are payment records, not tax invoices.
+- Protected order summaries, paid/unpaid admin filters, searchable/date-filtered client payment history and confirmed-payment receipts. Client status tabs are omitted while status remains visible per record and available to administrators. Receipts are payment records, not tax invoices.
 - An explicitly enabled **development sandbox** creates one retry-safe payment attempt per order and receives HMAC-authenticated events. Amount, currency, reference and order must match. Invalid/stale signatures and conflicting event IDs fail. Failure never activates work; duplicate success activates the existing project once; late failure cannot reverse success.
 - Payment confirmation time persists. Expected delivery stays unset until D06 specifies an executable deadline policy. No automatic assignment or earnings are enabled.
 

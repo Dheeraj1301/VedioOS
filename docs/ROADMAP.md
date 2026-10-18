@@ -53,11 +53,13 @@ The first-version scope is all 28 priorities in original brief section 34, cover
 
 **2026-10-09: market-reference quotation calibration.** Published Indian reel, colour-grading, captions/effects and cinematic-editing price ranges informed a higher ₹1,000–₹8,000 preview band. The active weighted policy now uses a ₹750 base and ₹150 per point, yielding ₹600 for colour grading, ₹1,560 for a normal 30–50 second edit with suggested music, and ₹4,320 for all seven features. Client copy is commercially readable while retaining an accurate no-live-charge disclosure at checkout.
 
-Unpaid custom orders can refresh an older quotation against current rates without mutating history. Pending payment sessions are cancelled, old accepted quotes remain auditable, and a new locked quotation/payment session is created; paid and cross-client requests fail closed.
+Unpaid custom orders can revise project details without mutating history. Pending payment sessions are cancelled, old accepted quotes remain auditable, and a new locked quotation/payment session is created; paid and cross-client requests fail closed.
 
 **2026-10-09: shared preview and payment-path guard.** Client project details now expose the correct next action for incomplete briefs, saved custom quotations and plan orders, restoring a visible path from quotation to payment. The team launcher verifies the selected Supabase database, private schema, Auth project, security posture and migration state before starting; it refuses an isolated SQLite preview so account and project writes cannot be mistaken for shared data.
 
 **2026-10-18: custom quotation summary navigation restored.** Custom briefs now return to the existing order-summary page, where the complete saved breakdown, private-file list, payment action and additional terms remain in their established order before and after payment navigation. The redundant saved-quotation banner and current-rate refresh action are removed. Edit Details safely reopens only unpaid custom orders, cancels pending payment sessions, preserves history and creates a new immutable quote from the revised brief.
+
+**2026-10-18: client payment-history discovery simplified.** Customer-facing status tabs were replaced with protected server-side search and a date-filter dropdown covering 5, 10, 30, 90 and 365 days. Status badges and administrator reconciliation filters remain. Payment-pending project screens no longer show delivery version history before that workflow is relevant.
 
 - Implement admin management of three plans and custom services with validated configuration.
 - Build plan/custom selection, backend price calculation, term snapshots, payment adapter, verified payment events, invoices/history foundations, and unique paid projects.

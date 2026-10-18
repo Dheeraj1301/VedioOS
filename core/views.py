@@ -36,7 +36,7 @@ from .models import (
     UploadPolicy,
     User,
 )
-from .payment_history import PAYMENT_STATUSES, payment_page
+from .payment_history import PAYMENT_DATE_RANGES, payment_page
 from .permissions import can_upload, project_for, role_required, visible_files, visible_projects
 from .sessions import (
     active_session_exists,
@@ -613,9 +613,17 @@ def project_detail(request, project_id, area):
 
 @role_required("client")
 def payment_history(request):
+    payment_search = request.GET.get("q", "").strip()
+    payment_date_range = request.GET.get("range", "all")
     payments, older_cursor, payment_filter = payment_page(
-        request.user, request.GET.get("before"), request.GET.get("status", "all")
+        request.user,
+        request.GET.get("before"),
+        request.GET.get("status", "all"),
+        query=payment_search,
+        date_range=payment_date_range,
     )
+    if payment_date_range not in PAYMENT_DATE_RANGES:
+        payment_date_range = "all"
     return render(
         request,
         "client/payments.html",
@@ -624,7 +632,10 @@ def payment_history(request):
             "payments": payments,
             "older_payment_cursor": older_cursor,
             "payment_filter": payment_filter,
-            "payment_statuses": PAYMENT_STATUSES,
+            "payment_search": payment_search,
+            "payment_date_range": payment_date_range,
+            "payment_date_label": PAYMENT_DATE_RANGES[payment_date_range][0],
+            "payment_date_ranges": PAYMENT_DATE_RANGES,
         },
     )
 

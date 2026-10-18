@@ -1,5 +1,8 @@
+from datetime import timedelta
+
 from django.test import Client as Browser
 from django.test import TestCase
+from django.utils import timezone
 from django.utils.html import strip_tags
 
 from core.models import Client, Order, Payment, Project, User
@@ -73,6 +76,51 @@ class PaymentHistoryTests(TestCase):
         self.assertFalse(any(payment.provider_reference == "other-payment" for payment in first.context["payments"]))
         filtered = browser.get("/client/payments/", {"status": "pending"})
         self.assertEqual([payment.id for payment in filtered.context["payments"]], [newer.id])
+
+    def test_client_history_uses_search_and_date_filter_without_status_tabs(self):
+        browser = self.browser(self.owner)
+        recent = Payment.objects.create(
+            order=self.order,
+            provider="synthetic",
+            provider_reference="searchable-reference",
+            amount_minor=2000,
+            currency="INR",
+            status="pending",
+        )
+        old = Payment.objects.create(
+            order=self.order,
+            provider="synthetic",
+            provider_reference="old-reference",
+            amount_minor=2000,
+            currency="INR",
+            status="failed",
+        )
+        Payment.objects.filter(pk=old.pk).update(created_at=timezone.now() - timedelta(days=11))
+
+        page = browser.get("/client/payments/")
+        self.assertContains(page, "Search payment history")
+        self.assertContains(page, "Last 5 days")
+        self.assertContains(page, "Last 10 days")
+        self.assertContains(page, "Last 30 days")
+        self.assertContains(page, "Last 90 days")
+        self.assertContains(page, "Last year")
+        self.assertNotContains(page, 'aria-label="Filter payment history"')
+        self.assertNotContains(page, "?status=pending")
+
+        searched = browser.get("/client/payments/", {"q": "searchable-reference"})
+        self.assertEqual([payment.id for payment in searched.context["payments"]], [recent.id])
+        dated = browser.get("/client/payments/", {"q": "old-reference", "range": "10"})
+        self.assertEqual(list(dated.context["payments"]), [])
+
+    def test_payment_pending_project_hides_delivery_version_history(self):
+        browser = self.browser(self.owner)
+        pending = browser.get(f"/client/projects/{self.project.id}/")
+        self.assertNotContains(pending, "Version history")
+
+        self.project.status = Project.Status.EDITING
+        self.project.save(update_fields=["status", "updated_at"])
+        active = browser.get(f"/client/projects/{self.project.id}/")
+        self.assertContains(active, "Version history")
 
     def test_admin_ledger_includes_all_clients_and_is_role_protected(self):
         self.assertEqual(Browser().get("/admin/payments/").status_code, 302)

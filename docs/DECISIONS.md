@@ -255,3 +255,11 @@ Owner / source of explicit decision: owner request to restore the original proje
 Decision: use the existing protected order-summary page as the single custom quotation summary before and after payment navigation. Keep the immutable saved breakdown, private-file list, payment action and additional terms on that page; remove the redundant saved-quotation banner and current-rate refresh action. Edit Details may reopen only an unpaid custom order. Saving revisions cancels pending payment sessions, clears the previously accepted order snapshot without deleting history, and creates a new server-owned immutable quote. Paid and cross-client edits remain denied.
 
 Verification required: summary section order, persistent custom detail after payment starts, no refresh action or saved banner, functioning unpaid Edit Details, cancelled pending payment, preserved quote history, new quote from edited inputs, paid/cross-client denial and unchanged plan-order behavior.
+
+## 2026-10-18 — Client payment-history discovery controls
+
+Status: approved and implemented
+
+Owner / source of explicit decision: owner request to simplify Payment History and add search and date filtering.
+
+Decision: remove the customer-facing payment-status tab row while retaining status badges, protected status filtering for existing deep links, and the separate administrator reconciliation controls. Client Payment History provides server-side search by project/payment reference and date ranges for 5, 10, 30, 90 and 365 days. Version History is hidden while a project remains payment-pending, but preserved after payment when delivery and revisions are relevant.

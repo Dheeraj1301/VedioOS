@@ -54,6 +54,11 @@ try {
   await page.screenshot({path: '.runtime/screenshots/client-desktop.png', fullPage: true});
   assert.equal((await context.request.get(`${base}/api/areas/admin/`)).status(), 403);
   assert.equal((await context.request.get(`${base}/api/areas/editor/`)).status(), 403);
+  await page.goto(`${base}/client/payments/`);
+  await page.getByLabel('Search payment history').waitFor();
+  await page.getByText('Filter by date', {exact: true}).click();
+  await page.getByText('Last 10 days', {exact: true}).waitFor();
+  assert.equal(await page.locator('[aria-label="Filter payment history"]').count(), 0);
   await page.goto(`${base}/client/new-order/`);
   await page.getByText('Customize my edit', {exact: true}).click();
   await page.getByLabel('Reel duration').selectOption('30_50');
