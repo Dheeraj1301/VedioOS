@@ -100,11 +100,44 @@ class SupabasePasswordLoginTests(TestCase):
             AuditLog.objects.filter(actor=user, action="client.supabase_auth_linked").exists()
         )
 
+    @patch("core.supabase_auth.requests.get")
     @patch("core.supabase_auth.requests.post")
-    def test_reset_client_cannot_fall_back_to_old_supabase_password(self, post):
+    def test_reset_unlinked_client_can_establish_supabase_identity(self, post, get):
+        auth_id = uuid.uuid4()
         user = User.objects.create_user(
             "reset@example.test", "New-Local-83!Tree", name="Reset client"
         )
+        Client.objects.create(user=user)
+        AuditLog.objects.create(
+            actor=user,
+            action="client.password_reset",
+            target_id=str(user.pk),
+        )
+        post.return_value = response(200, {"access_token": "short-lived"})
+        get.return_value = response(
+            200,
+            {
+                "id": str(auth_id),
+                "email": user.email,
+                "confirmed_at": "2026-10-18T10:00:00Z",
+            },
+        )
+
+        login = self.client.post(
+            "/login/", {"username": user.email, "password": PASSWORD}
+        )
+
+        self.assertRedirects(login, "/dashboard/", fetch_redirect_response=False)
+        user.refresh_from_db()
+        self.assertEqual(user.supabase_auth_user_id, auth_id)
+
+    @patch("core.supabase_auth.requests.post")
+    def test_reset_linked_client_cannot_fall_back_to_old_supabase_password(self, post):
+        user = User.objects.create_user(
+            "linked-reset@example.test", "New-Local-83!Tree", name="Reset client"
+        )
+        user.supabase_auth_user_id = uuid.uuid4()
+        user.save(update_fields=["supabase_auth_user_id"])
         Client.objects.create(user=user)
         AuditLog.objects.create(
             actor=user,

@@ -162,7 +162,11 @@ def authenticate_supabase_client(email, password):
     existing = User.objects.filter(email__iexact=normalized_email).first()
     if existing and existing.role != User.Role.CLIENT:
         return None
-    if existing and existing.has_usable_password():
+    if (
+        existing
+        and existing.has_usable_password()
+        and existing.supabase_auth_user_id
+    ):
         from operations.models import AuditLog
 
         if AuditLog.objects.filter(
