@@ -6,7 +6,9 @@ from django.test import SimpleTestCase, override_settings
 from core.email_verification import (
     VerificationCooldown,
     VerificationServiceUnavailable,
+    check_password_reset_code,
     check_verification_code,
+    send_password_reset_email,
     send_verification_email,
 )
 
@@ -17,6 +19,42 @@ from core.email_verification import (
     SUPABASE_AUTH_TIMEOUT_SECONDS=7,
 )
 class SupabaseEmailVerificationTests(SimpleTestCase):
+    @patch("core.email_verification.requests.post")
+    def test_password_reset_uses_recovery_endpoint(self, post):
+        post.return_value = Mock(status_code=200, json=lambda: {})
+
+        send_password_reset_email("client@example.com")
+
+        self.assertEqual(post.call_args.args[0], "https://project.supabase.co/auth/v1/recover")
+        self.assertEqual(post.call_args.kwargs["json"], {"email": "client@example.com"})
+
+    @patch("core.email_verification.requests.put")
+    @patch("core.email_verification.requests.post")
+    def test_password_reset_code_uses_recovery_type_and_rotates_provider_password(self, post, put):
+        post.return_value = Mock(
+            status_code=200,
+            json=lambda: {
+                "access_token": "discarded-access-token",
+                "refresh_token": "discarded-refresh-token",
+                "user": {"email": "client@example.com"},
+            },
+        )
+        put.return_value = Mock(status_code=200)
+
+        result = check_password_reset_code("CLIENT@example.com", "654321")
+
+        self.assertEqual(result, "verified")
+        self.assertEqual(
+            post.call_args.kwargs["json"],
+            {"email": "CLIENT@example.com", "token": "654321", "type": "recovery"},
+        )
+        self.assertEqual(put.call_args.args[0], "https://project.supabase.co/auth/v1/user")
+        self.assertTrue(put.call_args.kwargs["json"]["password"].startswith("Reset-"))
+        self.assertEqual(
+            put.call_args.kwargs["headers"]["Authorization"],
+            "Bearer discarded-access-token",
+        )
+
     @patch("core.email_verification.requests.post")
     def test_send_requests_a_supabase_email_otp(self, post):
         post.return_value = Mock(status_code=200, json=lambda: {})

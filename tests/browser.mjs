@@ -41,6 +41,14 @@ try {
   await noOverflow();
   await page.screenshot({path: '.runtime/screenshots/landing-mobile.png', fullPage: true});
   await page.setViewportSize({width: 1440, height: 1000});
+  await page.goto(`${base}/login/`);
+  await page.getByRole('link', {name: 'Forgot password?'}).click();
+  await page.getByRole('heading', {name: 'Request a reset code'}).waitFor();
+  await page.screenshot({path: '.runtime/screenshots/password-reset-desktop.png', fullPage: true});
+  await page.setViewportSize({width: 390, height: 844});
+  await noOverflow();
+  await page.screenshot({path: '.runtime/screenshots/password-reset-mobile.png', fullPage: true});
+  await page.setViewportSize({width: 1440, height: 1000});
   await page.goto(`${base}/register/`);
   await page.getByLabel('Name', {exact: true}).fill('Browser Test Creator');
   await page.getByLabel('Email').fill(pendingClientEmail);
@@ -145,7 +153,7 @@ try {
   await noOverflow();
   await page.screenshot({path: '.runtime/screenshots/admin-mobile.png', fullPage: true});
   assert.deepEqual(errors, []);
-  console.log('PASS: desktop/mobile UI, client verification pending flow, editor-ID/client/admin login, admin approval, role isolation, project creation, direct upload integrity, and client-to-team support reply visibility. No page errors.');
+  console.log('PASS: desktop/mobile UI including password recovery, client verification pending flow, editor-ID/client/admin login, admin approval, role isolation, project creation, direct upload integrity, and client-to-team support reply visibility. No page errors.');
 } catch (error) {
   await page.screenshot({path: '.runtime/screenshots/failure.png', fullPage: true});
   console.error('Browser flow failed:', error.message);

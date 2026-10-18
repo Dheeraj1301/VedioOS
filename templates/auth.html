@@ -16,6 +16,7 @@
       {{ form.as_div }}
       <button class="button" type="submit">{{ button }} <span>↗</span></button>
     </form>
+    {% if mode == 'login' %}<p class="auth-switch"><a href="{% url 'password_reset_request' %}">Forgot password?</a></p>{% endif %}
     <p class="auth-switch">
       {% if mode == 'editor_login' %}
         Client or administrator? <a href="{% url 'login' %}">Use regular sign in</a>

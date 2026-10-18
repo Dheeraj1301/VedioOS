@@ -3,13 +3,14 @@ import hashlib
 import json
 import re
 import uuid
-from datetime import timedelta
+from datetime import datetime, timedelta
 from pathlib import PurePath
 
 from botocore.exceptions import BotoCoreError, ClientError
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import logout
+from django.contrib.sessions.models import Session
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import IntegrityError, transaction
 from django.db.models import F, Q
@@ -21,10 +22,12 @@ from django.views.decorators.http import require_GET, require_POST
 from .email_verification import (
     VerificationCooldown,
     VerificationServiceUnavailable,
+    check_password_reset_code,
     check_verification_code,
+    send_password_reset_email,
     send_verification_email,
 )
-from .forms import LoginForm, ProjectForm, RegistrationForm
+from .forms import LoginForm, PasswordResetSetForm, ProjectForm, RegistrationForm
 from .models import (
     AuthAttempt,
     Client,
@@ -51,6 +54,7 @@ from .v1 import v1_status
 FONT_REFERENCE_MAX_BYTES = 1024 * 1024
 FONT_IMAGE_EXTENSIONS = {".avif", ".bmp", ".gif", ".heic", ".heif", ".jpeg", ".jpg", ".png", ".tif", ".tiff", ".webp"}
 INSPIRATION_UPLOAD_LIMIT = 3
+PASSWORD_RESET_GRANT_MINUTES = 10
 
 
 def audit(user, action, target, detail=None):
@@ -247,6 +251,131 @@ def verification_success(request):
     if not request.user.is_authenticated:
         return redirect("login")
     return render(request, "verification_success.html", {"title": "Email verified"})
+
+
+def _password_reset_user(request):
+    user_id = request.session.get("password_reset_user_id")
+    verified_at = request.session.get("password_reset_verified_at")
+    try:
+        verified = datetime.fromisoformat(verified_at)
+        if timezone.is_naive(verified):
+            verified = timezone.make_aware(verified)
+    except (TypeError, ValueError):
+        return None
+    if verified < timezone.now() - timedelta(minutes=PASSWORD_RESET_GRANT_MINUTES):
+        return None
+    return User.objects.filter(pk=user_id, role="client", is_active=True).first()
+
+
+def _clear_password_reset(request):
+    for key in ["password_reset_email", "password_reset_user_id", "password_reset_verified_at"]:
+        request.session.pop(key, None)
+
+
+def password_reset_request(request):
+    if request.user.is_authenticated:
+        return redirect("dashboard")
+    if request.method == "POST" and auth_rate_limited(request):
+        return render(
+            request,
+            "error.html",
+            {"message": "Too many attempts. Please try again in 15 minutes."},
+            status=429,
+        )
+    if request.method == "POST":
+        email = request.POST.get("email", "").strip().lower()[:254]
+        user = User.objects.filter(email__iexact=email, role="client", is_active=True).first()
+        _clear_password_reset(request)
+        request.session["password_reset_email"] = email
+        if user:
+            try:
+                send_password_reset_email(user.email)
+            except (VerificationCooldown, VerificationServiceUnavailable):
+                # Keep the response identical so provider state cannot reveal account existence.
+                pass
+        messages.success(
+            request,
+            "If an eligible client account matches that email, a six-digit reset code has been sent.",
+        )
+        return redirect("password_reset_verify")
+    return render(request, "password_reset_request.html", {"title": "Reset your password"})
+
+
+def password_reset_verify(request):
+    if request.user.is_authenticated:
+        return redirect("dashboard")
+    email = request.session.get("password_reset_email", "")
+    if not email:
+        return redirect("password_reset_request")
+    if request.method == "POST" and auth_rate_limited(request):
+        return render(
+            request,
+            "error.html",
+            {"message": "Too many attempts. Please try again in 15 minutes."},
+            status=429,
+        )
+    if request.method == "POST":
+        code = request.POST.get("code", "").strip()
+        if not re.fullmatch(r"\d{6}", code):
+            messages.error(request, "Enter the six digit code from your email.")
+            return redirect("password_reset_verify")
+        user = User.objects.filter(email__iexact=email, role="client", is_active=True).first()
+        try:
+            result = check_password_reset_code(email, code) if user else "invalid"
+        except VerificationServiceUnavailable:
+            messages.error(request, "Password recovery is temporarily unavailable. Try again shortly.")
+            return redirect("password_reset_verify")
+        if result == "verified" and user:
+            request.session["password_reset_user_id"] = str(user.pk)
+            request.session["password_reset_verified_at"] = timezone.now().isoformat()
+            return redirect("password_reset_new")
+        detail = {
+            "expired": "That code has expired. Request a new code.",
+            "locked": "Too many incorrect attempts. Request a new code.",
+        }.get(result, "That code is invalid. Check the email and try again.")
+        messages.error(request, detail)
+        return redirect("password_reset_verify")
+    return render(
+        request,
+        "password_reset_verify.html",
+        {"title": "Enter your reset code", "password_reset_email": email},
+    )
+
+
+def password_reset_new(request):
+    if request.user.is_authenticated:
+        return redirect("dashboard")
+    user = _password_reset_user(request)
+    if not user:
+        _clear_password_reset(request)
+        messages.error(request, "Your verified reset session expired. Request a new code.")
+        return redirect("password_reset_request")
+    if request.method == "POST" and auth_rate_limited(request):
+        return render(
+            request,
+            "error.html",
+            {"message": "Too many attempts. Please try again in 15 minutes."},
+            status=429,
+        )
+    form = PasswordResetSetForm(user, request.POST or None)
+    if request.method == "POST" and form.is_valid():
+        with transaction.atomic():
+            locked_user = User.objects.select_for_update().get(pk=user.pk, role="client", is_active=True)
+            previous_session_key = locked_user.active_session_key
+            locked_user.set_password(form.cleaned_data["new_password1"])
+            locked_user.active_session_key = ""
+            locked_user.save(update_fields=["password", "active_session_key"])
+            if previous_session_key:
+                Session.objects.filter(session_key=previous_session_key).delete()
+            audit(locked_user, "client.password_reset", locked_user.pk, {"method": "supabase_recovery_otp"})
+        _clear_password_reset(request)
+        messages.success(request, "Your password has been reset. Log in with your new password.")
+        return redirect("login")
+    return render(
+        request,
+        "password_reset_new.html",
+        {"title": "Choose a new password", "form": form},
+    )
 
 
 def _login_view(request, *, editor_only=False):

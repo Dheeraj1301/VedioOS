@@ -1,5 +1,5 @@
 from django import forms
-from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
+from django.contrib.auth.forms import AuthenticationForm, SetPasswordForm, UserCreationForm
 from django.core.exceptions import ValidationError
 
 from .models import Plan, Project, User
@@ -75,6 +75,18 @@ class LoginForm(AuthenticationForm):
                 raise local_error
             self.confirm_login_allowed(self.user_cache)
             return self.cleaned_data
+
+
+class PasswordResetSetForm(SetPasswordForm):
+    def __init__(self, *args, **kwargs):
+        kwargs.setdefault("label_suffix", "")
+        super().__init__(*args, **kwargs)
+        self.fields["new_password1"].label = "New password"
+        self.fields["new_password2"].label = "Confirm new password"
+        self.fields["new_password1"].help_text = (
+            "Use at least 8 characters with an uppercase letter, lowercase letter, "
+            "number, and special character."
+        )
 
 
 class ProjectForm(forms.ModelForm):

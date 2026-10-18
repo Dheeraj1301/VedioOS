@@ -33,6 +33,8 @@ Application sessions, roles and project authorization use Django's shared `users
 
 Client email verification uses Supabase Auth to create, send and validate the six digit OTP. After successful validation, VedioOS activates the matching private `vedioos.users` profile and starts a Django application session. Confirmed Supabase Auth password identities can enter through the same login form and are provisioned or linked to `vedioos.users`; editor/admin roles can never be created through that path. The legacy `vedioos.email_verification_challenges` table is retained but no longer populated by new client verification requests. Configure the OTP template and approved custom SMTP provider in Supabase Auth; keep provider credentials out of Git and browser code.
 
+Client password recovery uses Supabase Auth's Recovery template and recovery OTP verification. In **Authentication → Email Templates → Reset Password**, include the six-digit `{{ .Token }}` value because VedioOS asks the client to enter the code rather than follow a recovery link. Configure an approved custom SMTP provider and sending domain before production use; Supabase's default sender is rate-limited and intended only for testing. No redirect URL is required for this OTP form. The backend uses only the publishable Auth key, rotates the provider credential after verification, and never stores returned access or refresh tokens.
+
 ## Run and verify
 
 ```powershell

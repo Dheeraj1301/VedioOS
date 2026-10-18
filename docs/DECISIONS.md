@@ -275,3 +275,13 @@ Decision: clients select a support category, optionally select one of their own 
 Every assignment creates separate durable confirmations for the client and assigned editor. The confirmation points each participant to the protected project workspace, where the immutable accepted service, delivery, cancellation/refund text and role responsibilities are visible. Each notification has an email-delivery record, but production email remains held until D12 supplies an approved provider, domain, templates, preferences and worker schedule.
 
 D05 and D11 remain open. No cancellation deadline, refund amount, eligibility rule or processing promise was invented; those financial policies require the owner's exact approval record before real checkout or public terms can be activated.
+
+## 2026-10-18 — Client password recovery
+
+Status: approved and implemented for active client accounts
+
+Owner / source of explicit decision: owner request for an email OTP password-recovery flow from the regular login page.
+
+Decision: the regular client/administrator login page links to a client-only three-step recovery flow: request an email, verify a six-digit recovery OTP, then set and confirm a validated new password. Requests do not reveal whether an account exists. Supabase Auth sends and validates a recovery-specific OTP; after verification, VedioOS rotates the provider password immediately and discards all returned provider tokens. The user's chosen password is stored only through Django's password hasher, the previously approved application session is revoked, and the reset is audit logged. A verified reset grant lives only in the server-side application session and expires after ten minutes.
+
+Administrator-issued editor accounts remain excluded because the approved editor-access decision has no self-service password-change route. Production delivery requires the Supabase Recovery email template to include the six-digit `{{ .Token }}` value and an approved custom SMTP provider/domain; the default sender is suitable only for limited development testing.
