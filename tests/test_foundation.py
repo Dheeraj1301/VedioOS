@@ -89,6 +89,15 @@ class FoundationTests(TestCase):
         self.assertNotContains(response, "entirely numeric")
         self.assertNotContains(response, "too similar to your other personal information")
 
+    def test_public_auth_header_shows_only_the_alternate_action(self):
+        login = Browser().get("/login/")
+        self.assertContains(login, ">Start creating <", count=1)
+        self.assertNotContains(login, '>Log in</a><a class="button small"')
+
+        register = Browser().get("/register/")
+        self.assertContains(register, ">Log in</a>", count=2)
+        self.assertNotContains(register, ">Start creating <")
+
     def test_client_overview_discards_queued_flash_messages(self):
         browser = Browser()
         with patch("core.views.send_verification_email", side_effect=RuntimeError):
@@ -251,7 +260,7 @@ class FoundationTests(TestCase):
         browser = Browser()
         response = browser.get("/editor/signin/")
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "Use your administrator-issued editor ID or editor email.")
+        self.assertNotContains(response, "Use your administrator-issued editor ID or editor email.")
         self.assertContains(response, 'type="submit">Editor Sign In')
 
         invalid = browser.post(

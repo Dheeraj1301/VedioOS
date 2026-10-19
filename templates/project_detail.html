@@ -2,7 +2,7 @@
 {% block workspace_content %}
 <div class="page-heading">
   <div><p class="eyebrow">Project / {{ project.id|truncatechars:13 }}</p><h1>{{ project.title }}</h1><p class="muted">Created {{ project.created_at|date:"M j, Y" }}</p></div>
-  <span class="badge">{{ project.get_status_display }}</span>
+  {% if project.status != 'payment_pending' %}<span class="badge">{{ project.get_status_display }}</span>{% endif %}
 </div>
 <div class="project-columns{% if request.user.role == 'client' %} project-columns-single{% endif %}"><div>
   {% if request.user.role == 'client' and project.status == 'payment_pending' %}

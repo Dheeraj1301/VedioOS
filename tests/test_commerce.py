@@ -346,6 +346,7 @@ class CommerceTests(TestCase):
 
         project_detail = self.client.get(f"/client/projects/{project.id}/")
         self.assertContains(project_detail, "Complete your order")
+        self.assertContains(project_detail, "Payment pending", count=1)
         self.assertContains(project_detail, "Review quotation &amp; continue to payment")
         self.assertContains(project_detail, summary_url)
 

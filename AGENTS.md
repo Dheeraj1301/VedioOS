@@ -34,6 +34,8 @@ Read `docs/DAY_1.md` for the immediate milestone. Hamsa (Person 1) owns Client +
 
 ## Engineering expectations
 
+- Preserve the owner-approved UI control inventory during visual redesigns. Do not add, duplicate, rename, or remove buttons, links, or actions unless the owner explicitly requests it. When changing themes, layout, motion, or parallax effects, retain every existing authorized destination and behavior exactly once, repositioning the existing control when required instead of inventing another one.
+
 - Keep payment, storage, AI classification, and notification integrations replaceable. Select the actual stack through the decision record; no provider is mandated yet.
 - Use durable state, transactional constraints, idempotency, and retry-safe jobs for money, assignment, acceptance, and notifications.
 - Keep money in integer minor units with explicit currency; avoid floating-point financial calculations. Define coin precision when its policy is decided.
