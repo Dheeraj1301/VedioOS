@@ -10,6 +10,8 @@ Day 1 includes core and operational database migrations, client registration, ad
 
 Phase 3 includes admin plans/custom pricing, commercial terms, client quotes, saved order agreements, paid/unpaid order filters, payment history and an isolated signed-payment sandbox. See [Phase 3 behavior, tests and remaining decisions](docs/PHASE_3.md). Real checkout and production deployment remain inactive. See also [Day 1 evidence](docs/DAY_1_VERIFICATION.md) and [architecture](docs/ARCHITECTURE.md).
 
+Administrators manage all public landing-page copy and the hero MP4 at `/admin/landing-page/`. Defaults exactly match the checked-in design until an administrator saves changes. Hero videos must be valid MP4 files no larger than 100 MB; they use the configured private S3-compatible store and expiring signed playback addresses. Plan names, prices, revisions and features remain under `/admin/pricing/`.
+
 Phase 4 adds editor capacity controls, manual complexity review, paid queues, audited assignment/reassignment and persistent round robin with configurable skip/wait behavior. See [Phase 4 evidence and activation settings](docs/PHASE_4.md). Allocation is implemented but remains disabled in the connected environment until operating policies are configured; AI classification is not integrated.
 
 Phase 5 adds private editor submissions, version history, revision requests, explicit client acceptance and in-app notifications. [Phase 5 verification and activation](docs/PHASE_5.md) includes real storage/browser checks and PostgreSQL concurrency checks. Review requires an agreed rule in the order snapshot; it remains unconfigured for existing orders.

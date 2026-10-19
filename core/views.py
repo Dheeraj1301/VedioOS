@@ -28,10 +28,12 @@ from .email_verification import (
     send_verification_email,
 )
 from .forms import LoginForm, PasswordResetSetForm, ProjectForm, RegistrationForm
+from .landing_content import landing_content
 from .models import (
     AuthAttempt,
     Client,
     File,
+    LandingPageSettings,
     Order,
     Plan,
     Project,
@@ -76,7 +78,12 @@ def auth_rate_limited(request):
 
 
 def landing(request):
-    return render(request, "landing.html", {"plans": Plan.objects.filter(active=True)})
+    config = LandingPageSettings.objects.filter(pk=1).first()
+    return render(request, "landing.html", {
+        "plans": Plan.objects.filter(active=True),
+        "landing_content": landing_content(config.content if config else None),
+        "landing_has_video": bool(config and config.hero_video_object_key),
+    })
 
 
 def register(request):

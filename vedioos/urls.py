@@ -1,7 +1,7 @@
 from django.urls import path
 
 from core import commerce_views as commerce
-from core import views
+from core import landing_views, views
 from core.delivery_views import delivery_action, mark_notification_read, notifications
 from core.health import liveness, readiness
 from core.message_views import client_communication, client_project_communication, message_post
@@ -25,6 +25,7 @@ urlpatterns = [
     path("orders/<uuid:project_id>/delivery/", delivery_action, name="delivery_action"),
     path("orders/<uuid:project_id>/messages/", message_post, name="message_post"),
     path("", views.landing, name="landing"),
+    path("landing/hero-video/", landing_views.landing_hero_video, name="landing_hero_video"),
     path("register/", views.register, name="register"),
     path("verify-email/", views.verification_pending, name="verification_pending"),
     path("verify-email/code/", views.verify_email_otp, name="verify_email_otp"),
@@ -119,6 +120,7 @@ urlpatterns = [
     path("admin/projects/<uuid:project_id>/", views.project_detail, {"area": "admin"}, name="admin_project"),
     path("admin/editors/<uuid:editor_id>/approve/", ops.approve_editor, name="approve_editor"),
     path("admin/pricing/", commerce.pricing, name="pricing"),
+    path("admin/landing-page/", landing_views.landing_page_control, name="landing_page_control"),
     path("admin/pricing/plans/<int:slot>/", commerce.catalog_edit, {"kind": "plan"}, name="plan_edit"),
     path("admin/pricing/services/new/", commerce.catalog_edit, {"kind": "service"}, name="service_new"),
     path("admin/pricing/packages/new/", commerce.catalog_edit, {"kind": "package"}, name="package_new"),

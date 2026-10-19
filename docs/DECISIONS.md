@@ -4,6 +4,12 @@ Do not substitute invented production values for these decisions. Development fi
 
 Use the [owner decision checklist](OWNER_DECISION_CHECKLIST.md) to collect exact activation values or explicitly exclude a capability from the first release. Record approved answers in this file; never record credentials here.
 
+## D18 — Administrator-managed landing page (2026-10-19)
+
+Decision: preserve the approved public landing-page layout and link destinations while allowing administrators to edit every landing-page label, number, heading, paragraph, FAQ question and answer from a dedicated **Landing page** workspace screen. Dynamic plan names, prices, revision counts and features remain governed by the existing pricing catalog rather than duplicated in landing settings. The hero frame may be replaced with one validated MP4 (maximum 100 MB); it is stored in the existing private, versioned object store and rendered through a short-lived signed playback address with muted inline autoplay and looping. Removing or replacing the video returns the frame to its existing artwork and does not affect project media.
+
+Only the admin role may change the singleton settings or upload/remove the hero video. Public visitors can request playback only for the currently published landing video; no permanent object URL or bucket access is exposed. Copy uses normal template escaping, and navigation destinations are not editable from this screen.
+
 ## Decision register
 
 | ID | Decision needed | Resolve before |

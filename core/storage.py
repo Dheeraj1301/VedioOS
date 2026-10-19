@@ -65,3 +65,17 @@ def download_permission(file):
         },
         ExpiresIn=settings.DOWNLOAD_TTL_SECONDS,
     )
+
+
+def landing_video_permission(config):
+    params = {
+        "Bucket": settings.S3_BUCKET,
+        "Key": config.hero_video_object_key,
+        "ResponseContentType": "video/mp4",
+        "ResponseContentDisposition": "inline",
+    }
+    if config.hero_video_storage_version:
+        params["VersionId"] = config.hero_video_storage_version
+    return storage_client().generate_presigned_url(
+        "get_object", Params=params, ExpiresIn=settings.DOWNLOAD_TTL_SECONDS
+    )

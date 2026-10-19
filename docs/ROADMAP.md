@@ -4,6 +4,8 @@
 
 The [Day 1 local foundation](DAY_1_VERIFICATION.md) is implemented and verified. Phases 0–2 have progressed through that milestone; their broader production/large-file gates are not all complete. [Phase 3](PHASE_3.md) has a verified catalog/quote/payment-sandbox milestone. [Phase 4](PHASE_4.md) has a verified allocation milestone. [Phase 5](PHASE_5.md) has a verified review milestone. [Phase 6](PHASE_6.md) has a verified opt-in coin/sandbox payout milestone. Real checkout, payout provider, deadline rules, allocation activation and AI still require decisions. Work in dependency order, delivering small complete flows.
 
+**2026-10-19: landing-page content control implemented.** The existing landing layout now reads all visible copy from one admin-only settings screen, while live plan details continue to come from the established pricing catalog. Administrators can publish, replace or remove a validated private MP4 for the existing hero frame; public playback uses a short-lived signed address and loops muted inline. Role denial, escaped copy, preserved links, MP4 validation, private upload metadata and playback routing have isolated test coverage. Additive migration `core.0018` creates the singleton settings record without seeding or rewriting content.
+
 ### Immediate milestone: Day 1
 
 Follow [the Day 1 ownership and task plan](DAY_1.md). Hamsa is Person 1 (Client + Core Platform); Dheeraj is Person 2 (Admin + Editor Operations). This milestone combines foundation/auth, private storage, core and operational migrations, and basic role-specific UI. Its mandatory verification gate must pass before complex assignment implementation. Schema scaffolding for later phases does not mark those phases complete.

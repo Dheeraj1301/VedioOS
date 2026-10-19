@@ -368,6 +368,27 @@ class UploadPolicy(models.Model):
         db_table = "upload_policy"
 
 
+class LandingPageSettings(models.Model):
+    """Singleton copy and private hero-video metadata for the public landing page."""
+
+    id = models.PositiveSmallIntegerField(primary_key=True, default=1, editable=False)
+    content = models.JSONField(default=dict)
+    hero_video_object_key = models.CharField(max_length=300, blank=True)
+    hero_video_storage_version = models.CharField(max_length=200, blank=True)
+    hero_video_filename = models.CharField(max_length=240, blank=True)
+    hero_video_content_type = models.CharField(max_length=100, blank=True)
+    hero_video_size_bytes = models.PositiveBigIntegerField(null=True, blank=True)
+    hero_video_sha256 = models.CharField(max_length=64, blank=True)
+    updated_by = models.ForeignKey(
+        User, null=True, blank=True, on_delete=models.PROTECT, related_name="landing_page_updates"
+    )
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = "landing_page_settings"
+        constraints = [models.CheckConstraint(condition=models.Q(id=1), name="one_landing_page_settings")]
+
+
 class AuthAttempt(models.Model):
     key = models.CharField(max_length=64, unique=True)
     failures = models.PositiveIntegerField(default=0)
