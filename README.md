@@ -104,7 +104,7 @@ If `py -3.13` is unavailable but `python --version` reports Python 3.13, use `py
 
 ### 2. Start the private storage service
 
-Open **PowerShell terminal A** in the cloned repository and leave it running:
+For an offline preview, open **PowerShell terminal A** in the cloned repository and leave it running:
 
 ```powershell
 .venv/Scripts/python.exe scripts/start_storage.py
@@ -145,7 +145,7 @@ Every team preview intended to use shared data must set `SHARED_PREVIEW_REQUIRED
 .venv/Scripts/python.exe scripts/start_shared_preview.py
 ```
 
-This is the required team command for shared testing. Start the private storage service first. The command verifies the database, schema, migration state, matching Supabase Auth project, and a private-storage byte-integrity round trip before starting Django. It refuses to start against SQLite, an incomplete environment, or unavailable storage. Use `--check-only` when you only want to verify the complete binding. In Supabase Studio, select schema **vedioos**; client/editor/admin credentials are hashed in `vedioos.users`, while Supabase Auth's `auth.users` records the separate email-OTP identity. A teammate can use the same application login only when this command passes against the same project. Git cannot distribute the ignored database URL, CA, storage credentials, or payment secret; supply the same approved `.env` values through the team's private secret channel.
+This is the required team command for shared testing. When `S3_ENDPOINT_URL` is loopback and storage is not already running, the command starts the repository's private storage automatically, initializes it, and stops that child service when the preview exits. It then verifies the database, schema, migration state, matching Supabase Auth project, transactional login/logout and role isolation, and a private-storage byte-integrity round trip before starting Django. It refuses to start against SQLite, an incomplete environment, the wrong auth/database binding, a failed login verifier, or unavailable storage. Use `--check-only` when you only want to verify the complete binding. In Supabase Studio, select schema **vedioos**; client/editor/admin credentials are hashed in `vedioos.users`, while Supabase Auth's `auth.users` records the separate email-OTP identity. A teammate can use the same application login only when this command passes against the same project. Git cannot distribute the ignored database URL, CA, storage credentials, or payment secret; supply the same approved `.env` values through the team's private secret channel.
 
 External notification delivery is held by default. In-app notices work without a provider. After approving an email provider, sender domain, templates and notification policy, set `NOTIFICATION_EMAIL_ENABLED=true` and schedule this bounded command from a trusted worker:
 
