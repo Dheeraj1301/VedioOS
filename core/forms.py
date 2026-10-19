@@ -107,6 +107,9 @@ class ProjectForm(forms.ModelForm):
         # a hidden project-name input.
         self.fields["title"].required = False
         self.fields["song_choice"].required = False
+        # The rendered select always submits a choice. Accept older clients
+        # that do not know this additive field and apply the model default.
+        self.fields["revisions_needed"].required = False
         self.available_plans = Plan.objects.filter(active=True).order_by("slot")
         self.fields["order_choice"].choices = [
             (f"plan:{plan.pk}", plan.name) for plan in self.available_plans
@@ -168,6 +171,10 @@ class ProjectForm(forms.ModelForm):
             data["font_name"] = ""
         if not data.get("song_choice"):
             data["song_choice"] = "suggest"
+        if not data.get("revisions_needed"):
+            data["revisions_needed"] = (
+                self.initial.get("revisions_needed") or Project.RevisionsNeeded.ONE_TO_TWO
+            )
         if data.get("song_choice") == "suggest":
             data["song_information"] = ""
         return data
@@ -188,6 +195,7 @@ class ProjectForm(forms.ModelForm):
             "inspiration_link",
             "reference_notes",
             "song_choice",
+            "revisions_needed",
             "song_information",
         ]
         labels = {
@@ -204,6 +212,7 @@ class ProjectForm(forms.ModelForm):
             "inspiration_link": "Inspiration link",
             "reference_notes": "Other Instructions",
             "song_choice": "Music preference",
+            "revisions_needed": "Revisions needed",
             "song_information": "Song Name or Link",
         }
         widgets = {

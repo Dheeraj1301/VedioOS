@@ -59,7 +59,9 @@ class CustomFormRecoveryBrowserTests(StaticLiveServerTestCase):
             )
             self.assertEqual(result.returncode, 0, (result.stdout or "") + (result.stderr or ""))
             self.assertEqual(File.objects.filter(state="ready", category="reference").count(), 2)
-            self.assertEqual(File.objects.filter(state="removed", category="reference").count(), 2)
+            self.assertEqual(File.objects.filter(state="removed", category="reference").count(), 1)
+            self.assertEqual(File.objects.filter(state="ready", category="source").count(), 1)
+            self.assertEqual(File.objects.filter(state="removed", category="source").count(), 1)
             print(result.stdout)
         finally:
             storage.put_bucket_cors(

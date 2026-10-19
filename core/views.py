@@ -678,6 +678,16 @@ def _project_form(request, project=None, *, create_new=False):
             return redirect("order_summary", project_id=saved_project.pk)
         messages.success(request, "Creative brief saved. Add or review your private files below.")
         return redirect("client_project", project_id=saved_project.pk)
+    if request.method == "POST" and request.headers.get("X-Requested-With") == "XMLHttpRequest":
+        return JsonResponse(
+            {
+                "errors": {
+                    field: [error["message"] for error in errors]
+                    for field, errors in form.errors.get_json_data().items()
+                }
+            },
+            status=422,
+        )
     slots = {plan.slot: plan for plan in Plan.objects.order_by("slot")}
     plan_slots = [
         (slot, slots.get(slot), f"plan:{slots[slot].pk}" if slots.get(slot) else "")

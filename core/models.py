@@ -144,6 +144,11 @@ class CustomService(Record):
 
 
 class Project(Record):
+    class RevisionsNeeded(models.TextChoices):
+        ONE_TO_TWO = "1-2", "1-2"
+        THREE_TO_FOUR = "3-4", "3-4"
+        FIVE_PLUS = "5+", "5+"
+
     class ReelDuration(models.TextChoices):
         SHORT = "20_30", "20–30 seconds"
         MEDIUM = "30_50", "30–50 seconds"
@@ -194,6 +199,11 @@ class Project(Record):
             ("both", "I will provide my own song and would also like editor's suggestion"),
         ],
         default="suggest",
+    )
+    revisions_needed = models.CharField(
+        max_length=3,
+        choices=RevisionsNeeded.choices,
+        default=RevisionsNeeded.ONE_TO_TWO,
     )
     song_information = models.TextField(blank=True, max_length=2000)
     call_before = models.BooleanField(default=False)

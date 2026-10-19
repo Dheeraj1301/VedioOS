@@ -126,6 +126,9 @@ if (newOrderForm) {
   const fontSelection = newOrderForm.querySelector('#id_wording_direction');
   const songChoice = newOrderForm.querySelector('#id_song_choice');
   const songDetails = newOrderForm.querySelector('[data-song-details]');
+  const projectTitle = newOrderForm.querySelector('#id_title');
+  const reelDuration = newOrderForm.querySelector('#id_reel_duration');
+  const fontNameInput = newOrderForm.querySelector('#id_font_name');
   const estimate = newOrderForm.querySelector('#custom-estimate');
   const pricingPeriodFields = [...newOrderForm.querySelectorAll('[name="pricing_period"]')];
   const lockedPricingPeriods = [...newOrderForm.querySelectorAll('[data-pricing-period-locked]')];
@@ -167,11 +170,15 @@ if (newOrderForm) {
     submitRow.classList.toggle('is-hidden', !selectedChoice);
     submitButton.disabled = !selectedChoice;
     const wording = custom && wordingCheckbox.checked;
+    projectTitle.required = custom;
+    reelDuration.required = custom;
     wordingDirection.hidden = !wording;
     wordingDirection.querySelectorAll('select').forEach(field => field.disabled = !wording);
+    fontSelection.required = wording;
     const ownFont = wording && fontSelection.value === 'own_font';
     fontName.hidden = !ownFont;
     fontName.querySelectorAll('input').forEach(field => field.disabled = !ownFont);
+    fontNameInput.required = ownFont;
     const uploadsFontInspiration = wording && fontSelection.value === 'font_inspiration';
     fontInspiration.hidden = !uploadsFontInspiration;
     fontInspirationInput.disabled = !uploadsFontInspiration;
@@ -338,16 +345,57 @@ if (newOrderForm) {
     retryButton.hidden = true;
     newOrderForm.requestSubmit(submitButton);
   });
+  const clearFieldError = field => {
+    const errorId = `${field.id || field.name}-client-error`;
+    const describedBy = (field.getAttribute('aria-describedby') || '')
+      .split(/\s+/)
+      .filter(id => id && id !== errorId);
+    field.removeAttribute('aria-invalid');
+    if (describedBy.length) field.setAttribute('aria-describedby', describedBy.join(' '));
+    else field.removeAttribute('aria-describedby');
+    document.getElementById(errorId)?.remove();
+  };
+  const showFieldError = (field, message = 'This field is required.') => {
+    if (!field) return;
+    clearFieldError(field);
+    field.setAttribute('aria-invalid', 'true');
+    const error = document.createElement('p');
+    error.className = 'field-validation-error';
+    error.id = `${field.id || field.name}-client-error`;
+    error.setAttribute('role', 'alert');
+    error.textContent = message;
+    field.setAttribute('aria-describedby', [field.getAttribute('aria-describedby'), error.id].filter(Boolean).join(' '));
+    field.insertAdjacentElement('afterend', error);
+  };
+  const focusFirstInvalid = () => {
+    const firstInvalid = newOrderForm.querySelector('[aria-invalid="true"], :invalid');
+    firstInvalid?.scrollIntoView({behavior: 'smooth', block: 'center'});
+    firstInvalid?.focus({preventScroll: true});
+  };
+  const showServerErrors = errors => {
+    let firstField = null;
+    Object.entries(errors).forEach(([name, messages]) => {
+      if (name === '__all__') {
+        announce(submitStatus, messages.join(' '), true);
+        return;
+      }
+      const field = newOrderForm.elements.namedItem(name);
+      const target = field instanceof RadioNodeList ? field[0] : field;
+      if (!target) return;
+      showFieldError(target, messages.join(' '));
+      firstField ||= target;
+    });
+    if (firstField) window.setTimeout(focusFirstInvalid, 0);
+  };
   newOrderForm.addEventListener('invalid', event => {
-    event.target.setAttribute('aria-invalid', 'true');
-    window.setTimeout(() => {
-      const firstInvalid = newOrderForm.querySelector(':invalid');
-      firstInvalid?.scrollIntoView({behavior: 'smooth', block: 'center'});
-      firstInvalid?.focus({preventScroll: true});
-    }, 0);
+    const message = event.target.validity.valueMissing
+      ? 'This field is required.'
+      : event.target.validationMessage || 'Review this field.';
+    showFieldError(event.target, message);
+    window.setTimeout(focusFirstInvalid, 0);
   }, true);
-  newOrderForm.querySelectorAll('[aria-invalid="true"]').forEach(field => {
-    field.addEventListener('input', () => field.removeAttribute('aria-invalid'), {once: true});
+  newOrderForm.querySelectorAll('input, select, textarea').forEach(field => {
+    ['input', 'change'].forEach(type => field.addEventListener(type, () => clearFieldError(field)));
   });
   submitButton.addEventListener('click', () => {
     const invalidField = newOrderForm.querySelector(':invalid');
@@ -394,8 +442,16 @@ if (newOrderForm) {
       formData.delete('inspiration_files');
       formData.delete('font_inspiration');
       const response = await fetch(newOrderForm.action || window.location.href, {
-        method: 'POST', credentials: 'same-origin', headers: {'X-CSRFToken': csrf()}, body: formData,
+        method: 'POST', credentials: 'same-origin',
+        headers: {'X-CSRFToken': csrf(), 'X-Requested-With': 'XMLHttpRequest'}, body: formData,
       });
+      if (response.status === 422) {
+        const result = await response.json();
+        showServerErrors(result.errors || {});
+        announce(submitStatus, 'Review the highlighted field and try again.', true);
+        button.disabled = false;
+        return;
+      }
       if (!response.ok) throw new Error('The creative brief could not be saved. Please try again.');
       if (!response.redirected) {
         document.open(); document.write(await response.text()); document.close();

@@ -649,6 +649,7 @@ class FoundationTests(TestCase):
             "font_name": "Montserrat",
             "reference_notes": "Preserve these notes",
             "song_choice": "provide",
+            "revisions_needed": "3-4",
             "song_information": "Preserve this licensed song",
             "inspiration_link": "not-a-url",
         }
@@ -665,8 +666,48 @@ class FoundationTests(TestCase):
         ]:
             self.assertContains(response, value)
         self.assertContains(response, 'value="own_font" selected', html=False)
+        self.assertContains(response, 'value="3-4" selected', html=False)
         self.assertContains(response, 'id="id_colour_grading" checked', html=False)
         self.assertFalse(Project.objects.filter(title=data["title"]).exists())
+
+    def test_invalid_ajax_submission_returns_field_errors_without_redirecting(self):
+        response = self.auth(self.owner).post(
+            "/client/new-order/?new=1",
+            {
+                "title": "Keep this AJAX state",
+                "order_choice": "custom",
+                "song_choice": "provide",
+                "song_information": "Keep this song",
+                "revisions_needed": "5+",
+            },
+            HTTP_X_REQUESTED_WITH="XMLHttpRequest",
+        )
+        self.assertEqual(response.status_code, 422)
+        self.assertEqual(
+            response.json()["errors"]["reel_duration"],
+            ["Choose the expected reel duration."],
+        )
+        self.assertFalse(Project.objects.filter(title="Keep this AJAX state").exists())
+
+    def test_revisions_needed_is_saved_without_changing_quote_navigation(self):
+        browser = self.auth(self.owner)
+        response = browser.post(
+            "/client/new-order/?new=1",
+            {
+                "title": "Revision preference brief",
+                "order_choice": "custom",
+                "reel_duration": "30_50",
+                "song_choice": "suggest",
+                "revisions_needed": "5+",
+            },
+        )
+        project = Project.objects.get(title="Revision preference brief")
+        self.assertEqual(project.revisions_needed, "5+")
+        self.assertRedirects(
+            response,
+            f"/orders/{project.id}/",
+            fetch_redirect_response=False,
+        )
 
     def test_inspiration_link_persists_with_saved_brief(self):
         browser = self.auth(self.owner)
