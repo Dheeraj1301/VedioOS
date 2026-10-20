@@ -147,6 +147,13 @@ Every team preview intended to use shared data must set `SHARED_PREVIEW_REQUIRED
 .venv/Scripts/python.exe scripts/start_shared_preview.py
 ```
 
+In VS Code, **always use** `Terminal > Run Build Task` (`Ctrl+Shift+B`) and select
+`VedioOS: Start shared preview`. It runs the same verified command. Do not use the
+Python Run button on `manage.py` or start `runserver` with
+`--settings=vedioos.local_settings` for team-account testing: that explicit offline
+mode uses a separate SQLite user database, so shared client/editor credentials will
+correctly be rejected there.
+
 This is the required team command for shared testing. When `S3_ENDPOINT_URL` is loopback and storage is not already running, the command starts the repository's private storage automatically, initializes it, and stops that child service when the preview exits. It then verifies the database, schema, migration state, matching Supabase Auth project, transactional login/logout and role isolation, and a private-storage byte-integrity round trip before starting Django. It refuses to start against SQLite, an incomplete environment, the wrong auth/database binding, a failed login verifier, or unavailable storage. Use `--check-only` when you only want to verify the complete binding. In Supabase Studio, select schema **vedioos**; client/editor/admin credentials are hashed in `vedioos.users`, while Supabase Auth's `auth.users` records the separate email-OTP identity. A teammate can use the same application login only when this command passes against the same project. Git cannot distribute the ignored database URL, CA, storage credentials, or payment secret; supply the same approved `.env` values through the team's private secret channel.
 
 External notification delivery is held by default. In-app notices work without a provider. After approving an email provider, sender domain, templates and notification policy, set `NOTIFICATION_EMAIL_ENABLED=true` and schedule this bounded command from a trusted worker:
