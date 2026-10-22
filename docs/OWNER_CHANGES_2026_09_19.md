@@ -89,3 +89,8 @@ Status: requested interface changes are implemented. Production commercial activ
 - The selected Supabase project contained all three complete administrator-configured plans and their expected INR prices, but each persisted row still had `active = false`; the client correctly treated those database flags as unpublished even though the configured prices were visible in page data.
 - After private snapshot `database-snapshot-20261022T131312832339Z.json` (49 tables), the three owner-confirmed plan rows were transactionally changed to `active = true`. Each correction has a system audit event; no other commercial values were changed.
 - A Supabase-backed `ProjectForm` verification now returns Plan 1, Plan 2 and Plan 3 as selectable choices at ₹399.00, ₹799.00 and ₹1,499.00. Existing Custom and locked Monthly/Yearly behavior is unchanged. This operational data correction requires no code, migration or schema change.
+
+## Admin sidebar simplification — 2026-10-22
+
+- The Admin workspace sidebar no longer includes **Calls**, **Notifications**, or **Audit**. All remaining entries retain their previous order and styling, and the shared top-bar notification bell is unchanged.
+- The protected Calls, Notifications and Audit pages and routes remain available by direct URL; this change removes only their sidebar discovery links. The full isolated suite passes 318 tests with 13 optional integrations skipped. No schema or Supabase change is required.

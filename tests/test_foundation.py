@@ -371,6 +371,34 @@ class FoundationTests(TestCase):
                 with self.subTest(label=label):
                     self.assertEqual(browser.get(url).status_code, 200)
 
+    def test_admin_sidebar_hides_calls_audit_and_notifications_only(self):
+        from core.context import NAV
+
+        self.assertEqual(
+            NAV["admin"],
+            [
+                ("Overview", "/admin/"),
+                ("Orders", "/admin/orders/"),
+                ("Payments", "/admin/payments/"),
+                ("Editors", "/admin/editors/"),
+                ("Clients", "/admin/clients/"),
+                ("Assignments", "/admin/assignments/"),
+                ("Plans / Pricing", "/admin/pricing/"),
+                ("Landing page", "/admin/landing-page/"),
+                ("Feature controls", "/admin/features/"),
+                ("Payouts", "/admin/payouts/"),
+                ("Support", "/admin/support/"),
+                ("Analytics", "/admin/analytics/"),
+            ],
+        )
+        browser = self.auth(self.admin)
+        dashboard = browser.get("/admin/")
+        for hidden_label in ["Calls", "Audit", "Notifications"]:
+            self.assertNotContains(dashboard, f">{hidden_label}<span", html=False)
+        self.assertEqual(browser.get("/admin/calls/").status_code, 200)
+        self.assertEqual(browser.get("/admin/audit/").status_code, 200)
+        self.assertEqual(browser.get("/admin/notifications/").status_code, 200)
+
     def test_admin_editor_search_and_sort(self):
         john_user = User.objects.create_user(
             "johnny@example.test", PASSWORD, name="Johnny Rivera", role="editor"

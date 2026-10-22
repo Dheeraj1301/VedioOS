@@ -278,3 +278,7 @@ All three fixed-plan selections now expose their own source and inspiration uplo
 ### 2026-10-22 published-plan reconciliation evidence
 
 The three complete Supabase plan rows had the configured ₹399.00, ₹799.00 and ₹1,499.00 per-reel prices but stale `active = false` publication flags, which was the direct cause of the disabled client cards. Following a private 49-table snapshot, only those three owner-confirmed flags were transactionally corrected and audit recorded. A live Supabase-backed form check returns all three plans as selectable client choices. No client query, Admin UI, Custom flow, Monthly/Yearly toggle, schema or migration changed.
+
+### 2026-10-22 admin-sidebar evidence
+
+Calls, Notifications and Audit were removed only from the Admin workspace navigation inventory. The remaining entries preserve their prior order and rendering, the top-bar notification bell is untouched, and all three protected operational routes continue to load directly for administrators. The full isolated suite passes 318 tests with 13 optional integrations skipped. No schema or Supabase change is required.

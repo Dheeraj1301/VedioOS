@@ -25,11 +25,8 @@ NAV = {
         ("Plans / Pricing", "/admin/pricing/"),
         ("Landing page", "/admin/landing-page/"),
         ("Feature controls", "/admin/features/"),
-        ("Calls", "/admin/calls/"),
         ("Payouts", "/admin/payouts/"),
         ("Support", "/admin/support/"),
-        ("Notifications", "/admin/notifications/"),
-        ("Audit", "/admin/audit/"),
         ("Analytics", "/admin/analytics/"),
     ],
 }
