@@ -87,3 +87,19 @@ class NotificationHistoryTests(TestCase):
         self.assertEqual(
             self.client.post(f"/orders/notifications/{project_notice.pk}/read/").status_code, 404
         )
+
+    def test_admin_order_notice_opens_order_action_page_and_marks_read(self):
+        notice = Notification.objects.create(
+            recipient=self.admin,
+            project=self.project,
+            reference_type=Notification.ReferenceType.ORDER,
+            reference_id=self.project.order.id,
+            event_key="admin-order-action",
+            message="Review this order.",
+        )
+        self.client.force_login(self.admin)
+        response = self.client.get(f"/notifications/{notice.id}/", follow=True)
+        self.assertRedirects(response, f"/admin/orders/{self.project.order.id}/")
+        self.assertContains(response, "Order details")
+        notice.refresh_from_db()
+        self.assertIsNotNone(notice.read_at)

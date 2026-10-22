@@ -112,3 +112,9 @@ Status: requested interface changes are implemented. Production commercial activ
 - PostgreSQL rejected the reply transaction because its row lock also covered the nullable side of the optional project outer join. The query now locks only the support-request row while preserving the existing authorization and retry-safe transaction.
 - Database failures are logged and return the administrator to the ticket with **Failed to send response. Please try again.** The transaction rolls back, so a failed reply cannot appear partially saved.
 - A rollback-only probe against the selected Supabase project completed message creation, client notification and audit creation while preserving all live row counts. No schema migration was required.
+
+## Actionable notification routing — 2026-10-22
+
+- Notifications now persist a validated reference type and UUID. Existing support-ticket, project-message, payment/order and project notices were backfilled; general campaigns and account-only announcements remain read-only.
+- Clicking a bell or history notification marks it read and immediately routes administrators to the support reply form, project conversation, or order detail as appropriate. Client and editor project notices use their existing role-authorized communication destinations.
+- Additive migrations `operations.0016` and `operations.0017` were applied to the selected Supabase schema after ignored private snapshots `database-snapshot-20261022T144816860050Z.json` and `database-snapshot-20261022T145114808475Z.json`. The full isolated suite passes 328 tests with 13 optional integrations skipped. All 49 tables retain RLS and browser/public grants remain zero.

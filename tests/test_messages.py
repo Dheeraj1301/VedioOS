@@ -45,6 +45,25 @@ class ProjectMessageTests(TestCase):
         self.assertContains(page, "&lt;script&gt;secret&lt;/script&gt;")
         self.assertNotContains(page, "<script>secret</script>", html=False)
 
+    def test_admin_notification_opens_actionable_project_conversation_and_marks_read(self):
+        post_message(
+            self.client_user,
+            self.project.id,
+            "Please answer this project question.",
+            "shared",
+            uuid.uuid4(),
+        )
+        notice = Notification.objects.get(recipient=self.admin)
+        self.assertEqual(notice.reference_type, Notification.ReferenceType.PROJECT_MESSAGE)
+        self.assertEqual(notice.reference_id, self.project.id)
+        self.client.force_login(self.admin)
+        response = self.client.get(f"/notifications/{notice.id}/", follow=True)
+        self.assertRedirects(response, f"/admin/projects/{self.project.id}/")
+        self.assertContains(response, "Please answer this project question.")
+        self.assertContains(response, 'id="shared-message"', html=False)
+        notice.refresh_from_db()
+        self.assertIsNotNone(notice.read_at)
+
     def test_replay_is_idempotent_and_changed_payload_rejected(self):
         key = uuid.uuid4()
         first = post_message(self.client_user, self.project.id, "Hello", "shared", key)

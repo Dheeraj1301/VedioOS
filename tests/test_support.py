@@ -85,6 +85,18 @@ class SupportWorkflowTests(TestCase):
         admin_list = self.browser(self.admin).get("/admin/support/?status=all")
         self.assertContains(admin_list, "Project help: Client project")
 
+    def test_admin_notification_opens_ticket_reply_form_and_marks_read(self):
+        support_request = self.open_request()
+        notice = Notification.objects.get(recipient=self.admin)
+        self.assertEqual(notice.reference_type, Notification.ReferenceType.SUPPORT_TICKET)
+        self.assertEqual(notice.reference_id, support_request.id)
+        response = self.browser(self.admin).get(f"/notifications/{notice.id}/", follow=True)
+        self.assertRedirects(response, f"/support/{support_request.id}/")
+        self.assertContains(response, 'id="support-reply"', html=False)
+        self.assertContains(response, "Please check the project status.")
+        notice.refresh_from_db()
+        self.assertIsNotNone(notice.read_at)
+
     def test_cross_client_case_and_project_are_denied(self):
         support_request = self.open_request()
         other = self.browser(self.other_user)

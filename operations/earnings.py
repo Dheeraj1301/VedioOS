@@ -157,6 +157,8 @@ def release_earning(admin, acceptance_id):
             "recipient": acceptance.assignment.editor.user,
             "project": acceptance.project,
             "message": "Approved coins are now available in your wallet.",
+            "reference_type": Notification.ReferenceType.PROJECT,
+            "reference_id": acceptance.project_id,
         },
     )
     audit(admin, "coin.released", acceptance.pk, {"coins": entry.amount})

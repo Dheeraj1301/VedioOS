@@ -12,18 +12,34 @@ from core.views import audit
 from .models import CallRequest, Editor, Notification
 
 
-def notify(recipient, project, key, message):
+def notify(recipient, project, key, message, *, reference_type="", reference_id=None):
+    if project is not None and not reference_type:
+        reference_type = Notification.ReferenceType.PROJECT
+        reference_id = project.pk
     _, created = Notification.objects.get_or_create(
         event_key=key,
-        defaults={"recipient": recipient, "project": project, "message": message},
+        defaults={
+            "recipient": recipient,
+            "project": project,
+            "message": message,
+            "reference_type": reference_type,
+            "reference_id": reference_id,
+        },
     )
     return created
 
 
-def notify_admins(project, key, message):
+def notify_admins(project, key, message, *, reference_type="", reference_id=None):
     created_any = False
     for admin in User.objects.filter(role="admin", is_active=True):
-        created = notify(admin, project, f"{key}:admin:{admin.pk}", message)
+        created = notify(
+            admin,
+            project,
+            f"{key}:admin:{admin.pk}",
+            message,
+            reference_type=reference_type,
+            reference_id=reference_id,
+        )
         created_any = created_any or created
     return created_any
 

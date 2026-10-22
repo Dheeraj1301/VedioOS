@@ -231,8 +231,18 @@ class NotificationCampaign(Record):
 
 
 class Notification(Record):
+    class ReferenceType(models.TextChoices):
+        PROJECT = "project", "Project"
+        PROJECT_MESSAGE = "project_message", "Project message"
+        SUPPORT_TICKET = "support_ticket", "Support ticket"
+        ORDER = "order", "Order"
+
     recipient = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT)
     project = models.ForeignKey(Project, null=True, blank=True, on_delete=models.PROTECT)
+    reference_type = models.CharField(
+        max_length=30, choices=ReferenceType.choices, blank=True, default=""
+    )
+    reference_id = models.UUIDField(null=True, blank=True)
     event_key = models.CharField(max_length=200, unique=True)
     message = models.CharField(max_length=500)
     read_at = models.DateTimeField(null=True, blank=True)
@@ -248,6 +258,19 @@ class Notification(Record):
         db_table = "notifications"
         indexes = [
             models.Index(fields=["recipient", "-created_at", "-id"], name="notice_recipient_cursor_idx")
+        ]
+        constraints = [
+            models.CheckConstraint(
+                condition=(models.Q(reference_type="", reference_id__isnull=True)
+                | (~models.Q(reference_type="") & models.Q(reference_id__isnull=False))),
+                name="notice_reference_pair",
+            ),
+            models.CheckConstraint(
+                condition=models.Q(
+                    reference_type__in=["", "project", "project_message", "support_ticket", "order"]
+                ),
+                name="valid_notice_reference_type",
+            ),
         ]
 
     def save(self, *args, **kwargs):

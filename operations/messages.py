@@ -112,6 +112,8 @@ def post_message(user, project_id, body, audience, request_key):
                 project,
                 f"message:{message.pk}:recipient:{recipient.pk}",
                 "New project message." if audience == "shared" else "New internal project note.",
+                reference_type="project_message",
+                reference_id=project.pk,
             )
     audit(
         user,

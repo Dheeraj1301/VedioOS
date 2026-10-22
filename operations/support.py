@@ -113,6 +113,8 @@ def create_support_request(user, category, body, project_id, request_key):
             project,
             f"support:{support_request.pk}:opened:recipient:{admin.pk}",
             "New client support request.",
+            reference_type="support_ticket",
+            reference_id=support_request.pk,
         )
     audit(
         user,
@@ -159,6 +161,8 @@ def post_support_message(user, request_id, body, audience, request_key):
             support_request.project,
             f"support-message:{message.pk}:recipient:{support_request.client.user_id}",
             "Your support request has a new reply.",
+            reference_type="support_ticket",
+            reference_id=support_request.pk,
         )
     audit(
         user,
@@ -186,6 +190,8 @@ def change_support_status(user, request_id, status):
         support_request.project,
         f"support:{support_request.pk}:status:{status}:at:{support_request.updated_at.isoformat()}",
         f"Your support request is now {support_request.get_status_display().lower()}.",
+        reference_type="support_ticket",
+        reference_id=support_request.pk,
     )
     audit(
         user,

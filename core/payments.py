@@ -192,11 +192,15 @@ def confirm_razorpay_test_payment(user, payment_id, payload):
             project,
             f"payment:{payment.pk}:client",
             "Razorpay test payment confirmed. Your project remains in test-payment mode.",
+            reference_type="order",
+            reference_id=order.pk,
         )
         notify_admins(
             project,
             f"payment:{payment.pk}",
             "A Razorpay test payment was confirmed. It is not production revenue.",
+            reference_type="order",
+            reference_id=order.pk,
         )
         audit(
             None,
@@ -294,9 +298,15 @@ def apply_sandbox_event(body, signature):
             project,
             f"payment:{payment.pk}:client",
             "Payment confirmed. Your project is ready for assignment.",
+            reference_type="order",
+            reference_id=order.pk,
         )
         notify_admins(
-            project, f"payment:{payment.pk}", "A project payment was confirmed and is ready for assignment."
+            project,
+            f"payment:{payment.pk}",
+            "A project payment was confirmed and is ready for assignment.",
+            reference_type="order",
+            reference_id=order.pk,
         )
         audit(None, "payment.confirmed", payment.id, {"provider": "sandbox", "project": str(project.id)})
     elif event["status"] == "failed" and payment.status != "confirmed":
