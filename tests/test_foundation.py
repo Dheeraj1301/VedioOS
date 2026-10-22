@@ -610,6 +610,7 @@ class FoundationTests(TestCase):
         browser = self.auth(self.owner)
         blank = browser.get("/client/new-order/?new=1")
         self.assertContains(blank, "data-custom-fields hidden", html=False)
+        self.assertContains(blank, "data-standard-upload-fields hidden", html=False)
         self.assertContains(blank, "data-brief-fields hidden", html=False)
         self.assertContains(blank, "data-submit-row hidden", html=False)
         self.assertContains(blank, "custom-fields is-hidden", html=False)
@@ -621,6 +622,7 @@ class FoundationTests(TestCase):
         self.assertEqual(custom.status_code, 200)
         self.assertContains(custom, "data-custom-fields", html=False)
         self.assertNotContains(custom, "data-custom-fields hidden", html=False)
+        self.assertContains(custom, "data-standard-upload-fields hidden", html=False)
         self.assertContains(custom, "data-brief-fields", html=False)
         self.assertNotContains(custom, "data-brief-fields hidden", html=False)
         self.assertContains(custom, "data-submit-row", html=False)
@@ -641,7 +643,35 @@ class FoundationTests(TestCase):
         self.assertNotContains(response, "Talk to an editor after the draft")
         content = response.content.decode()
         self.assertLess(content.index("Upload Your Clips"), content.index("Add Inspiration Reel/Video"))
-        self.assertLess(content.index("Inspiration link"), content.index("Add Inspiration Reel/Video"))
+        self.assertLess(content.index("Inspiration link"), content.rindex("Add Inspiration Reel/Video"))
+
+    def test_standard_plan_shows_only_its_upload_panel_when_resumed(self):
+        plan = Plan.objects.create(
+            slot=1,
+            name="Standard upload plan",
+            price_minor=10000,
+            currency="INR",
+            features=["Cuts"],
+            revision_limit=1,
+            delivery_hours=24,
+            duration_limit_seconds=60,
+            priority=1,
+            active=True,
+        )
+        browser = self.auth(self.owner)
+        saved = browser.post(
+            "/client/new-order/?new=1",
+            {"order_choice": f"plan:{plan.id}", "pricing_period": "per_reel"},
+        )
+        self.assertEqual(saved.status_code, 302)
+
+        resumed = browser.get("/client/new-order/")
+        self.assertContains(resumed, "data-standard-upload-fields", html=False)
+        self.assertNotContains(resumed, "data-standard-upload-fields hidden", html=False)
+        self.assertContains(resumed, "data-custom-fields hidden", html=False)
+        self.assertContains(resumed, 'id="standard-upload-clips"', html=False)
+        self.assertContains(resumed, 'id="standard-upload-inspiration"', html=False)
+        self.assertContains(resumed, "Max uploads: 3.")
 
     def test_invalid_submission_preserves_all_brief_values_and_validates_inspiration_url(self):
         browser = self.auth(self.owner)

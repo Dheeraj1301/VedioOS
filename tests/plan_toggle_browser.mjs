@@ -16,9 +16,31 @@ try {
   const plan = page.locator(`input[name="order_choice"][value="plan:${fixture.plan_id}"]`);
   await plan.click();
   assert.equal(await plan.isChecked(), true);
+  assert.equal(await page.locator('[data-standard-upload-fields]').isVisible(), true);
+  assert.equal(await page.locator('[data-custom-fields]').isHidden(), true);
+  await page.locator('#standard-upload-clips').setInputFiles({
+    name: 'standard-source.bin', mimeType: 'application/octet-stream', buffer: Buffer.from('source'),
+  });
+  await page.locator('#standard-upload-inspiration').setInputFiles(
+    [1, 2, 3, 4].map(number => ({
+      name: `standard-reference-${number}.mp4`,
+      mimeType: 'video/mp4',
+      buffer: Buffer.from(`reference-${number}`),
+    })),
+  );
+  assert.equal(await page.locator('#standard-upload-inspiration').evaluate(input => input.files.length), 3);
+  await page.locator('.standard-brief-inspiration-status').getByText('Max uploads: 3.', {exact: true}).waitFor();
   await plan.click();
   await page.waitForFunction(() => !document.querySelector('input[name="order_choice"]:checked'));
   assert.equal(await plan.isChecked(), false);
+  assert.equal(await page.locator('[data-standard-upload-fields]').isHidden(), true);
+  assert.equal(await page.locator('#standard-upload-clips').evaluate(input => input.files.length), 1);
+  assert.equal(await page.locator('#standard-upload-inspiration').evaluate(input => input.files.length), 3);
+
+  await plan.click();
+  assert.equal(await page.locator('[data-standard-upload-fields]').isVisible(), true);
+  assert.equal(await page.locator('#standard-upload-clips').evaluate(input => input.files.length), 1);
+  await plan.click();
 
   const custom = page.locator('input[name="order_choice"][value="custom"]');
   await custom.click();
@@ -40,7 +62,7 @@ try {
   assert.equal(await page.locator('[data-custom-fields]').isVisible(), true);
   assert.equal(await page.getByLabel('Project name').inputValue(), 'Preserved toggle brief');
   assert.equal(await page.locator('#upload-inspiration').evaluate(input => input.files.length), 1);
-  console.log('PASS: fixed and Custom cards toggle off; Custom fields and selected files survive deselect/reselect.');
+  console.log('PASS: standard uploads toggle and retain files with a strict three-reference cap; Custom fields and selected files remain unchanged.');
 } finally {
   await browser.close();
 }

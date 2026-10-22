@@ -8,7 +8,7 @@ from unittest import skipUnless
 
 from django.contrib.staticfiles.testing import StaticLiveServerTestCase
 
-from core.models import Client, Plan, User
+from core.models import Client, Plan, UploadPolicy, User
 
 
 @skipUnless(os.getenv("RUN_PLAN_TOGGLE_BROWSER") == "1", "Requires Microsoft Edge")
@@ -19,6 +19,7 @@ class PlanToggleBrowserTests(StaticLiveServerTestCase):
             "plan-toggle-browser@example.test", password, name="Plan Toggle Browser"
         )
         Client.objects.create(user=user)
+        UploadPolicy.objects.create(max_bytes=1024 * 1024, allowed_types={".mp4": ["video/mp4"]})
         plan = Plan.objects.create(
             slot=1,
             name="Toggle plan",

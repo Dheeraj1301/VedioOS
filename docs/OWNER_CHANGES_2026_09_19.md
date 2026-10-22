@@ -76,3 +76,10 @@ Status: requested interface changes are implemented. Production commercial activ
 - Previously, a custom brief and quotation could save successfully, but the browser rejected the valid `/client/checkout/<project-id>/` redirect before uploading selected files and displayed “The saved project could not be identified.”
 - This is a JavaScript-only regression fix. It changes no schema or commercial policy and requires no Supabase migration.
 - Explicit `vedioos.local_settings` and `vedioos.test_settings` runs now establish SQLite before cloud-database validation, so a malformed shared-preview placeholder cannot prevent the documented isolated preview or test suite from starting. Default settings still fail closed on malformed or missing required Supabase configuration.
+
+## Standard-plan uploads — 2026-10-22
+
+- Selecting any published fixed plan reveals dedicated **Upload Your Clips** and **Add Inspiration Reel/Video** controls below the plan cards; deselecting the plan hides them without clearing the browser-held files.
+- Fixed-plan source and inspiration files use the existing private reservation, direct upload, integrity verification and project-linking pipeline before navigation.
+- The standard-plan inspiration picker accepts at most three files and reports **Max uploads: 3.** when extras are rejected. The existing transactional backend cap remains authoritative for concurrent or direct requests.
+- The separate Custom form, its fields and its upload controls retain their existing behavior. The full isolated suite passes 317 tests with 13 optional integrations skipped, and the opt-in Edge plan-toggle regression passes. This is a code-only change with no database migration or Supabase schema update.

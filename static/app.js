@@ -112,6 +112,7 @@ if (editorSearchForm) {
 const newOrderForm = document.querySelector('[data-new-order-form]');
 if (newOrderForm) {
   const customFields = newOrderForm.querySelector('[data-custom-fields]');
+  const standardUploadFields = newOrderForm.querySelector('[data-standard-upload-fields]');
   const briefFields = newOrderForm.querySelector('[data-brief-fields]');
   const submitRow = newOrderForm.querySelector('[data-submit-row]');
   const submitButton = submitRow.querySelector('[type="submit"]');
@@ -160,6 +161,10 @@ if (newOrderForm) {
   const updateOrderFields = () => {
     const selectedChoice = newOrderForm.querySelector('[name="order_choice"]:checked')?.value || '';
     const custom = selectedChoice === 'custom';
+    const standard = selectedChoice.startsWith('plan:');
+    standardUploadFields.hidden = !standard;
+    standardUploadFields.classList.toggle('is-hidden', !standard);
+    standardUploadFields.querySelectorAll('input').forEach(field => field.disabled = !standard);
     customFields.hidden = !custom;
     customFields.classList.toggle('is-hidden', !custom);
     customFields.querySelectorAll('input, select').forEach(field => field.disabled = !custom);
@@ -245,6 +250,11 @@ if (newOrderForm) {
   const clipStatus = newOrderForm.querySelector('.brief-upload-status');
   const inspirationInput = newOrderForm.querySelector('.brief-inspiration-files');
   const inspirationStatus = newOrderForm.querySelector('.brief-inspiration-status');
+  const standardInspirationBox = newOrderForm.querySelector('.standard-inspiration-upload-box');
+  const standardClipInput = newOrderForm.querySelector('.standard-brief-upload-files');
+  const standardClipStatus = newOrderForm.querySelector('.standard-brief-upload-status');
+  const standardInspirationInput = newOrderForm.querySelector('.standard-brief-inspiration-files');
+  const standardInspirationStatus = newOrderForm.querySelector('.standard-brief-inspiration-status');
   let existingInspirationFiles = Number(inspirationBox.dataset.existingFiles || 0);
   const inspirationUploadLimit = 3;
   const uploadsEnabled = newOrderForm.dataset.uploadEnabled === 'true';
@@ -261,6 +271,8 @@ if (newOrderForm) {
   };
   let selectedClipFiles = [];
   let selectedInspirationFiles = [];
+  let selectedStandardClipFiles = [];
+  let selectedStandardInspirationFiles = [];
   clipInput.addEventListener('change', () => {
     const knownFiles = new Set(selectedClipFiles.map(fileKey));
     for (const file of clipInput.files) {
@@ -304,6 +316,51 @@ if (newOrderForm) {
       );
     } else if (inspirationStatus.getAttribute('role') === 'alert') {
       announce(inspirationStatus, '');
+    }
+  });
+  standardClipInput.addEventListener('change', () => {
+    const knownFiles = new Set(selectedStandardClipFiles.map(fileKey));
+    for (const file of standardClipInput.files) {
+      const key = fileKey(file);
+      if (!knownFiles.has(key)) {
+        selectedStandardClipFiles.push(file);
+        knownFiles.add(key);
+      }
+    }
+    syncFileInput(standardClipInput, selectedStandardClipFiles);
+    if (!uploadsEnabled && selectedStandardClipFiles.length) {
+      announce(standardClipStatus, 'File uploads are temporarily unavailable. Your project has not been saved.', true);
+    } else if (selectedStandardClipFiles.length) {
+      announce(standardClipStatus, `${selectedStandardClipFiles.length} clip${selectedStandardClipFiles.length === 1 ? '' : 's'} selected.`);
+    }
+  });
+  standardInspirationInput.addEventListener('change', () => {
+    const incomingFiles = [...standardInspirationInput.files];
+    let remainingSlots = Math.max(
+      0,
+      inspirationUploadLimit - Number(standardInspirationBox.dataset.existingFiles || 0) - selectedStandardInspirationFiles.length,
+    );
+    let rejected = false;
+    for (const file of incomingFiles) {
+      if (remainingSlots === 0) {
+        rejected = true;
+        continue;
+      }
+      selectedStandardInspirationFiles.push(file);
+      remainingSlots -= 1;
+    }
+    syncFileInput(standardInspirationInput, selectedStandardInspirationFiles);
+    if (!uploadsEnabled && selectedStandardInspirationFiles.length) {
+      announce(standardInspirationStatus, 'File uploads are temporarily unavailable. Your project has not been saved.', true);
+    } else if (rejected) {
+      announce(standardInspirationStatus, 'Max uploads: 3.', true);
+    } else if (selectedStandardInspirationFiles.length) {
+      announce(
+        standardInspirationStatus,
+        `${selectedStandardInspirationFiles.length} inspiration file${selectedStandardInspirationFiles.length === 1 ? '' : 's'} selected.`,
+      );
+    } else if (standardInspirationStatus.getAttribute('role') === 'alert') {
+      announce(standardInspirationStatus, '');
     }
   });
   const fontImageExtensions = ['.avif', '.bmp', '.gif', '.heic', '.heif', '.jpeg', '.jpg', '.png', '.tif', '.tiff', '.webp'];
@@ -405,15 +462,22 @@ if (newOrderForm) {
   });
   newOrderForm.addEventListener('submit', async event => {
     retryButton.hidden = true;
-    const clipFiles = [...(selectedClipFiles.length ? selectedClipFiles : clipInput.files)];
-    const inspirationFiles = [
-      ...(selectedInspirationFiles.length ? selectedInspirationFiles : inspirationInput.files),
-    ];
+    const submittingStandardPlan = newOrderForm.querySelector('[name="order_choice"]:checked')?.value.startsWith('plan:');
+    const activeClipInput = submittingStandardPlan ? standardClipInput : clipInput;
+    const activeInspirationInput = submittingStandardPlan ? standardInspirationInput : inspirationInput;
+    const activeClipStatus = submittingStandardPlan ? standardClipStatus : clipStatus;
+    const activeInspirationStatus = submittingStandardPlan ? standardInspirationStatus : inspirationStatus;
+    const clipFiles = [...(submittingStandardPlan
+      ? (selectedStandardClipFiles.length ? selectedStandardClipFiles : standardClipInput.files)
+      : (selectedClipFiles.length ? selectedClipFiles : clipInput.files))];
+    const inspirationFiles = [...(submittingStandardPlan
+      ? (selectedStandardInspirationFiles.length ? selectedStandardInspirationFiles : standardInspirationInput.files)
+      : (selectedInspirationFiles.length ? selectedInspirationFiles : inspirationInput.files))];
     const fontInspirationFiles = fontInspirationInput.disabled ? [] : [...fontInspirationInput.files];
     const hasUploads = clipFiles.length || inspirationFiles.length || fontInspirationFiles.length;
     if (hasUploads && !uploadsEnabled) {
       event.preventDefault();
-      const activeStatus = clipFiles.length ? clipStatus : inspirationFiles.length ? inspirationStatus : fontInspirationStatus;
+      const activeStatus = clipFiles.length ? activeClipStatus : inspirationFiles.length ? activeInspirationStatus : fontInspirationStatus;
       announce(activeStatus, 'File uploads are temporarily unavailable. Your project has not been saved.', true);
       announce(submitStatus, 'Remove the selected files or try again when uploads are available.', true);
       return;
@@ -435,12 +499,14 @@ if (newOrderForm) {
     const fontInspirationProgress = newOrderForm.querySelector('.brief-font-inspiration-progress');
     button.disabled = true;
     try {
-      const activeStatus = clipFiles.length ? clipStatus : inspirationFiles.length ? inspirationStatus : fontInspirationStatus;
+      const activeStatus = clipFiles.length ? activeClipStatus : inspirationFiles.length ? activeInspirationStatus : fontInspirationStatus;
       announce(activeStatus, 'Saving your creative brief…');
       const formData = new FormData(newOrderForm);
       formData.delete('clips');
       formData.delete('inspiration_files');
       formData.delete('font_inspiration');
+      formData.delete('standard_clips');
+      formData.delete('standard_inspiration_files');
       const response = await fetch(newOrderForm.action || window.location.href, {
         method: 'POST', credentials: 'same-origin',
         headers: {'X-CSRFToken': csrf(), 'X-Requested-With': 'XMLHttpRequest'}, body: formData,
@@ -499,13 +565,21 @@ if (newOrderForm) {
           onUploaded(file);
         }
       };
-      await uploadFiles(clipFiles, 'source', clipProgress, clipStatus, file => {
-        selectedClipFiles = selectedClipFiles.filter(item => item !== file);
-        syncFileInput(clipInput, selectedClipFiles);
+      const activeClipProgress = submittingStandardPlan
+        ? newOrderForm.querySelector('.standard-brief-upload-progress')
+        : clipProgress;
+      const activeInspirationProgress = submittingStandardPlan
+        ? newOrderForm.querySelector('.standard-brief-inspiration-progress')
+        : inspirationProgress;
+      await uploadFiles(clipFiles, 'source', activeClipProgress, activeClipStatus, file => {
+        if (submittingStandardPlan) selectedStandardClipFiles = selectedStandardClipFiles.filter(item => item !== file);
+        else selectedClipFiles = selectedClipFiles.filter(item => item !== file);
+        syncFileInput(activeClipInput, submittingStandardPlan ? selectedStandardClipFiles : selectedClipFiles);
       });
-      await uploadFiles(inspirationFiles, 'reference', inspirationProgress, inspirationStatus, file => {
-        selectedInspirationFiles = selectedInspirationFiles.filter(item => item !== file);
-        syncFileInput(inspirationInput, selectedInspirationFiles);
+      await uploadFiles(inspirationFiles, 'reference', activeInspirationProgress, activeInspirationStatus, file => {
+        if (submittingStandardPlan) selectedStandardInspirationFiles = selectedStandardInspirationFiles.filter(item => item !== file);
+        else selectedInspirationFiles = selectedInspirationFiles.filter(item => item !== file);
+        syncFileInput(activeInspirationInput, submittingStandardPlan ? selectedStandardInspirationFiles : selectedInspirationFiles);
       });
       await uploadFiles(fontInspirationFiles, 'font_reference', fontInspirationProgress, fontInspirationStatus, () => {
         fontInspirationInput.value = '';
@@ -517,7 +591,7 @@ if (newOrderForm) {
       }
       window.location.assign(response.url);
     } catch (error) {
-      const activeStatus = clipFiles.length ? clipStatus : inspirationFiles.length ? inspirationStatus : fontInspirationStatus;
+      const activeStatus = clipFiles.length ? activeClipStatus : inspirationFiles.length ? activeInspirationStatus : fontInspirationStatus;
       announce(activeStatus, error.message, true);
       announce(submitStatus, error.message, true);
       retryButton.hidden = false;
