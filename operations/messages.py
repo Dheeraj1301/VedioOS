@@ -32,9 +32,11 @@ def visible_messages(user, project):
     return messages
 
 
-def message_page(user, project, before=None, size=50):
+def message_page(user, project, before=None, size=50, *, shared_only=False):
     """Return a stable, newest-first cursor page, displayed oldest-first."""
     messages = visible_messages(user, project).order_by("-created_at", "-id")
+    if shared_only:
+        messages = messages.filter(audience=ProjectMessage.Audience.SHARED)
     if before:
         if not isinstance(before, str) or len(before) > 100:
             raise Http404("Invalid message page.")

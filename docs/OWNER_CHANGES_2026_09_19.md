@@ -94,3 +94,9 @@ Status: requested interface changes are implemented. Production commercial activ
 
 - The Admin workspace sidebar no longer includes **Calls**, **Notifications**, or **Audit**. All remaining entries retain their previous order and styling, and the shared top-bar notification bell is unchanged.
 - The protected Calls, Notifications and Audit pages and routes remain available by direct URL; this change removes only their sidebar discovery links. The full isolated suite passes 318 tests with 13 optional integrations skipped. No schema or Supabase change is required.
+
+## Editor project communication — 2026-10-22
+
+- The Editor sidebar replaces **Calls** with **Project Communication** while preserving every other Editor navigation item and its order. The existing protected Calls route remains available directly.
+- The Editor communication list contains only paid projects with a current assignment to the signed-in approved editor, grouped into Ongoing and Completed. Other-editor, unassigned, unpaid, cancelled and former assignments are excluded by the existing backend project-visibility boundary.
+- Editors can open shared client/team conversation history with author role badges and send persistent shared replies for ongoing projects. Completed conversations remain readable and reject replies in both the UI and transactional message service. Client communication pages are unchanged and immediately show editor replies. The full isolated suite passes 323 tests with 13 optional integrations skipped. No schema or Supabase migration is required.

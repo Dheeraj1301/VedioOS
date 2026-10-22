@@ -282,3 +282,7 @@ The three complete Supabase plan rows had the configured ₹399.00, ₹799.00 an
 ### 2026-10-22 admin-sidebar evidence
 
 Calls, Notifications and Audit were removed only from the Admin workspace navigation inventory. The remaining entries preserve their prior order and rendering, the top-bar notification bell is untouched, and all three protected operational routes continue to load directly for administrators. The full isolated suite passes 318 tests with 13 optional integrations skipped. No schema or Supabase change is required.
+
+### 2026-10-22 editor communication evidence
+
+The Editor sidebar now links to a dedicated Project Communication list instead of Calls. Existing payment, approval and current-assignment authorization filters the Ongoing and Completed groups; direct list, detail and reply requests deny other-editor, unassigned, unpaid and former assignments. Editor replies use the existing durable shared-message service and appear immediately in the unchanged client conversation. Completed projects expose read-only history and reject backend writes. The full isolated suite passes 323 tests with 13 optional integrations skipped. No schema or Supabase migration is required.

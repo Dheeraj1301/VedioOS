@@ -11,7 +11,7 @@ NAV = {
         ("Assigned projects", "/editor/"),
         ("Project details", "/editor/projects/"),
         ("Revisions", "/editor/revisions/"),
-        ("Calls", "/editor/calls/"),
+        ("Project Communication", "/editor/communication/"),
         ("Wallet", "/editor/wallet/"),
         ("Availability", "/editor/availability/"),
     ],
@@ -41,7 +41,10 @@ def navigation(request):
                 "label": label,
                 "url": url,
                 "active": request.path == url
-                or (url == "/client/communication/" and request.path.startswith(url)),
+                or (
+                    url in {"/client/communication/", "/editor/communication/"}
+                    and request.path.startswith(url)
+                ),
             }
             for label, url in NAV.get(request.user.role, [])
         ]
