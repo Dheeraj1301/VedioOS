@@ -689,14 +689,23 @@ class FoundationTests(TestCase):
         browser = self.auth(self.owner)
         saved = browser.post(
             "/client/new-order/?new=1",
-            {"order_choice": f"plan:{plan.id}", "pricing_period": "per_reel"},
+            {
+                "title": "Named standard project",
+                "order_choice": f"plan:{plan.id}",
+                "pricing_period": "per_reel",
+            },
         )
         self.assertEqual(saved.status_code, 302)
+        self.assertTrue(
+            Project.objects.filter(client__user=self.owner, title="Named standard project").exists()
+        )
 
         resumed = browser.get("/client/new-order/")
         self.assertContains(resumed, "data-standard-upload-fields", html=False)
         self.assertNotContains(resumed, "data-standard-upload-fields hidden", html=False)
         self.assertContains(resumed, "data-custom-fields hidden", html=False)
+        self.assertContains(resumed, 'id="standard-project-title"', html=False)
+        self.assertContains(resumed, 'value="Named standard project"', html=False)
         self.assertContains(resumed, 'id="standard-upload-clips"', html=False)
         self.assertContains(resumed, 'id="standard-upload-inspiration"', html=False)
         self.assertContains(resumed, "Max uploads: 3.")

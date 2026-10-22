@@ -20,18 +20,21 @@ class PlanToggleBrowserTests(StaticLiveServerTestCase):
         )
         Client.objects.create(user=user)
         UploadPolicy.objects.create(max_bytes=1024 * 1024, allowed_types={".mp4": ["video/mp4"]})
-        plan = Plan.objects.create(
-            slot=1,
-            name="Toggle plan",
-            price_minor=10000,
-            currency="INR",
-            features=["Cuts"],
-            revision_limit=1,
-            delivery_hours=24,
-            duration_limit_seconds=60,
-            priority=1,
-            active=True,
-        )
+        plans = [
+            Plan.objects.create(
+                slot=slot,
+                name=f"Toggle plan {slot}",
+                price_minor=slot * 10000,
+                currency="INR",
+                features=["Cuts"],
+                revision_limit=1,
+                delivery_hours=24,
+                duration_limit_seconds=60,
+                priority=slot,
+                active=True,
+            )
+            for slot in range(1, 4)
+        ]
         result = subprocess.run(
             ["node", "tests/plan_toggle_browser.mjs"],
             env={
@@ -41,7 +44,7 @@ class PlanToggleBrowserTests(StaticLiveServerTestCase):
                         "base": self.live_server_url,
                         "email": user.email,
                         "password": password,
-                        "plan_id": str(plan.id),
+                        "plan_ids": [str(plan.id) for plan in plans],
                     }
                 ),
             },

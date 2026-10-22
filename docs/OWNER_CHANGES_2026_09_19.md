@@ -100,3 +100,9 @@ Status: requested interface changes are implemented. Production commercial activ
 - The Editor sidebar replaces **Calls** with **Project Communication** while preserving every other Editor navigation item and its order. The existing protected Calls route remains available directly.
 - The Editor communication list contains only paid projects with a current assignment to the signed-in approved editor, grouped into Ongoing and Completed. Other-editor, unassigned, unpaid, cancelled and former assignments are excluded by the existing backend project-visibility boundary.
 - Editors can open shared client/team conversation history with author role badges and send persistent shared replies for ongoing projects. Completed conversations remain readable and reject replies in both the UI and transactional message service. Client communication pages are unchanged and immediately show editor replies. The full isolated suite passes 323 tests with 13 optional integrations skipped. No schema or Supabase migration is required.
+
+## Immediate standard-plan brief fields — 2026-10-22
+
+- Plan 1, Plan 2 and Plan 3 now reveal **Project name**, **Upload Your Clips**, **Add Inspiration Reel/Video**, and the existing Save action immediately on selection. A frontend cache-key bump ensures browsers load the current toggle code instead of a stale script.
+- Switching or temporarily deselecting fixed plans retains the entered title and selected files in browser state. Inspiration remains capped at three accepted files with **Max uploads: 3.** shown when extras are rejected.
+- The Custom form remains a separate unchanged panel. The opt-in Edge regression and full isolated suite (323 passing, 13 optional integrations skipped) pass. This is a code-only change with no database migration or Supabase schema update.
