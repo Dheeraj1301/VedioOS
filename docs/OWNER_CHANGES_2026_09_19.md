@@ -83,3 +83,9 @@ Status: requested interface changes are implemented. Production commercial activ
 - Fixed-plan source and inspiration files use the existing private reservation, direct upload, integrity verification and project-linking pipeline before navigation.
 - The standard-plan inspiration picker accepts at most three files and reports **Max uploads: 3.** when extras are rejected. The existing transactional backend cap remains authoritative for concurrent or direct requests.
 - The separate Custom form, its fields and its upload controls retain their existing behavior. The full isolated suite passes 317 tests with 13 optional integrations skipped, and the opt-in Edge plan-toggle regression passes. This is a code-only change with no database migration or Supabase schema update.
+
+## Published-plan state reconciliation — 2026-10-22
+
+- The selected Supabase project contained all three complete administrator-configured plans and their expected INR prices, but each persisted row still had `active = false`; the client correctly treated those database flags as unpublished even though the configured prices were visible in page data.
+- After private snapshot `database-snapshot-20261022T131312832339Z.json` (49 tables), the three owner-confirmed plan rows were transactionally changed to `active = true`. Each correction has a system audit event; no other commercial values were changed.
+- A Supabase-backed `ProjectForm` verification now returns Plan 1, Plan 2 and Plan 3 as selectable choices at ₹399.00, ₹799.00 and ₹1,499.00. Existing Custom and locked Monthly/Yearly behavior is unchanged. This operational data correction requires no code, migration or schema change.

@@ -274,3 +274,7 @@ With Supabase password login enabled, linked client and administrator email iden
 ### 2026-10-22 standard-plan upload evidence
 
 All three fixed-plan selections now expose their own source and inspiration upload controls and pass selected originals through the existing private, verified project-file workflow before proceeding. The browser rejects files beyond the three-reference limit, retains accepted selections while a plan is deselected or changed, and hides the controls when no plan is selected. The backend's existing serialized three-reference cap remains authoritative. The Custom form and its upload controls are unchanged. The full isolated suite passes 317 tests with 13 optional integrations skipped, and the opt-in Edge plan-toggle regression passes. No schema migration is required.
+
+### 2026-10-22 published-plan reconciliation evidence
+
+The three complete Supabase plan rows had the configured ₹399.00, ₹799.00 and ₹1,499.00 per-reel prices but stale `active = false` publication flags, which was the direct cause of the disabled client cards. Following a private 49-table snapshot, only those three owner-confirmed flags were transactionally corrected and audit recorded. A live Supabase-backed form check returns all three plans as selectable client choices. No client query, Admin UI, Custom flow, Monthly/Yearly toggle, schema or migration changed.
