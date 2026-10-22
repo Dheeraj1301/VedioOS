@@ -131,18 +131,82 @@ class SupabasePasswordLoginTests(TestCase):
         user.refresh_from_db()
         self.assertEqual(user.supabase_auth_user_id, auth_id)
 
+    @patch("core.supabase_auth.requests.get")
     @patch("core.supabase_auth.requests.post")
-    def test_reset_linked_client_cannot_fall_back_to_old_supabase_password(self, post):
+    def test_linked_client_uses_supabase_password_instead_of_local_password(self, post, get):
+        auth_id = uuid.uuid4()
         user = User.objects.create_user(
             "linked-reset@example.test", "New-Local-83!Tree", name="Reset client"
+        )
+        user.supabase_auth_user_id = auth_id
+        user.save(update_fields=["supabase_auth_user_id"])
+        Client.objects.create(user=user)
+        post.return_value = response(200, {"access_token": "short-lived"})
+        get.return_value = response(
+            200,
+            {
+                "id": str(auth_id),
+                "email": user.email,
+                "confirmed_at": "2026-10-22T10:00:00Z",
+            },
+        )
+
+        login = self.client.post(
+            "/login/", {"username": user.email, "password": PASSWORD}
+        )
+
+        self.assertRedirects(login, "/dashboard/", fetch_redirect_response=False)
+        self.assertEqual(post.call_count, 1)
+        self.assertEqual(get.call_count, 1)
+
+    @patch("core.supabase_auth.requests.get")
+    @patch("core.supabase_auth.requests.post")
+    def test_linked_admin_uses_supabase_password_without_role_change(self, post, get):
+        auth_id = uuid.uuid4()
+        admin = User.objects.create_user(
+            "linked-manager@example.test",
+            "Different-Local-72!Leaf",
+            name="Manager",
+            role=User.Role.ADMIN,
+        )
+        admin.supabase_auth_user_id = auth_id
+        admin.save(update_fields=["supabase_auth_user_id"])
+        Admin.objects.create(user=admin)
+        post.return_value = response(200, {"access_token": "short-lived"})
+        get.return_value = response(
+            200,
+            {
+                "id": str(auth_id),
+                "email": admin.email,
+                "confirmed_at": "2026-10-22T10:00:00Z",
+            },
+        )
+
+        login = self.client.post(
+            "/login/", {"username": admin.email, "password": PASSWORD}
+        )
+
+        self.assertRedirects(login, "/dashboard/", fetch_redirect_response=False)
+        admin.refresh_from_db()
+        self.assertEqual(admin.role, User.Role.ADMIN)
+
+    @patch("core.supabase_auth.requests.get")
+    @patch("core.supabase_auth.requests.post")
+    def test_linked_identity_rejects_a_different_supabase_uuid(self, post, get):
+        user = User.objects.create_user(
+            "uuid-mismatch@example.test", "Different-Local-72!Leaf", name="Client"
         )
         user.supabase_auth_user_id = uuid.uuid4()
         user.save(update_fields=["supabase_auth_user_id"])
         Client.objects.create(user=user)
-        AuditLog.objects.create(
-            actor=user,
-            action="client.password_reset",
-            target_id=str(user.pk),
+        post.return_value = response(200, {"access_token": "short-lived"})
+        get.return_value = response(
+            200,
+            {
+                "id": str(uuid.uuid4()),
+                "email": user.email,
+                "confirmed_at": "2026-10-22T10:00:00Z",
+            },
         )
 
         rejected = self.client.post(
@@ -151,7 +215,7 @@ class SupabasePasswordLoginTests(TestCase):
 
         self.assertEqual(rejected.status_code, 200)
         self.assertContains(rejected, "Please enter a correct email and password")
-        post.assert_not_called()
+        self.assertFalse(self.client.session.get("_auth_user_id"))
 
     @patch("core.supabase_auth.requests.post")
     def test_invalid_password_does_not_create_an_application_user(self, post):

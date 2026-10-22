@@ -151,8 +151,13 @@ def _provision_client(identity):
         return user
 
 
-def authenticate_supabase_client(email, password):
-    """Authenticate a confirmed Supabase user and return its application client."""
+def authenticate_supabase_user(email, password):
+    """Authenticate a confirmed Supabase identity against its immutable UUID.
+
+    Existing linked application identities keep their server-owned role. An
+    unknown identity, or an unlinked existing client, is provisioned through
+    the client-only bridge below. Supabase metadata never selects a role.
+    """
     if not settings.SUPABASE_AUTH_PASSWORD_LOGIN_ENABLED:
         return None
     normalized_email = str(email or "").strip().lower()
@@ -160,22 +165,15 @@ def authenticate_supabase_client(email, password):
         return None
 
     existing = User.objects.filter(email__iexact=normalized_email).first()
+    if existing and existing.supabase_auth_user_id:
+        identity = verify_password(normalized_email, password)
+        if not identity:
+            return None
+        if existing.supabase_auth_user_id != identity["id"] or not existing.is_active:
+            return None
+        return existing
     if existing and existing.role != User.Role.CLIENT:
         return None
-    if (
-        existing
-        and existing.has_usable_password()
-        and existing.supabase_auth_user_id
-    ):
-        from operations.models import AuditLog
-
-        if AuditLog.objects.filter(
-            actor=existing,
-            action__in=["client.password_reset", "editor.password_reset"],
-        ).exists():
-            # A recovered local password is authoritative. Never let an older
-            # provider password bypass the completed password change.
-            return None
     identity = verify_password(normalized_email, password)
     if not identity:
         return None
@@ -193,3 +191,8 @@ def authenticate_supabase_client(email, password):
         ):
             return user
         return None
+
+
+def authenticate_supabase_client(email, password):
+    """Backward-compatible name for callers using the client bridge."""
+    return authenticate_supabase_user(email, password)

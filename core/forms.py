@@ -1,4 +1,5 @@
 from django import forms
+from django.conf import settings
 from django.contrib.auth.forms import AuthenticationForm, SetPasswordForm, UserCreationForm
 from django.core.exceptions import ValidationError
 
@@ -6,7 +7,7 @@ from .models import Plan, Project, User
 from .supabase_auth import (
     SupabaseAuthRejected,
     SupabaseAuthUnavailable,
-    authenticate_supabase_client,
+    authenticate_supabase_user,
 )
 
 
@@ -48,15 +49,49 @@ class LoginForm(AuthenticationForm):
         return editor.user.email if editor else identity.lower()
 
     def clean(self):
+        email = self.cleaned_data.get("username")
+        password = self.cleaned_data.get("password")
+        existing = User.objects.filter(email__iexact=email).first() if email else None
+        use_supabase = bool(
+            settings.SUPABASE_AUTH_PASSWORD_LOGIN_ENABLED
+            and email
+            and "@" in email
+            and password
+            and (
+                existing is None
+                or existing.role == User.Role.CLIENT
+                or existing.supabase_auth_user_id
+            )
+        )
+        if use_supabase:
+            try:
+                self.user_cache = authenticate_supabase_user(email, password)
+            except SupabaseAuthRejected as exc:
+                if exc.reason == "email_not_confirmed":
+                    message = (
+                        "This Supabase user exists, but its email is not confirmed. "
+                        "Confirm the user in Supabase Authentication and try again."
+                    )
+                else:
+                    message = "Supabase has temporarily limited sign-in attempts. Try again shortly."
+                raise ValidationError(message, code=exc.reason) from exc
+            except SupabaseAuthUnavailable as exc:
+                raise ValidationError(
+                    "Sign-in is temporarily unavailable. Please try again shortly.",
+                    code="supabase_auth_unavailable",
+                ) from exc
+            if self.user_cache is None:
+                raise self.get_invalid_login_error()
+            self.confirm_login_allowed(self.user_cache)
+            return self.cleaned_data
+
         try:
             return super().clean()
         except ValidationError as local_error:
-            email = self.cleaned_data.get("username")
-            password = self.cleaned_data.get("password")
             if not email or "@" not in email or not password:
                 raise local_error
             try:
-                self.user_cache = authenticate_supabase_client(email, password)
+                self.user_cache = authenticate_supabase_user(email, password)
             except SupabaseAuthRejected as exc:
                 if exc.reason == "email_not_confirmed":
                     message = (

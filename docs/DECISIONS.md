@@ -303,3 +303,15 @@ The editor and client entry screens link only to each other; the editor page doe
 Status: approved owner direction
 
 Decision: visual redesigns may change color, layout, motion and placement, but must preserve the approved functional control inventory exactly once. Do not invent or duplicate buttons and links. The public authentication header shows only the useful alternate action, client/editor entry switching remains in the footer, the mobile workspace utility bar precedes the horizontally scrolling navigation, and payment-pending project detail shows its status only in the actionable next-step panel.
+
+## 2026-10-22 — Supabase Auth is authoritative for linked email login
+
+Status: approved and implemented
+
+Owner / source of explicit decision: Hamsa requested that login use users from the selected Supabase Authentication table and that the delivered login not depend on a local-server URL.
+
+Decision: when `SUPABASE_AUTH_PASSWORD_LOGIN_ENABLED` is enabled, an email identity that is a client or already carries a stored Supabase Auth UUID is verified by Supabase password authentication before a Django session is created. The verified email and immutable Auth UUID must match the private application identity. Existing linked roles are preserved and cannot be selected through Auth metadata; an unknown confirmed Auth identity can only be provisioned as a client. Administrator-issued editor IDs and unlinked privileged legacy identities retain their private application credentials. This supersedes the earlier transition behavior that tried the private client password first and rejected all existing privileged identities at the Supabase bridge.
+
+No hosting provider was selected by this authentication decision. A public HTTPS URL requires an approved hosted runtime with production host, CSRF, cookie, secret, database, storage and email configuration; a loopback preview or tunnel does not satisfy that release requirement.
+
+Verification required: confirmed linked client and linked administrator login, immutable UUID mismatch denial, unknown-user client-only provisioning, unlinked admin/editor takeover denial, provider outage/rate-limit handling, role isolation, session replacement and selected-project binding.
