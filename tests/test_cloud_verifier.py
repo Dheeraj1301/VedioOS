@@ -1,12 +1,13 @@
 from io import StringIO
 
-from django.test import TestCase
+from django.test import TestCase, override_settings
 
 from core.management.commands.verify_cloud import run_cloud_checks
 from core.models import User
 
 
 class CloudVerifierTests(TestCase):
+    @override_settings(SUPABASE_AUTH_PASSWORD_LOGIN_ENABLED=True)
     def test_current_auth_and_access_flow_is_reversible(self):
         output = StringIO()
 

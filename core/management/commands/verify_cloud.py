@@ -61,6 +61,7 @@ def run_cloud_checks(write):
                 and verification.url == reverse("verification_success"),
                 "client email verification activates account",
             )
+            client_user.refresh_from_db()
             require(client.get("/client/").status_code == 200, "client dashboard")
             require(client.get("/admin/").status_code == 403, "client denied admin access")
             require(client.get("/editor/").status_code == 403, "client denied editor access")
@@ -84,10 +85,21 @@ def run_cloud_checks(write):
                 "logout invalidates server session",
             )
             require(client.get("/api/areas/client/").status_code == 401, "anonymous API denied")
-            require(
-                client.post("/login/", {"username": email, "password": password}).status_code == 302,
-                "verified client login",
-            )
+            # The fixture is deliberately rolled back and must not create a
+            # persistent Supabase Auth user. Exercise the application login
+            # and session path with the already verified synthetic identity;
+            # focused auth tests cover the live HTTP provider boundary.
+            with patch(
+                "core.forms.authenticate_supabase_user",
+                return_value=client_user,
+            ):
+                require(
+                    client.post(
+                        "/login/", {"username": email, "password": password}
+                    ).status_code
+                    == 302,
+                    "verified client login",
+                )
 
             public_editor = Browser()
             response = public_editor.get("/register/editor/")
