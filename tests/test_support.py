@@ -1,10 +1,13 @@
 import uuid
+from unittest.mock import patch
 
+from django.db import DatabaseError
 from django.test import Client as Browser
 from django.test import TestCase
 
 from core.models import Client, Project, User
 from operations.models import Admin, AuditLog, Notification, SupportMessage, SupportRequest
+from operations.support import support_request_for
 
 PASSWORD = "Synthetic-Support-72!Leaf"
 
@@ -113,10 +116,13 @@ class SupportWorkflowTests(TestCase):
             f"/support/{support_request.id}/messages/",
             {"body": "Internal investigation.", "audience": "internal", "request_key": uuid.uuid4()},
         )
-        admin.post(
+        reply_response = admin.post(
             f"/support/{support_request.id}/messages/",
             {"body": "We are checking this.", "audience": "shared", "request_key": uuid.uuid4()},
+            follow=True,
         )
+        self.assertContains(reply_response, "Support message saved.")
+        self.assertContains(reply_response, "We are checking this.")
         client_response = self.browser(self.client_user).get(f"/support/{support_request.id}/")
         self.assertNotContains(client_response, "Internal investigation")
         self.assertNotContains(client_response, "Legacy client follow-up")
@@ -134,6 +140,36 @@ class SupportWorkflowTests(TestCase):
                 recipient=self.client_user, event_key__startswith="support-message:"
             ).exists()
         )
+
+    def test_database_failure_keeps_admin_on_ticket_with_clear_error(self):
+        support_request = self.open_request()
+        admin = self.browser(self.admin)
+        before = SupportMessage.objects.filter(support_request=support_request).count()
+        with patch(
+            "operations.support_views.post_support_message",
+            side_effect=DatabaseError("temporary database failure"),
+        ):
+            response = admin.post(
+                f"/support/{support_request.id}/messages/",
+                {"body": "Please retry this reply.", "audience": "shared", "request_key": uuid.uuid4()},
+                follow=True,
+            )
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Failed to send response. Please try again.")
+        self.assertContains(response, 'id="support-reply"', html=False)
+        self.assertEqual(
+            SupportMessage.objects.filter(support_request=support_request).count(), before
+        )
+
+    def test_locked_ticket_query_limits_postgresql_lock_to_request_row(self):
+        support_request = self.open_request()
+        with patch("operations.support.SupportRequest.objects.select_related") as select_related:
+            rows = select_related.return_value
+            locked_rows = rows.select_for_update.return_value
+            locked_rows.get.return_value = support_request
+            result = support_request_for(self.admin, support_request.id, lock=True)
+        self.assertEqual(result, support_request)
+        rows.select_for_update.assert_called_once_with(of=("self",))
 
     def test_client_cannot_post_a_reply_even_while_request_is_open(self):
         support_request = self.open_request()

@@ -17,7 +17,9 @@ from .models import SupportMessage, SupportRequest
 def support_request_for(user, request_id, *, lock=False):
     rows = SupportRequest.objects.select_related("client__user", "project")
     if lock:
-        rows = rows.select_for_update()
+        # Lock only the support request. PostgreSQL rejects an unrestricted
+        # FOR UPDATE when this query outer-joins the optional project row.
+        rows = rows.select_for_update(of=("self",))
     if user.role == "client":
         rows = rows.filter(client__user=user)
     elif user.role != "admin":

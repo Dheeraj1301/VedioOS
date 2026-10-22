@@ -106,3 +106,9 @@ Status: requested interface changes are implemented. Production commercial activ
 - Plan 1, Plan 2 and Plan 3 now reveal **Project name**, **Upload Your Clips**, **Add Inspiration Reel/Video**, and the existing Save action immediately on selection. A frontend cache-key bump ensures browsers load the current toggle code instead of a stale script.
 - Switching or temporarily deselecting fixed plans retains the entered title and selected files in browser state. Inspiration remains capped at three accepted files with **Max uploads: 3.** shown when extras are rejected.
 - The Custom form remains a separate unchanged panel. The opt-in Edge regression and full isolated suite (323 passing, 13 optional integrations skipped) pass. This is a code-only change with no database migration or Supabase schema update.
+
+## Admin support-reply reliability — 2026-10-22
+
+- PostgreSQL rejected the reply transaction because its row lock also covered the nullable side of the optional project outer join. The query now locks only the support-request row while preserving the existing authorization and retry-safe transaction.
+- Database failures are logged and return the administrator to the ticket with **Failed to send response. Please try again.** The transaction rolls back, so a failed reply cannot appear partially saved.
+- A rollback-only probe against the selected Supabase project completed message creation, client notification and audit creation while preserving all live row counts. No schema migration was required.

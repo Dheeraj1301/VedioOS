@@ -37,6 +37,7 @@ Status: in progress. Operational analytics, private client support, and the admi
 - Order-roster tests reconcile payment-attempt counts, combined filters, compatibility aliases, role denial and cursor rejection. This slice changes no schema; Supabase remains synchronized through `operations.0013`.
 - Project-roster tests reconcile assignment and overdue queues, search, role denial and cursor rejection. This slice changes no schema; Supabase remains synchronized through `operations.0013`.
 - The read-only `reconcile_communications` check validates support ownership, category/status values, the original client opening message and client/admin audience boundaries. On 2026-09-26 the connected database contained no support records and passed with no findings.
+- On 2026-10-22, admin replies were repaired for PostgreSQL: the transactional lookup now locks only the support-request row instead of attempting `FOR UPDATE` across the nullable project outer join. A rollback-only live Supabase probe completed the message, notification and audit path without persisting synthetic data, and database failures now return the admin to the ticket with a clear retry message instead of a 500 response.
 - No paid subscription or upgrade was required.
 
 ## Remaining before the Phase 8 gate

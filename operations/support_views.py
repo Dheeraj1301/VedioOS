@@ -1,7 +1,9 @@
+import logging
 import uuid
 
 from django.contrib import messages
 from django.core.exceptions import ValidationError
+from django.db import DatabaseError
 from django.shortcuts import redirect, render
 from django.views.decorators.http import require_GET, require_POST
 
@@ -15,6 +17,8 @@ from .support import (
     support_request_for,
     visible_support_messages,
 )
+
+logger = logging.getLogger(__name__)
 
 
 @require_GET
@@ -119,6 +123,9 @@ def support_message(request, request_id):
         )
     except ValidationError as exc:
         messages.error(request, " ".join(exc.messages))
+    except DatabaseError:
+        logger.exception("Support reply could not be saved", extra={"request_id": str(request_id)})
+        messages.error(request, "Failed to send response. Please try again.")
     else:
         messages.success(request, "Support message saved.")
     return redirect("support_detail", request_id=request_id)
