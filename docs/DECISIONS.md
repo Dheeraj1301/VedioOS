@@ -419,3 +419,11 @@ Status: approved and implemented
 Owner / source of explicit decision: Hamsa requested that Pending remain as the sole visible payment-state tab on Admin Orders.
 
 Decision: Admin Orders defaults to the Pending payment filter and renders only its Pending tab. Search and workflow filtering preserve the active payment state. Existing protected server-side reconciliation filters and order records remain available and unchanged; only the roster's visible tab inventory and default are narrowed.
+
+## 2026-10-23 — Remove Wallet from Editor navigation
+
+Status: approved and implemented
+
+Owner / source of explicit decision: Hamsa requested removal of the Wallet section from the Editor dashboard.
+
+Decision: the Editor workspace sidebar no longer renders the Wallet destination. The protected wallet route, ledger records, redemption behavior and administrator payout operations remain unchanged; this is a navigation-only removal.

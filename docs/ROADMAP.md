@@ -340,3 +340,7 @@ The Admin Analytics page no longer renders the Consultations card or the Metrics
 ### 2026-10-23 pending-only Admin Orders evidence
 
 Admin Orders now renders Pending as its sole payment-state tab and uses Pending for an unfiltered page request. Search, workflow selection, pagination, order cards and protected backend reconciliation filters remain unchanged. Regression coverage verifies the default summary and pending results, the absence of All/Confirmed/Failed/Refunded from the tab row, and preservation of explicit server-side filtering. The focused five-test order roster suite and full isolated suite (343 tests, 14 optional integrations skipped) pass, along with Django, migration-drift, Ruff, JavaScript syntax and whitespace checks. This UI/default change requires no database migration or Supabase synchronization.
+
+### 2026-10-23 Editor Wallet navigation removal evidence
+
+The Editor workspace sidebar no longer contains the Wallet section. Assigned projects, Project details, Revisions, Project Communication and Availability retain their existing destinations and order. The protected wallet route and its ledger/redemption implementation remain unchanged, as do Admin Payouts. Focused Editor navigation and wallet-security coverage (14 tests) and the full isolated suite (343 tests, 14 optional integrations skipped) pass, along with Django, migration-drift, Ruff, JavaScript syntax and whitespace checks. This UI-only change requires no database migration or Supabase synchronization.

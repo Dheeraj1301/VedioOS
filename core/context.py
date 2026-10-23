@@ -13,7 +13,6 @@ NAV = {
         ("Project details", "/editor/projects/"),
         ("Revisions", "/editor/revisions/"),
         ("Project Communication", "/editor/communication/"),
-        ("Wallet", "/editor/wallet/"),
         ("Availability", "/editor/availability/"),
     ],
     "admin": [

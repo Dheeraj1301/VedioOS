@@ -53,7 +53,7 @@ class EditorCommunicationTests(TestCase):
         )
         self.client.force_login(self.editor.user)
 
-    def test_editor_sidebar_replaces_calls_without_changing_other_items(self):
+    def test_editor_sidebar_omits_calls_and_wallet(self):
         self.assertEqual(
             NAV["editor"],
             [
@@ -61,12 +61,12 @@ class EditorCommunicationTests(TestCase):
                 ("Project details", "/editor/projects/"),
                 ("Revisions", "/editor/revisions/"),
                 ("Project Communication", "/editor/communication/"),
-                ("Wallet", "/editor/wallet/"),
                 ("Availability", "/editor/availability/"),
             ],
         )
         page = self.client.get("/editor/")
         self.assertNotContains(page, '>Calls<span', html=False)
+        self.assertNotContains(page, '>Wallet<span', html=False)
         self.assertContains(page, '>Project Communication<span', html=False)
         self.assertEqual(self.client.get("/editor/calls/").status_code, 200)
 
