@@ -427,3 +427,11 @@ Status: approved and implemented
 Owner / source of explicit decision: Hamsa requested removal of the Wallet section from the Editor dashboard.
 
 Decision: the Editor workspace sidebar no longer renders the Wallet destination. The protected wallet route, ledger records, redemption behavior and administrator payout operations remain unchanged; this is a navigation-only removal.
+
+## 2026-10-23 — Supabase Auth deletion archival policy
+
+Status: approved and implemented
+
+Owner / source of explicit decision: Hamsa requested immediate Admin synchronization, project/file cleanup, last-Admin protection and graceful Editor unassignment when a linked Supabase Auth identity is deleted.
+
+Decision: use archival rather than cascading deletion because financial, message, delivery, earning and audit records must remain attributable and recoverable. Before any Admin page renders, the server-only Supabase Auth Admin API is reconciled against linked local identities; failure to verify Auth returns a retryable 503 instead of stale roster data. Client projects receive `archived_at`, disappear from Client/Editor/Admin operational project, order and payment queries, and enqueue version-aware private-object cleanup. Editor deletion ends current assignments, returns nonterminal projects to Awaiting assignment, clears rotation/call references and leaves the client's project intact. Reconciliation refuses to archive the last active application Admin and records the blocked safeguard; preventing a direct deletion inside the managed `auth` schema would require Supabase project-owner DDL permission, which the constrained runtime and connected management account do not have. A dry-run/apply command handles scheduled or manual reconciliation. Storage cleanup is performed only through the configured S3-compatible API and is retryable; SQL never deletes Supabase Storage metadata.

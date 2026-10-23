@@ -28,11 +28,12 @@ def role_required(*roles):
 
 def visible_projects(user):
     if user.role == "admin":
-        return Project.objects.all()
+        return Project.objects.filter(archived_at__isnull=True)
     if user.role == "client":
-        return Project.objects.filter(client__user=user)
+        return Project.objects.filter(client__user=user, archived_at__isnull=True)
     if user.role == "editor":
         return Project.objects.filter(
+            archived_at__isnull=True,
             order__payment_status="confirmed",
             payment_completed_at__isnull=False,
             assignments__editor__user=user,

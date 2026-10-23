@@ -20,7 +20,8 @@ def order_page(before=None, payment="all", workflow="all", search="", size=50):
         raise Http404("Invalid order search.")
 
     rows = (
-        Order.objects.select_related("project__client__user", "plan")
+        Order.objects.filter(project__archived_at__isnull=True)
+        .select_related("project__client__user", "plan")
         .annotate(payment_attempt_count=Count("payments", distinct=True))
         .order_by("-created_at", "-id")
     )

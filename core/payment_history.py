@@ -23,8 +23,10 @@ PAYMENT_DATE_RANGES = {
 def payment_page(user, before=None, status="all", size=50, query="", date_range="all"):
     if user.role not in {"client", "admin"}:
         raise Http404("Payment history not found.")
-    rows = Payment.objects.select_related("order__project__client__user").order_by(
-        "-created_at", "-id"
+    rows = (
+        Payment.objects.filter(order__project__archived_at__isnull=True)
+        .select_related("order__project__client__user")
+        .order_by("-created_at", "-id")
     )
     if user.role == "client":
         rows = rows.filter(order__project__client__user=user)

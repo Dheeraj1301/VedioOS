@@ -27,7 +27,8 @@ OPEN_SUPPORT_STATES = (SupportRequest.Status.OPEN, SupportRequest.Status.IN_PROG
 
 def client_roster():
     return (
-        Client.objects.select_related("user")
+        Client.objects.filter(user__auth_deleted_at__isnull=True)
+        .select_related("user")
         .annotate(
             project_count=Count("projects", distinct=True),
             open_project_count=Count(

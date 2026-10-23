@@ -115,6 +115,10 @@ Acceptance triggers one earning credit under the project's earning rules. Pendin
 
 The editor wallet shows total earned, pending, redeemable, redeemed, redemption requests/history, and transaction history. Admins manage earning settings and payout requests. Reserve funds/coins during redemption so simultaneous requests cannot spend the same balance. Record payout outcomes and use compensating ledger entries for corrections.
 
+## Identity deletion and retention
+
+Supabase Auth deletion removes application access immediately but does not cascade-delete retained commercial or audit evidence. The linked local identity is deactivated and marked with its Auth deletion time. A deleted Client's projects are archived out of all operational rosters; their orders, payments, messages and audit history remain private and retained. Exact private file objects for those projects are permanently deleted by the retryable storage cleanup worker. A deleted Editor's open assignments end and the client's nonterminal projects return to Awaiting assignment. The last active Admin cannot be deleted.
+
 Coin conversion, precision, eligibility, payout provider, reassignment earning split, and refund/cancellation effects are undecided. Disable real redemption until configured; do not imply a monetary value for demo coins.
 
 ## 12. Notifications, audit, and administration

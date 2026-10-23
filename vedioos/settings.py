@@ -22,6 +22,13 @@ SUPABASE_AUTH_URL = os.getenv(
 )
 SUPABASE_AUTH_PUBLISHABLE_KEY = os.getenv("SUPABASE_AUTH_PUBLISHABLE_KEY", "")
 SUPABASE_SECRET_KEY = os.getenv("SUPABASE_SECRET_KEY", "")
+SUPABASE_DELETION_SYNC_ENABLED = (
+    os.getenv(
+        "SUPABASE_DELETION_SYNC_ENABLED",
+        "true" if SUPABASE_SECRET_KEY else "false",
+    ).lower()
+    == "true"
+)
 SUPABASE_AUTH_TIMEOUT_SECONDS = int(os.getenv("SUPABASE_AUTH_TIMEOUT_SECONDS", "10"))
 SUPABASE_AUTH_PASSWORD_LOGIN_ENABLED = (
     os.getenv("SUPABASE_AUTH_PASSWORD_LOGIN_ENABLED", "false").lower() == "true"
@@ -51,6 +58,7 @@ MIDDLEWARE = [
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "core.middleware.SupabaseDeletionSyncMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "core.middleware.SingleActiveSessionMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",

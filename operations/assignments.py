@@ -84,7 +84,9 @@ EDITOR_SORTS = {
 
 def editor_roster(search="", sort=None):
     search = search.strip()[:200]
-    editors = Editor.objects.select_related("user", "proficiency").annotate(
+    editors = Editor.objects.filter(user__auth_deleted_at__isnull=True).select_related(
+        "user", "proficiency"
+    ).annotate(
         active_count=Count(
             "assignments",
             filter=Q(assignments__ended_at__isnull=True) & ~Q(assignments__project__status__in=TERMINAL),

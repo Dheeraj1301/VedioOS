@@ -79,3 +79,34 @@ def landing_video_permission(config):
     return storage_client().generate_presigned_url(
         "get_object", Params=params, ExpiresIn=settings.DOWNLOAD_TTL_SECONDS
     )
+
+
+def delete_private_object_versions(object_key):
+    """Permanently delete every version and delete marker for one exact key."""
+    client = storage_client()
+    deleted = 0
+    key_marker = None
+    version_marker = None
+    while True:
+        request = {"Bucket": settings.S3_BUCKET, "Prefix": object_key}
+        if key_marker:
+            request["KeyMarker"] = key_marker
+        if version_marker:
+            request["VersionIdMarker"] = version_marker
+        page = client.list_object_versions(**request)
+        objects = [
+            {"Key": item["Key"], "VersionId": item["VersionId"]}
+            for group in ("Versions", "DeleteMarkers")
+            for item in page.get(group, [])
+            if item.get("Key") == object_key
+        ]
+        if objects:
+            client.delete_objects(
+                Bucket=settings.S3_BUCKET,
+                Delete={"Objects": objects, "Quiet": True},
+            )
+            deleted += len(objects)
+        if not page.get("IsTruncated"):
+            return deleted
+        key_marker = page.get("NextKeyMarker")
+        version_marker = page.get("NextVersionIdMarker")

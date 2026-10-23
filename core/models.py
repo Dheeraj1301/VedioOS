@@ -35,6 +35,7 @@ class User(AbstractUser):
     role = models.CharField(max_length=10, choices=Role.choices, default=Role.CLIENT)
     email_verified_at = models.DateTimeField(null=True, blank=True)
     supabase_auth_user_id = models.UUIDField(null=True, blank=True, unique=True)
+    auth_deleted_at = models.DateTimeField(null=True, blank=True)
     active_session_key = models.CharField(max_length=40, blank=True, default="")
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = ["name"]
@@ -232,6 +233,7 @@ class Project(Record):
     payment_completed_at = models.DateTimeField(null=True, blank=True)
     expected_delivery_at = models.DateTimeField(null=True, blank=True)
     quotation_snapshot = models.JSONField(default=dict, blank=True)
+    archived_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:
         db_table = "projects"
@@ -320,6 +322,31 @@ class File(Record):
     class Meta:
         db_table = "files"
         ordering = ["created_at"]
+
+
+class ProjectStorageCleanup(models.Model):
+    class State(models.TextChoices):
+        PENDING = "pending", "Pending"
+        PROCESSING = "processing", "Processing"
+        RETRY = "retry", "Retry scheduled"
+        COMPLETED = "completed", "Completed"
+
+    project = models.OneToOneField(
+        Project,
+        primary_key=True,
+        on_delete=models.PROTECT,
+        related_name="storage_cleanup",
+    )
+    state = models.CharField(max_length=20, choices=State.choices, default=State.PENDING)
+    attempts = models.PositiveIntegerField(default=0)
+    object_count = models.PositiveIntegerField(default=0)
+    last_attempt_at = models.DateTimeField(null=True, blank=True)
+    completed_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = "project_storage_cleanups"
 
 
 class ProjectVersion(Record):

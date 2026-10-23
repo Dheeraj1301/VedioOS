@@ -1,7 +1,11 @@
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import logout
-from django.http import JsonResponse
+from django.http import HttpResponse, JsonResponse
 from django.shortcuts import redirect
+
+from .identity_cleanup import SupabaseDeletionSyncUnavailable, synchronize_supabase_deletions
+from .models import User
 
 
 class SingleActiveSessionMiddleware:
@@ -53,3 +57,36 @@ class PrivateResponseMiddleware:
         response["Referrer-Policy"] = "same-origin"
         response["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()"
         return response
+
+
+# AuthenticationMiddleware precedes this class in settings, so request.user is available.
+class SupabaseDeletionSyncMiddleware:
+    """Fail closed before rendering Admin data that may contain deleted identities."""
+
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        if (
+            settings.SUPABASE_DELETION_SYNC_ENABLED
+            and request.path.startswith("/admin/")
+            and request.user.is_authenticated
+            and request.user.role == "admin"
+        ):
+            try:
+                synchronize_supabase_deletions()
+            except SupabaseDeletionSyncUnavailable:
+                response = HttpResponse(
+                    "Admin identity synchronization is temporarily unavailable. Please retry.",
+                    status=503,
+                )
+                response["Retry-After"] = "30"
+                return response
+            if not User.objects.filter(
+                pk=request.user.pk,
+                is_active=True,
+                auth_deleted_at__isnull=True,
+            ).exists():
+                logout(request)
+                return redirect("/login/?account=removed")
+        return self.get_response(request)

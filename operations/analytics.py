@@ -27,11 +27,15 @@ def operational_analytics():
 
     order_counts = {
         row["payment_status"]: row["count"]
-        for row in Order.objects.values("payment_status").annotate(count=Count("id"))
+        for row in Order.objects.filter(project__archived_at__isnull=True)
+        .values("payment_status")
+        .annotate(count=Count("id"))
     }
     project_counts = {
         row["status"]: row["count"]
-        for row in Project.objects.values("status").annotate(count=Count("id"))
+        for row in Project.objects.filter(archived_at__isnull=True)
+        .values("status")
+        .annotate(count=Count("id"))
     }
     call_counts = {
         row["status"]: row["count"]
@@ -45,16 +49,22 @@ def operational_analytics():
         row["state"]: row["count"]
         for row in NotificationDelivery.objects.values("state").annotate(count=Count("id"))
     }
-    open_assignments = EditorAssignment.objects.filter(ended_at__isnull=True).exclude(
+    open_assignments = EditorAssignment.objects.filter(
+        ended_at__isnull=True, project__archived_at__isnull=True
+    ).exclude(
         project__status__in=[Project.Status.COMPLETED, Project.Status.CANCELLED]
     )
-    editor_counts = Editor.objects.aggregate(
+    editor_counts = Editor.objects.filter(user__auth_deleted_at__isnull=True).aggregate(
         total=Count("id"),
         approved_active=Count("id", filter=Q(approved=True, user__is_active=True)),
         awaiting_approval=Count("id", filter=Q(approved=False)),
     )
     editor_counts["available"] = (
-        Editor.objects.filter(approved=True, user__is_active=True)
+        Editor.objects.filter(
+            approved=True,
+            user__is_active=True,
+            user__auth_deleted_at__isnull=True,
+        )
         .annotate(
             active_count=Count(
                 "assignments",
@@ -73,10 +83,12 @@ def operational_analytics():
     return {
         "generated_at": timezone.now(),
         "headline": {
-            "clients": Client.objects.filter(user__is_active=True).count(),
+            "clients": Client.objects.filter(
+                user__is_active=True, user__auth_deleted_at__isnull=True
+            ).count(),
             "orders": sum(order_counts.values()),
             "paid_orders": order_counts.get("confirmed", 0),
-            "open_projects": Project.objects.exclude(
+            "open_projects": Project.objects.filter(archived_at__isnull=True).exclude(
                 status__in=[Project.Status.COMPLETED, Project.Status.CANCELLED]
             ).count(),
             "completed_projects": project_counts.get(Project.Status.COMPLETED, 0),

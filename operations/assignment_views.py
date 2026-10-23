@@ -35,7 +35,11 @@ from .models import (
 def assignments(request):
     mode = request.GET.get("status", "review")
     projects = (
-        Project.objects.filter(order__payment_status="confirmed", payment_completed_at__isnull=False)
+        Project.objects.filter(
+            archived_at__isnull=True,
+            order__payment_status="confirmed",
+            payment_completed_at__isnull=False,
+        )
         .exclude(status__in=TERMINAL)
         .select_related("client__user", "order", "projectcomplexity__proficiency", "assignmentqueue")
     )
@@ -85,7 +89,10 @@ def assignment_policy(request):
 @role_required("admin")
 def editor_detail(request, editor_id):
     editor = get_object_or_404(
-        Editor.objects.select_related("user", "proficiency", "approved_by"), pk=editor_id
+        Editor.objects.filter(user__auth_deleted_at__isnull=True).select_related(
+            "user", "proficiency", "approved_by"
+        ),
+        pk=editor_id,
     )
     availability = availability_state(editor)
     return render(
@@ -102,7 +109,10 @@ def editor_detail(request, editor_id):
 
 @role_required("admin")
 def editor_operations(request, editor_id):
-    editor = get_object_or_404(Editor.objects.select_related("user"), pk=editor_id)
+    editor = get_object_or_404(
+        Editor.objects.filter(user__auth_deleted_at__isnull=True).select_related("user"),
+        pk=editor_id,
+    )
     form = EditorOperationsForm(
         request.POST or None,
         initial={
@@ -139,7 +149,10 @@ def editor_operations(request, editor_id):
 
 @role_required("admin")
 def assignment_detail(request, project_id):
-    project = get_object_or_404(Project.objects.select_related("order", "client__user"), pk=project_id)
+    project = get_object_or_404(
+        Project.objects.filter(archived_at__isnull=True).select_related("order", "client__user"),
+        pk=project_id,
+    )
     complexity = ProjectComplexity.objects.filter(project=project).first()
     current = (
         EditorAssignment.objects.filter(project=project, ended_at__isnull=True)

@@ -166,8 +166,10 @@ def admin_dashboard(request):
             "support_count": SupportRequest.objects.filter(
                 status__in=[SupportRequest.Status.OPEN, SupportRequest.Status.IN_PROGRESS]
             ).count(),
-            "editor_count": Editor.objects.count(),
-            "pending_count": Editor.objects.filter(approved=False).count(),
+            "editor_count": Editor.objects.filter(user__auth_deleted_at__isnull=True).count(),
+            "pending_count": Editor.objects.filter(
+                approved=False, user__auth_deleted_at__isnull=True
+            ).count(),
             "projects": visible_projects(request.user)[:5],
         },
     )
