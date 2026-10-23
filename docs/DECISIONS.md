@@ -387,3 +387,11 @@ Status: approved and implemented
 Owner / source of explicit decision: Hamsa requested direct-currency prices for all four custom revision tiers and inclusion of the selected tier in authoritative quotations.
 
 Decision: the singleton commerce policy stores integer-minor-unit prices for `0`, `1-2`, `3-4` and `5+`. Administrators enter major currency values through the existing money controls. Revision pricing is all-or-none: leaving all four values blank preserves legacy quotations without a revision surcharge, while entering any value requires all four. This avoids silently inventing commercial rates during deployment. Once configured, the selected tier is added after the existing feature estimate and its min/max bounds, and is included in the estimate response, saved project snapshot, order quote and checkout breakdown. A zero-valued tier remains an explicit free line in the breakdown without creating a zero-valued payable item. Accepted quotations remain immutable when later prices change.
+
+## 2026-10-23 — Supplied BRIO logo asset
+
+Status: approved and implemented
+
+Owner / source of explicit decision: Hamsa supplied the orange ornamental BRIO icon and requested it replace the generated letter mark throughout the application.
+
+Decision: use the supplied JPEG unchanged as the shared public/workspace logo and browser favicon. Retain the adjacent BRIO wordmark and existing header/sidebar geometry. Render the image at a fixed 34-pixel box with `object-fit: contain` to preserve its aspect ratio, and identify meaningful instances as `BRIO Logo` for accessibility.

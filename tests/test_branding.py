@@ -1,3 +1,4 @@
+from django.contrib.staticfiles import finders
 from django.test import TestCase
 
 from tests.assignment_fixtures import create_people
@@ -9,6 +10,11 @@ class BrandingTests(TestCase):
         content = response.content.decode("utf-8")
         self.assertIn("BRIO", content)
         self.assertNotIn("vedioos", content.lower())
+        self.assertContains(response, 'class="brand-logo"', html=False)
+        self.assertContains(response, 'src="/static/images/brio-logo.jpeg"', html=False)
+        self.assertContains(response, 'alt="BRIO Logo"', html=False)
+        self.assertContains(response, 'rel="icon" href="/static/images/brio-logo.jpeg"', html=False)
+        self.assertNotContains(response, 'class="brand-mark"', html=False)
 
     def test_public_and_authentication_pages_use_brio(self):
         for path in ["/", "/register/", "/login/", "/editor/signin/"]:
@@ -22,4 +28,4 @@ class BrandingTests(TestCase):
         response = self.client.get("/client/")
 
         self.assert_brio_branding(response)
-        self.assertContains(response, '<span class="brand-mark">B</span>BRIO', html=False)
+        self.assertIsNotNone(finders.find("images/brio-logo.jpeg"))
