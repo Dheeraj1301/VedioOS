@@ -16,7 +16,8 @@
     {% csrf_token %}<input type="hidden" name="request_key" value="{{ message_request_key }}">
     <input type="hidden" name="audience" value="shared">
     <label for="shared-message">Message to client and team</label>
-    <textarea id="shared-message" name="body" rows="4" maxlength="5000" required></textarea>
+    <textarea id="shared-message" name="body" rows="4" maxlength="5000" required{% if request.user.role == 'client' or request.user.role == 'editor' %} data-digit-restricted aria-describedby="shared-message-number-warning"{% endif %}></textarea>
+    {% if request.user.role == 'client' or request.user.role == 'editor' %}<p id="shared-message-number-warning" class="message-number-warning" role="alert" hidden>Phone numbers are restricted. Please do not enter more than 5 consecutive numbers.</p>{% endif %}
     <button type="submit" class="button">Send message</button>
   </form>
   {% if request.user.role != 'client' %}

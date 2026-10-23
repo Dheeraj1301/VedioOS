@@ -126,6 +126,25 @@ class EditorCommunicationTests(TestCase):
         self.assertContains(client_page, "Editor shared reply")
         self.assertContains(client_page, self.editor.user.name)
 
+    def test_editor_reply_rejects_six_consecutive_digits(self):
+        detail_path = f"/editor/communication/{self.ongoing.id}/"
+        detail = self.client.get(detail_path)
+        self.assertContains(detail, "data-digit-restricted", html=False)
+        blocked = self.client.post(
+            f"/editor/communication/{self.ongoing.id}/reply/",
+            {
+                "body": "Do not share 123456",
+                "request_key": detail.context["message_request_key"],
+            },
+        )
+        self.assertEqual(blocked.status_code, 400)
+        self.assertContains(
+            blocked,
+            "Phone numbers are restricted. Please do not enter more than 5 consecutive numbers.",
+            status_code=400,
+        )
+        self.assertFalse(ProjectMessage.objects.filter(body__contains="123456").exists())
+
     def test_completed_is_read_only_and_other_projects_are_denied(self):
         ProjectMessage.objects.create(
             project=self.completed,

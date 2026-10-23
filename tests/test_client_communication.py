@@ -79,6 +79,46 @@ class ClientCommunicationTests(TestCase):
         self.assertContains(reloaded, self.editors[0].user.name)
         self.assertContains(reloaded, "Client and team")
 
+    def test_phone_number_sequences_are_rejected_but_broken_sequences_are_allowed(self):
+        path = f"/client/communication/{self.ongoing.id}/"
+        page = self.client.get(path)
+        self.assertContains(page, "data-digit-restricted", html=False)
+        self.assertContains(
+            page,
+            "Phone numbers are restricted. Please do not enter more than 5 consecutive numbers.",
+        )
+        blocked = self.client.post(
+            f"/orders/{self.ongoing.id}/messages/",
+            {
+                "audience": ProjectMessage.Audience.SHARED,
+                "body": "Call me at 9876543210",
+                "request_key": page.context["message_request_key"],
+            },
+        )
+        self.assertEqual(blocked.status_code, 400)
+        self.assertContains(
+            blocked,
+            "Phone numbers are restricted. Please do not enter more than 5 consecutive numbers.",
+            status_code=400,
+        )
+        self.assertFalse(ProjectMessage.objects.filter(body__contains="9876543210").exists())
+
+        allowed = self.client.post(
+            f"/orders/{self.ongoing.id}/messages/",
+            {
+                "audience": ProjectMessage.Audience.SHARED,
+                "body": "Reference 12345 67890 and 123-456",
+                "request_key": uuid.uuid4(),
+            },
+        )
+        self.assertRedirects(allowed, path)
+        self.assertTrue(
+            ProjectMessage.objects.filter(
+                project=self.ongoing,
+                body="Reference 12345 67890 and 123-456",
+            ).exists()
+        )
+
     def test_completed_history_is_read_only_in_ui_and_backend(self):
         path = f"/client/communication/{self.completed.id}/"
         response = self.client.get(path)

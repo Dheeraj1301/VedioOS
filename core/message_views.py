@@ -3,6 +3,7 @@ import uuid
 from django.contrib import messages
 from django.core.exceptions import ValidationError
 from django.db.models import OuterRef, Subquery
+from django.http import HttpResponseBadRequest
 from django.shortcuts import redirect, render
 from django.views.decorators.http import require_GET, require_POST
 
@@ -11,6 +12,10 @@ from operations.models import ProjectMessage
 
 from .models import Project
 from .permissions import project_for, role_required, visible_projects
+
+
+def _is_phone_number_restriction(error):
+    return any(item.code == "restricted_phone_number" for item in error.error_list)
 
 
 def _communication_projects(user, *, exclude_cancelled=False):
@@ -124,6 +129,8 @@ def editor_message_post(request, project_id):
             request.POST.get("request_key"),
         )
     except ValidationError as exc:
+        if _is_phone_number_restriction(exc):
+            return HttpResponseBadRequest(" ".join(exc.messages), content_type="text/plain")
         messages.error(request, " ".join(exc.messages))
     else:
         messages.success(request, "Reply saved.")
@@ -142,6 +149,8 @@ def message_post(request, project_id):
             request.POST.get("request_key"),
         )
     except ValidationError as exc:
+        if _is_phone_number_restriction(exc):
+            return HttpResponseBadRequest(" ".join(exc.messages), content_type="text/plain")
         messages.error(request, " ".join(exc.messages))
     else:
         messages.success(request, "Message saved.")

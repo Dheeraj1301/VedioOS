@@ -20,7 +20,8 @@
   <form class="form-stack" method="post" action="{% url 'editor_message_post' project.id %}">
     {% csrf_token %}<input type="hidden" name="request_key" value="{{ message_request_key }}">
     <label for="editor-reply">Reply to the client and team</label>
-    <textarea id="editor-reply" name="body" rows="4" maxlength="5000" required></textarea>
+    <textarea id="editor-reply" name="body" rows="4" maxlength="5000" required data-digit-restricted aria-describedby="editor-reply-number-warning"></textarea>
+    <p id="editor-reply-number-warning" class="message-number-warning" role="alert" hidden>Phone numbers are restricted. Please do not enter more than 5 consecutive numbers.</p>
     <button type="submit" class="button">Send reply</button>
   </form>
   {% else %}

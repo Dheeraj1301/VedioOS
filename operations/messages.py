@@ -1,5 +1,6 @@
 """Project conversation boundary; internal notes never enter client views or notices."""
 
+import re
 import uuid
 from datetime import datetime
 
@@ -17,6 +18,10 @@ from .calls import notify
 from .models import EditorAssignment, ProjectMessage
 
 CLOSED_MESSAGE_STATUSES = {Project.Status.COMPLETED, Project.Status.CANCELLED}
+PHONE_NUMBER_WARNING = (
+    "Phone numbers are restricted. Please do not enter more than 5 consecutive numbers."
+)
+CONSECUTIVE_DIGITS = re.compile(r"\d{6,}")
 
 
 def messaging_enabled(project):
@@ -70,6 +75,12 @@ def post_message(user, project_id, body, audience, request_key):
         raise ValidationError("Enter a message of 1 to 5,000 characters.")
     if audience not in ProjectMessage.Audience.values:
         raise ValidationError("Choose a valid message audience.")
+    if (
+        user.role in {"client", "editor"}
+        and audience == ProjectMessage.Audience.SHARED
+        and CONSECUTIVE_DIGITS.search(text)
+    ):
+        raise ValidationError(PHONE_NUMBER_WARNING, code="restricted_phone_number")
     if user.role == "client" and audience != ProjectMessage.Audience.SHARED:
         raise PermissionDenied
     project_for(user, project_id)

@@ -7,6 +7,54 @@ async function postJSON(url, data = {}) {
   return body;
 }
 
+document.querySelectorAll('[data-digit-restricted]').forEach((field) => {
+  const warning = document.getElementById(field.getAttribute('aria-describedby'));
+  let lastValidValue = field.value;
+  const hasRestrictedDigits = value => /\d{6,}/.test(value);
+  const showWarning = () => {
+    field.classList.add('message-number-invalid');
+    field.setAttribute('aria-invalid', 'true');
+    if (warning) warning.hidden = false;
+  };
+  const clearWarning = () => {
+    field.classList.remove('message-number-invalid');
+    field.removeAttribute('aria-invalid');
+    if (warning) warning.hidden = true;
+  };
+  const prospectiveValue = text => (
+    field.value.slice(0, field.selectionStart) + text + field.value.slice(field.selectionEnd)
+  );
+  field.addEventListener('beforeinput', (event) => {
+    if (!event.inputType.startsWith('insert') || event.data === null) return;
+    if (hasRestrictedDigits(prospectiveValue(event.data))) {
+      event.preventDefault();
+      showWarning();
+    }
+  });
+  field.addEventListener('paste', (event) => {
+    const text = event.clipboardData?.getData('text') || '';
+    if (hasRestrictedDigits(prospectiveValue(text))) {
+      event.preventDefault();
+      showWarning();
+    }
+  });
+  field.addEventListener('input', () => {
+    if (hasRestrictedDigits(field.value)) {
+      field.value = lastValidValue;
+      showWarning();
+      return;
+    }
+    lastValidValue = field.value;
+    clearWarning();
+  });
+  field.form?.addEventListener('submit', (event) => {
+    if (!hasRestrictedDigits(field.value)) return;
+    event.preventDefault();
+    showWarning();
+    field.focus();
+  });
+});
+
 document.querySelectorAll('[data-faq-editor]').forEach((editor) => {
   const list = editor.querySelector('[data-faq-list]');
   const total = editor.querySelector('[name="faqs-TOTAL_FORMS"]');
