@@ -1,10 +1,11 @@
 {
-  "name": "vedioos-day-one",
+  "name": "brio-day-one",
   "private": true,
   "scripts": {
     "check:javascript": "node scripts/check-javascript.mjs",
     "check:vendor": "node scripts/vendor.mjs && git diff --exit-code -- static/vendor",
     "vendor": "node scripts/vendor.mjs",
+    "test:branding-browser": "node tests/branding_browser.mjs",
     "test:browser": "node tests/browser.mjs"
   },
   "devDependencies": {

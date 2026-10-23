@@ -482,7 +482,7 @@ def _login_view(request, *, editor_only=False):
             "subtitle": (
                 "Use your administrator-issued editor ID or editor email."
                 if editor_only
-                else "Sign in to your VedioOS workspace."
+                else "Sign in to your BRIO workspace."
             ),
             "button": "Editor Sign In" if editor_only else "Log in",
             "mode": "editor_login" if editor_only else "login",

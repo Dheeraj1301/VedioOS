@@ -6,7 +6,7 @@
 
 ## 2. Product and experience
 
-VedioOS MUST manage human editing, not perform automatic editing. AI is limited to internal complexity classification and assignment support. Editors download files and use their own tools.
+BRIO MUST manage human editing, not perform automatic editing. AI is limited to internal complexity classification and assignment support. Editors download files and use their own tools.
 
 The landing page must clearly explain the service to creators, influencers, students, businesses, personal brands, and first-time editing clients. Use a modern, premium, creative visual style, strong hierarchy, thumbnails, project cards, progress, and status badges. Clients need a mobile-first experience; editor/admin dashboards remain responsive with desktop-oriented workflows.
 

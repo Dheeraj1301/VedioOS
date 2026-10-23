@@ -2,7 +2,7 @@
   "version": "2.0.0",
   "tasks": [
     {
-      "label": "VedioOS: Start shared preview",
+      "label": "BRIO: Start shared preview",
       "type": "process",
       "command": "${workspaceFolder}\\.venv\\Scripts\\python.exe",
       "args": [
@@ -13,7 +13,7 @@
       },
       "isBackground": true,
       "problemMatcher": {
-        "owner": "vedioos",
+        "owner": "brio",
         "pattern": {
           "regexp": "^(.*)$",
           "message": 1
@@ -35,7 +35,7 @@
       }
     },
     {
-      "label": "VedioOS: Check shared preview",
+      "label": "BRIO: Check shared preview",
       "type": "process",
       "command": "${workspaceFolder}\\.venv\\Scripts\\python.exe",
       "args": [

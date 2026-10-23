@@ -76,11 +76,11 @@ def deliver_one():
     reference = f"notification-{notice.id}"
     try:
         sent = EmailMessage(
-            subject="VedioOS workspace update",
+            subject="BRIO workspace update",
             body=notice.message,
             from_email=settings.DEFAULT_FROM_EMAIL,
             to=[notice.recipient.email],
-            headers={"Message-ID": f"<{reference}@vedioos.local>"},
+            headers={"Message-ID": f"<{reference}@brio.local>"},
         ).send(fail_silently=False)
         if sent != 1:
             raise RuntimeError("email_backend_did_not_confirm")

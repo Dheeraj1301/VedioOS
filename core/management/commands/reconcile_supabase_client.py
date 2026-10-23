@@ -26,7 +26,7 @@ class Command(BaseCommand):
         email = options["email"].strip().lower()
         user = User.objects.filter(email__iexact=email).select_related("client_profile").first()
         if not user or user.role != User.Role.CLIENT or not hasattr(user, "client_profile"):
-            raise CommandError("An existing VedioOS client profile was not found.")
+            raise CommandError("An existing BRIO client profile was not found.")
 
         secret_key = settings.SUPABASE_SECRET_KEY
         if not settings.SUPABASE_AUTH_URL or not secret_key:

@@ -164,7 +164,7 @@ Status: approved
 
 Owner / source of explicit decision: Hamsa, request to use Supabase as the email authenticator while keeping all other application behavior unchanged.
 
-Decision: delegate new client email OTP generation, delivery, resend throttling and validation to the selected Supabase Auth project. Keep the existing private VedioOS user/profile records, passwords, Django application sessions, role authorization, editor-ID login and administrator login unchanged. Activate a matching inactive client only after Supabase Auth verifies the submitted code and returns the same normalized email. Do not persist returned Supabase access or refresh tokens. Retain the old challenge table without new writes; dropping it is outside this change.
+Decision: delegate new client email OTP generation, delivery, resend throttling and validation to the selected Supabase Auth project. Keep the existing private BRIO user/profile records, passwords, Django application sessions, role authorization, editor-ID login and administrator login unchanged. Activate a matching inactive client only after Supabase Auth verifies the submitted code and returns the same normalized email. Do not persist returned Supabase access or refresh tokens. Retain the old challenge table without new writes; dropping it is outside this change.
 
 Rationale: use the requested hosted verification service without redesigning every protected relation or changing established editor/admin authentication. Supabase Auth is an external verification boundary, not the source of application roles or project authorization.
 
@@ -194,7 +194,7 @@ Status: approved for test mode only; D05 remains open for production
 
 Owner / source of explicit decision: Hamsa supplied a Razorpay test-key file and requested a Razorpay test payment wall.
 
-Decision: add Razorpay Standard Checkout as a replaceable test-mode adapter. Create every Razorpay order on the backend from the accepted immutable VedioOS quote; expose only the browser-safe test key ID; verify `order_id|payment_id` using the server secret; and fetch the Razorpay payment before recording confirmation. Require captured status and exact order, amount and currency matching. Label all resulting records and receipts as test payments and exclude them from production assignment eligibility. Keep test credentials in ignored environment configuration.
+Decision: add Razorpay Standard Checkout as a replaceable test-mode adapter. Create every Razorpay order on the backend from the accepted immutable BRIO quote; expose only the browser-safe test key ID; verify `order_id|payment_id` using the server secret; and fetch the Razorpay payment before recording confirmation. Require captured status and exact order, amount and currency matching. Label all resulting records and receipts as test payments and exclude them from production assignment eligibility. Keep test credentials in ignored environment configuration.
 
 This decision does not authorize live keys, real charges, refunds, disputes, settlements, tax invoices or production launch. Those policies and provider-account requirements remain under D05.
 
@@ -202,7 +202,7 @@ This decision does not authorize live keys, real charges, refunds, disputes, set
 
 Status: approved implementation for shared client testing
 
-Owner / source of explicit decision: Hamsa requested that confirmed users created in the selected Supabase Authentication user table be able to log in from any correctly connected VedioOS preview and see the same shared application data.
+Owner / source of explicit decision: Hamsa requested that confirmed users created in the selected Supabase Authentication user table be able to log in from any correctly connected BRIO preview and see the same shared application data.
 
 Decision: retain Django sessions and the private `vedioos.users` authorization/profile identity, while accepting confirmed Supabase Auth email/password credentials for clients. After the local client-password check fails, the backend calls the selected project's password token endpoint, validates the returned short-lived token through `/auth/v1/user`, and discards all Supabase session tokens. It links the immutable Supabase Auth UUID to one application user. If no application user exists for that verified email, first login creates an active client user/profile with an unusable local password. Auth `user_metadata` never determines role or authorization. Existing editor/admin emails cannot use this bridge, and existing Django credentials remain supported during transition.
 
@@ -214,7 +214,7 @@ Verification required: valid confirmed Auth login and first-login provisioning, 
 
 ## 2026-10-14 — One active application session per account
 
-Status: approved and implemented for all VedioOS roles
+Status: approved and implemented for all BRIO roles
 
 Owner / source of explicit decision: Hamsa requested that an account cannot remain logged in on two devices and that a second-device login receive a clear explanation and session-management choices.
 

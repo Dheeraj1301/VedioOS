@@ -17,7 +17,7 @@ if (razorpayForm) {
       key: razorpayForm.dataset.key,
       amount: Number(razorpayForm.dataset.amount),
       currency: razorpayForm.dataset.currency,
-      name: 'VedioOS',
+      name: 'BRIO',
       description: 'Video editing order',
       order_id: razorpayForm.dataset.orderId,
       prefill: {

@@ -21,7 +21,7 @@ class ReleaseReadinessTests(TestCase):
             "supabase_auth_url": "https://project.supabase.co",
             "supabase_auth_key_configured": True,
             "email_backend": "example.EmailBackend",
-            "default_from_email": "VedioOS <no-reply@example.test>",
+            "default_from_email": "BRIO <no-reply@example.test>",
             "payment_mode": "disabled",
             "payout_mode": "disabled",
             "notification_email_enabled": False,

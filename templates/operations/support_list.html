@@ -1,5 +1,5 @@
 {% extends 'workspace.html' %}{% block workspace_content %}
-<div class="page-heading"><div><p class="eyebrow">{% if is_admin %}Admin / Support{% else %}Your account{% endif %}</p><h1>{{ title }}</h1><p class="muted">{% if is_admin %}Review client requests without exposing private messages in notifications or audit history.{% else %}Ask the VedioOS team for help with your account, payment record, or project.{% endif %}</p></div></div>
+<div class="page-heading"><div><p class="eyebrow">{% if is_admin %}Admin / Support{% else %}Your account{% endif %}</p><h1>{{ title }}</h1><p class="muted">{% if is_admin %}Review client requests without exposing private messages in notifications or audit history.{% else %}Ask the BRIO team for help with your account, payment record, or project.{% endif %}</p></div></div>
 {% if is_admin %}
 <nav class="commerce-filters" aria-label="Filter support requests"><a class="text-link" href="?status=all">All</a>{% for value,label in statuses %}<a class="text-link" href="?status={{ value }}">{{ label }}</a>{% endfor %}</nav><p class="muted">Showing: {{ selected_status }}</p>
 {% else %}

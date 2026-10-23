@@ -1,11 +1,11 @@
 # Codex master prompt — live Supabase preview
 
-Use this prompt in a Codex task that has access to the VedioOS repository and the team's separately provisioned Supabase environment. It launches the current application without committing credentials, changing shared schema, or presenting unfinished integrations as live.
+Use this prompt in a Codex task that has access to the BRIO repository and the team's separately provisioned Supabase environment. It launches the current application without committing credentials, changing shared schema, or presenting unfinished integrations as live.
 
 ## Copy-paste prompt
 
 ```text
-Run the current VedioOS application as a functional local preview backed by the configured team Supabase database and the repository's private local S3-compatible storage.
+Run the current BRIO application as a functional local preview backed by the configured team Supabase database and the repository's private local S3-compatible storage.
 
 Repository and target:
 - Repository: https://github.com/Dheeraj1301/VedioOS.git
@@ -44,7 +44,7 @@ Private storage startup:
 Application verification and startup:
 1. Run `python manage.py check` and `python manage.py makemigrations --check --dry-run` against the configured application. Do not generate migrations during preview startup.
 2. Run `python -m ruff check .` and `python manage.py test`. The test command must use `vedioos.test_settings` and must never point at Supabase.
-3. Check whether port 8000 is already listening. Reuse an existing healthy VedioOS server; otherwise report conflicts rather than killing unrelated processes.
+3. Check whether port 8000 is already listening. Reuse an existing healthy BRIO server; otherwise report conflicts rather than killing unrelated processes.
 4. Start `python manage.py runserver 127.0.0.1:8000 --noreload` in a persistent background process or dedicated terminal using the configured `.env`, with logs under ignored `.runtime`. Do not add `--settings=vedioos.local_settings`, because this requested preview must use Supabase.
 5. Require HTTP 200 from `/health/live/` and `/health/ready/`, then require successful responses from `/`, `/register/`, and `/login/`.
 6. Open `http://127.0.0.1:8000/` in the available Codex browser and perform a visual smoke check for the landing page, registration page, login page, responsive navigation, and absence of browser console errors. Do not create shared cloud fixtures for this smoke check.

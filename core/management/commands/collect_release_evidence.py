@@ -22,7 +22,7 @@ class Command(BaseCommand):
         if options["json"]:
             self.stdout.write(json.dumps(report, sort_keys=True))
         else:
-            self.stdout.write("VedioOS release evidence")
+            self.stdout.write("BRIO release evidence")
             for name, result in report["checks"].items():
                 detail = ", ".join(
                     f"{key}={str(value).lower() if isinstance(value, bool) else value}"

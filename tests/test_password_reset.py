@@ -59,7 +59,7 @@ class PasswordResetWorkflowTests(TestCase):
         login = Browser().get("/login/")
         self.assertContains(login, "Forgot password?")
         self.assertContains(login, "Editor Sign In", count=1)
-        self.assertNotContains(login, "Sign in to your VedioOS workspace.")
+        self.assertNotContains(login, "Sign in to your BRIO workspace.")
         editor_login = Browser().get("/editor/signin/")
         self.assertContains(editor_login, "Forgot password?")
         self.assertContains(editor_login, "Client Sign In", count=1)

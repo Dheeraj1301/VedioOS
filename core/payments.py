@@ -82,8 +82,8 @@ def start_checkout(user, project_id):
             json={
                 "amount": order.total_minor,
                 "currency": order.currency,
-                "receipt": f"vedioos_{order.pk.hex[:24]}",
-                "notes": {"vedioos_order_id": str(order.pk)},
+                "receipt": f"brio_{order.pk.hex[:24]}",
+                "notes": {"brio_order_id": str(order.pk)},
             },
         )
         reference = gateway_order.get("id")

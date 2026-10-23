@@ -1,6 +1,6 @@
-# VedioOS
+# BRIO
 
-A managed video-editing service connecting clients with our internal team of human editors. Editors work in their own editing software; VedioOS manages ordering, payments, files, assignment, communication, review, delivery, and editor earnings.
+A managed video-editing service connecting clients with our internal team of human editors. Editors work in their own editing software; BRIO manages ordering, payments, files, assignment, communication, review, delivery, and editor earnings.
 
 **Core principle: high-quality video + privacy + fair editor allocation + human editing + a simple client experience.**
 
@@ -139,7 +139,7 @@ Issue an editor ID and initial password from the same trusted terminal. The edit
 
 An editor can log in before approval, but an admin must approve proficiency at `/admin/editors/` before assignment. Client and administrator-issued passwords require at least 8 characters with an uppercase letter, lowercase letter, number and special character.
 
-New client accounts remain inactive until the client enters the six digit code sent to the registered email. Supabase Auth creates, sends and validates that client verification OTP; VedioOS activates the matching private application profile only after Supabase confirms the email. Confirmed email/password identities created in the selected Supabase Auth project can also sign in through `/login/`: the backend verifies the password with Supabase, validates the returned session against `/auth/v1/user`, links the immutable Auth UUID, and provisions a client application profile on first login. Supabase tokens are discarded and Auth metadata cannot select a role. When Supabase password login is enabled, confirmed linked clients and administrators authenticate against Supabase Auth and must match the immutable Auth UUID stored on their private application identity; unknown confirmed identities can only be provisioned as clients. Administrator-issued editor IDs and unlinked privileged legacy accounts retain the private application credential path, while all server-side role/project authorization remains in VedioOS. Real inbox delivery requires a custom SMTP provider and verified sender configured in the Supabase Auth dashboard; automated tests mock the external Auth boundary and never send email.
+New client accounts remain inactive until the client enters the six digit code sent to the registered email. Supabase Auth creates, sends and validates that client verification OTP; BRIO activates the matching private application profile only after Supabase confirms the email. Confirmed email/password identities created in the selected Supabase Auth project can also sign in through `/login/`: the backend verifies the password with Supabase, validates the returned session against `/auth/v1/user`, links the immutable Auth UUID, and provisions a client application profile on first login. Supabase tokens are discarded and Auth metadata cannot select a role. When Supabase password login is enabled, confirmed linked clients and administrators authenticate against Supabase Auth and must match the immutable Auth UUID stored on their private application identity; unknown confirmed identities can only be provisioned as clients. Administrator-issued editor IDs and unlinked privileged legacy accounts retain the private application credential path, while all server-side role/project authorization remains in BRIO. Real inbox delivery requires a custom SMTP provider and verified sender configured in the Supabase Auth dashboard; automated tests mock the external Auth boundary and never send email.
 
 Every team preview intended to use shared data must set `SHARED_PREVIEW_REQUIRED=true`, `SUPABASE_PROJECT_REF=lmwvoniiykmfzuxigzqf`, and the privately supplied Supabase connection settings in its ignored `.env`. Confirm the binding before starting the server:
 
@@ -148,14 +148,14 @@ Every team preview intended to use shared data must set `SHARED_PREVIEW_REQUIRED
 ```
 
 In VS Code, **always use** `Terminal > Run Build Task` (`Ctrl+Shift+B`) and select
-`VedioOS: Start shared preview`. It runs the same verified command. Do not use the
+`BRIO: Start shared preview`. It runs the same verified command. Do not use the
 Python Run button on `manage.py` or start `runserver` with
 `--settings=vedioos.local_settings` for team-account testing: that explicit offline
 mode uses a separate SQLite user database, so shared client/editor credentials will
 correctly be rejected there.
 
 If a client deletes and recreates the same Supabase Auth identity while the private
-VedioOS profile still exists, an operator can safely restore the immutable link with
+BRIO profile still exists, an operator can safely restore the immutable link with
 `manage.py reconcile_supabase_client --email client@example.com`. The command accepts
 only one confirmed same-email Auth identity, preserves the existing client/profile and
 project history, records an audit event, and refuses to overwrite a different link.

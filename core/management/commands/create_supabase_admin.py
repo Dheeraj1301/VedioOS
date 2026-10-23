@@ -16,7 +16,7 @@ from operations.models import Admin
 
 
 class Command(BaseCommand):
-    help = "Provision a confirmed Supabase Auth identity and linked VedioOS admin."
+    help = "Provision a confirmed Supabase Auth identity and linked BRIO admin."
 
     def add_arguments(self, parser):
         parser.add_argument("--email", required=True)
