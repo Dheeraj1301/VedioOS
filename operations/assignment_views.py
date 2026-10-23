@@ -7,7 +7,13 @@ from django.views.decorators.http import require_POST
 from core.models import Project
 from core.permissions import role_required
 
-from .assignment_forms import AssignmentPolicyForm, ComplexityForm, EditorOperationsForm, ManualAssignmentForm
+from .assignment_forms import (
+    AdminAvailabilityOverrideForm,
+    AssignmentPolicyForm,
+    ComplexityForm,
+    EditorOperationsForm,
+    ManualAssignmentForm,
+)
 from .assignments import (
     TERMINAL,
     assign_next,
@@ -20,7 +26,7 @@ from .assignments import (
     process_queue,
     save_policy,
 )
-from .availability import availability_state
+from .availability import availability_state, set_availability_override
 from .models import (
     AssignmentPolicy,
     AssignmentQueue,
@@ -95,6 +101,7 @@ def editor_detail(request, editor_id):
         pk=editor_id,
     )
     availability = availability_state(editor)
+    pending_request = editor.availability_requests.filter(status="pending").first()
     return render(
         request,
         "assignments/editor_detail.html",
@@ -103,8 +110,38 @@ def editor_detail(request, editor_id):
             "editor": editor,
             "availability": availability,
             "active_count": availability["active_count"],
+            "pending_request": pending_request,
+            "availability_form": AdminAvailabilityOverrideForm(
+                initial={
+                    "status": editor.availability_override,
+                    "reason": pending_request.reason if pending_request else editor.availability_override_reason,
+                }
+            ),
         },
     )
+
+
+@require_POST
+@role_required("admin")
+def editor_availability_override(request, editor_id):
+    editor = get_object_or_404(
+        Editor.objects.filter(user__auth_deleted_at__isnull=True), pk=editor_id
+    )
+    form = AdminAvailabilityOverrideForm(request.POST)
+    if form.is_valid():
+        try:
+            set_availability_override(
+                request.user,
+                editor.pk,
+                form.cleaned_data["status"],
+                form.cleaned_data["reason"],
+            )
+            messages.success(request, "Editor availability status updated.")
+        except ValidationError as exc:
+            messages.error(request, " ".join(exc.messages))
+    else:
+        messages.error(request, "Choose a status and provide a reason.")
+    return redirect("editor_detail", editor_id=editor.pk)
 
 
 @role_required("admin")

@@ -4,7 +4,7 @@ from datetime import timezone as datetime_timezone
 from django.contrib import messages
 from django.core.exceptions import ValidationError
 from django.db.models import Exists, OuterRef
-from django.http import HttpResponseNotAllowed, JsonResponse
+from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.views.decorators.http import require_GET, require_POST
@@ -15,8 +15,9 @@ from core.permissions import role_required, visible_projects
 from core.v1 import attach_v1_status
 
 from .analytics import operational_analytics
+from .assignment_forms import EditorAvailabilityRequestForm
 from .assignments import EDITOR_SORTS, approve_proficiency, editor_roster, open_workload
-from .availability import availability_state
+from .availability import availability_state, request_not_available
 from .calls import complete_call, schedule_call
 from .clients import CLIENT_STATES, client_page, client_record
 from .features import feature_controls
@@ -112,12 +113,25 @@ def editor_page(request, page):
             request, "projects.html", {"title": "Project details", "projects": visible_projects(request.user)}
         )
     if page == "availability":
-        if request.method != "GET":
-            return HttpResponseNotAllowed(["GET"])
+        form = EditorAvailabilityRequestForm(request.POST or None)
+        if request.method == "POST" and form.is_valid():
+            try:
+                request_not_available(request.user, form.cleaned_data["reason"])
+                messages.success(
+                    request,
+                    "Your Not Available request was sent to Admin. Your current status has not changed.",
+                )
+                return redirect("/editor/availability/")
+            except ValidationError as exc:
+                form.add_error(None, exc)
         return render(
             request,
             "operations/availability.html",
-            {"title": "Availability", "availability": availability_state(editor)},
+            {
+                "title": "Availability",
+                "availability": availability_state(editor),
+                "form": form,
+            },
         )
     titles = {
         "revisions": (

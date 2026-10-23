@@ -32,6 +32,10 @@ class EditorProficiency(models.Model):
 
 
 class Editor(Record):
+    class AvailabilityOverride(models.TextChoices):
+        AUTOMATIC = "", "Automatic (workload-derived)"
+        NOT_AVAILABLE = "not_available", "Not Available"
+
     login_id = models.CharField(max_length=20, unique=True, default=new_editor_login_id, editable=False)
     user = models.OneToOneField(
         settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name="editor_profile"
@@ -53,6 +57,18 @@ class Editor(Record):
         related_name="approved_editors",
     )
     workload_capacity = models.PositiveIntegerField(null=True, blank=True)
+    availability_override = models.CharField(
+        max_length=20, choices=AvailabilityOverride.choices, blank=True, default=""
+    )
+    availability_override_reason = models.TextField(blank=True, max_length=2000)
+    availability_override_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        blank=True,
+        on_delete=models.PROTECT,
+        related_name="editor_availability_overrides",
+    )
+    availability_override_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:
         db_table = "editors"
@@ -61,7 +77,82 @@ class Editor(Record):
                 condition=models.Q(approved=False)
                 | models.Q(proficiency__isnull=False, approved_by__isnull=False),
                 name="approved_editor_has_review",
-            )
+            ),
+            models.CheckConstraint(
+                condition=models.Q(availability_override__in=["", "not_available"]),
+                name="valid_editor_availability_override",
+            ),
+            models.CheckConstraint(
+                condition=(
+                    models.Q(
+                        availability_override="",
+                        availability_override_reason="",
+                        availability_override_by__isnull=True,
+                        availability_override_at__isnull=True,
+                    )
+                    | models.Q(
+                        availability_override="not_available",
+                        availability_override_by__isnull=False,
+                        availability_override_at__isnull=False,
+                    )
+                    & ~models.Q(availability_override_reason="")
+                ),
+                name="editor_availability_override_metadata",
+            ),
+        ]
+
+
+class EditorAvailabilityRequest(Record):
+    class Status(models.TextChoices):
+        PENDING = "pending", "Pending Admin approval"
+        APPLIED = "applied", "Applied"
+        DECLINED = "declined", "Declined"
+
+    editor = models.ForeignKey(
+        Editor, on_delete=models.PROTECT, related_name="availability_requests"
+    )
+    requested_status = models.CharField(
+        max_length=20, choices=[("not_available", "Not Available")], default="not_available"
+    )
+    reason = models.TextField(max_length=2000)
+    status = models.CharField(max_length=20, choices=Status.choices, default=Status.PENDING)
+    decided_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        blank=True,
+        on_delete=models.PROTECT,
+        related_name="decided_editor_availability_requests",
+    )
+    decided_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        db_table = "editor_availability_requests"
+        ordering = ["-created_at", "-id"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["editor"],
+                condition=models.Q(status="pending"),
+                name="one_pending_editor_availability_request",
+            ),
+            models.CheckConstraint(
+                condition=models.Q(requested_status="not_available"),
+                name="valid_editor_availability_request_status",
+            ),
+            models.CheckConstraint(
+                condition=~models.Q(reason=""),
+                name="editor_availability_request_has_reason",
+            ),
+            models.CheckConstraint(
+                condition=(
+                    models.Q(status="pending", decided_by__isnull=True, decided_at__isnull=True)
+                    | models.Q(
+                        status__in=["applied", "declined"],
+                        decided_by__isnull=False,
+                        decided_at__isnull=False,
+                    )
+                ),
+                name="editor_availability_request_decision_metadata",
+            ),
         ]
 
 
@@ -236,6 +327,7 @@ class Notification(Record):
         PROJECT_MESSAGE = "project_message", "Project message"
         SUPPORT_TICKET = "support_ticket", "Support ticket"
         ORDER = "order", "Order"
+        EDITOR = "editor", "Editor"
 
     recipient = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT)
     project = models.ForeignKey(Project, null=True, blank=True, on_delete=models.PROTECT)
@@ -267,7 +359,7 @@ class Notification(Record):
             ),
             models.CheckConstraint(
                 condition=models.Q(
-                    reference_type__in=["", "project", "project_message", "support_ticket", "order"]
+                    reference_type__in=["", "project", "project_message", "support_ticket", "order", "editor"]
                 ),
                 name="valid_notice_reference_type",
             ),

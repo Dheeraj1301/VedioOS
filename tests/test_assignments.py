@@ -23,6 +23,7 @@ from operations.models import (
     AssignmentQueue,
     AuditLog,
     EditorAssignment,
+    EditorAvailabilityRequest,
     Notification,
     ProjectComplexity,
     RoundRobinState,
@@ -142,7 +143,7 @@ class AssignmentTests(TestCase):
         project = self.queue()
         first = assign_next(project.id)
         self.assertEqual(assign_next(project.id).id, first.id)
-        self.assertEqual(availability_state(self.editors[0])["status"], "unavailable")
+        self.assertEqual(availability_state(self.editors[0])["status"], "busy")
         project.status = "completed"
         project.save(update_fields=["status", "updated_at"])
         self.assertEqual(availability_state(self.editors[0])["status"], "available")
@@ -300,24 +301,73 @@ class AssignmentTests(TestCase):
         self.assertContains(editor_page, "Keep project files private")
         self.assertContains(editor_page, "Synthetic delivery responsibilities.")
 
-    def test_availability_page_and_api_are_read_only_and_derived(self):
+    def test_availability_request_requires_reason_and_waits_for_admin(self):
         editor = self.editors[0]
         self.client.force_login(editor.user)
         page = self.client.get("/editor/availability/")
         self.assertContains(page, "Your availability.")
         self.assertContains(page, "✅ Available — no active projects")
-        self.assertNotContains(page, "<select")
-        self.assertNotContains(page, "Save availability")
-        self.assertEqual(self.client.post("/editor/availability/", {"status": "available"}).status_code, 405)
+        self.assertContains(page, "Request Not Available")
+        invalid = self.client.post(
+            "/editor/availability/", {"status": "not_available", "reason": ""}
+        )
+        self.assertEqual(invalid.status_code, 200)
+        self.assertFalse(EditorAvailabilityRequest.objects.exists())
+        response = self.client.post(
+            "/editor/availability/",
+            {"status": "not_available", "reason": "Synthetic vacation request"},
+        )
+        self.assertEqual(response.status_code, 302)
+        request_record = EditorAvailabilityRequest.objects.get(editor=editor)
+        self.assertEqual(request_record.status, EditorAvailabilityRequest.Status.PENDING)
+        editor.refresh_from_db()
+        self.assertEqual(editor.availability_override, "")
+        self.assertEqual(availability_state(editor)["status"], "available")
+        notice = Notification.objects.get(
+            recipient=self.admin, reference_type=Notification.ReferenceType.EDITOR
+        )
+        self.assertIn(editor.login_id, notice.message)
+        self.assertIn("Synthetic vacation request", notice.message)
+        self.client.force_login(self.admin)
+        notice_response = self.client.get(f"/notifications/{notice.id}/")
+        self.assertRedirects(notice_response, f"/admin/editors/{editor.id}/")
+
+        applied = self.client.post(
+            f"/admin/editors/{editor.id}/availability/",
+            {"status": "not_available", "reason": "Approved leave"},
+        )
+        self.assertRedirects(applied, f"/admin/editors/{editor.id}/")
+        editor.refresh_from_db()
+        request_record.refresh_from_db()
+        self.assertEqual(editor.availability_override, "not_available")
+        self.assertEqual(request_record.status, EditorAvailabilityRequest.Status.APPLIED)
+        self.assertEqual(availability_state(editor)["status"], "not_available")
+        project = self.queue()
+        with self.assertRaises(ValidationError):
+            manual_assign(self.admin, project.id, editor.id, "Must be blocked")
+        self.assertNotEqual(assign_next(project.id).editor_id, editor.id)
+
+        restored = self.client.post(
+            f"/admin/editors/{editor.id}/availability/",
+            {"status": "", "reason": "Leave completed"},
+        )
+        self.assertRedirects(restored, f"/admin/editors/{editor.id}/")
+        editor.refresh_from_db()
+        self.assertEqual(editor.availability_override, "")
+        self.assertEqual(availability_state(editor)["status"], "available")
+
+    def test_availability_api_remains_workload_derived_without_override(self):
+        editor = self.editors[0]
+        self.client.force_login(editor.user)
 
         first = self.queue()
         second = self.queue()
         EditorAssignment.objects.create(project=first, editor=editor, assigned_by=self.admin)
         EditorAssignment.objects.create(project=second, editor=editor, assigned_by=self.admin)
         state = self.client.get("/api/editor/availability/").json()
-        self.assertEqual(state["status"], "unavailable")
+        self.assertEqual(state["status"], "busy")
         self.assertEqual(state["active_count"], 2)
-        self.assertEqual(state["summary"], "Unavailable — 2 active projects")
+        self.assertEqual(state["summary"], "Unavailable (Busy) — 2 active projects")
 
         first.status = "completed"
         first.save(update_fields=["status", "updated_at"])

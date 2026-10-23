@@ -3,6 +3,28 @@ from django import forms
 from .models import AssignmentPolicy, Editor, EditorProficiency
 
 
+class EditorAvailabilityRequestForm(forms.Form):
+    status = forms.ChoiceField(
+        choices=[("not_available", "Not Available")], label="Requested status"
+    )
+    reason = forms.CharField(
+        max_length=300,
+        widget=forms.Textarea(attrs={"rows": 4}),
+        help_text="Required. Tell the Admin why you need to be unavailable.",
+    )
+
+
+class AdminAvailabilityOverrideForm(forms.Form):
+    status = forms.ChoiceField(
+        choices=[
+            (Editor.AvailabilityOverride.NOT_AVAILABLE, "Not Available"),
+            (Editor.AvailabilityOverride.AUTOMATIC, "Automatic (Available/Busy by workload)"),
+        ],
+        required=False,
+    )
+    reason = forms.CharField(max_length=300, widget=forms.Textarea(attrs={"rows": 3}))
+
+
 class AssignmentPolicyForm(forms.ModelForm):
     class Meta:
         model = AssignmentPolicy
@@ -67,6 +89,8 @@ class ManualAssignmentForm(forms.Form):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields["editor"].queryset = Editor.objects.filter(
-            approved=True, user__is_active=True
+            approved=True,
+            user__is_active=True,
+            availability_override=Editor.AvailabilityOverride.AUTOMATIC,
         ).select_related("user", "proficiency")
         self.fields["editor"].label_from_instance = lambda item: f"{item.user.name} — {item.proficiency_id}"

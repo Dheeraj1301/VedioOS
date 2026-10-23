@@ -106,6 +106,8 @@ def editor_roster(search="", sort=None):
 def eligibility(editor, proficiency):
     if not editor.approved or not editor.user.is_active:
         return "Editor is not approved or the account is inactive."
+    if editor.availability_override == Editor.AvailabilityOverride.NOT_AVAILABLE:
+        return "Editor is marked Not Available by an administrator."
     if editor.proficiency_id != proficiency:
         return "Editor proficiency does not match the project. Review complexity before changing levels."
     if open_workload(editor) > 0:
@@ -319,7 +321,12 @@ def assign_next(project_id, user=None):
     state, _ = RoundRobinState.objects.get_or_create(proficiency_id=queue.proficiency_id)
     editors = list(
         editor_roster()
-        .filter(approved=True, proficiency_id=queue.proficiency_id, user__is_active=True)
+        .filter(
+            approved=True,
+            proficiency_id=queue.proficiency_id,
+            user__is_active=True,
+            availability_override=Editor.AvailabilityOverride.AUTOMATIC,
+        )
         .order_by("created_at", "id")
     )
     if state.last_editor_id:

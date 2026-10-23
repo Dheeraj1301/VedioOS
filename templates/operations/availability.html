@@ -4,7 +4,7 @@
   <div>
     <p class="eyebrow">Your editing studio</p>
     <h1>Your availability.</h1>
-    <p class="muted">Your availability is calculated automatically based on your active projects.</p>
+    <p class="muted">Workload status is automatic. Only an Admin can apply a Not Available override.</p>
   </div>
 </div>
 <section class="panel availability-panel">
@@ -20,5 +20,23 @@
     Assigned, editing, review, and revision projects count as active. Completed and cancelled projects do not.
   </p>
   <p class="availability-refresh-note">This status refreshes automatically while this page is open.</p>
+</section>
+<section class="panel availability-panel">
+  <h2>Request Not Available</h2>
+  {% if availability.status == 'not_available' %}
+    <div class="notice">Admin has already set your status to Not Available. No additional request is needed.</div>
+  {% else %}
+  {% if availability.pending_request %}
+    <div class="notice"><strong>Not Available request pending Admin approval.</strong><br>Your system-wide status remains {{ availability.label }} until an Admin acts.<br><span class="muted">Reason: {{ availability.pending_reason }}</span></div>
+  {% endif %}
+  <p class="muted">Send a reason to Admin for review. This request does not change your assignment status immediately.</p>
+  <form method="post" class="stack-form">
+    {% csrf_token %}
+    {{ form.non_field_errors }}
+    <div class="field"><label for="{{ form.status.id_for_label }}">{{ form.status.label }}</label>{{ form.status }}{{ form.status.errors }}</div>
+    <div class="field"><label for="{{ form.reason.id_for_label }}">{{ form.reason.label }}</label>{{ form.reason }}<small>{{ form.reason.help_text }}</small>{{ form.reason.errors }}</div>
+    <button class="button" type="submit">Send request to Admin</button>
+  </form>
+  {% endif %}
 </section>
 {% endblock %}

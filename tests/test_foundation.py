@@ -549,7 +549,7 @@ class FoundationTests(TestCase):
         )
         self.assertEqual(
             self.auth(self.editor_user).post("/editor/availability/", {"status": "available"}).status_code,
-            405,
+            200,
         )
 
     def test_admin_approval_audited(self):

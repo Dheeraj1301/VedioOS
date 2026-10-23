@@ -41,6 +41,12 @@ def notification_destination(user, notice):
             Order.objects.filter(project__in=visible_projects(user)), pk=notice.reference_id
         )
         return reverse("admin_order_detail", kwargs={"order_id": order.pk})
+    if (
+        user.role == "admin"
+        and notice.reference_type == Notification.ReferenceType.EDITOR
+        and notice.reference_id
+    ):
+        return reverse("editor_detail", kwargs={"editor_id": notice.reference_id})
     if notice.project_id:
         route = {
             "admin": "admin_project",

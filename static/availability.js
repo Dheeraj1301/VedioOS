@@ -8,7 +8,8 @@
   const render = state => {
     statusNodes.forEach(node => {
       node.classList.toggle('is-available', state.status === 'available');
-      node.classList.toggle('is-unavailable', state.status === 'unavailable');
+      node.classList.toggle('is-busy', state.status === 'busy');
+      node.classList.toggle('is-not_available', state.status === 'not_available');
       node.textContent = `${state.icon} ${state.summary}`;
     });
     document.querySelectorAll('[data-active-project-count]').forEach(node => {

@@ -134,6 +134,11 @@ urlpatterns = [
     path("admin/assignments/<uuid:project_id>/", assignments.assignment_detail, name="assignment_detail"),
     path("admin/editors/<uuid:editor_id>/", assignments.editor_detail, name="editor_detail"),
     path(
+        "admin/editors/<uuid:editor_id>/availability/",
+        assignments.editor_availability_override,
+        name="editor_availability_override",
+    ),
+    path(
         "admin/editors/<uuid:editor_id>/operations/", assignments.editor_operations, name="editor_operations"
     ),
     path("admin/projects/<uuid:project_id>/", views.project_detail, {"area": "admin"}, name="admin_project"),
