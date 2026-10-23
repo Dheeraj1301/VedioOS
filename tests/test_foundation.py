@@ -767,6 +767,12 @@ class FoundationTests(TestCase):
 
     def test_revisions_needed_is_saved_without_changing_quote_navigation(self):
         browser = self.auth(self.owner)
+        form_page = browser.get("/client/new-order/?new=1")
+        content = form_page.content.decode()
+        self.assertLess(
+            content.index('<option value="0">0</option>'),
+            content.index('<option value="1-2"'),
+        )
         response = browser.post(
             "/client/new-order/?new=1",
             {
@@ -774,11 +780,11 @@ class FoundationTests(TestCase):
                 "order_choice": "custom",
                 "reel_duration": "30_50",
                 "song_choice": "suggest",
-                "revisions_needed": "5+",
+                "revisions_needed": "0",
             },
         )
         project = Project.objects.get(title="Revision preference brief")
-        self.assertEqual(project.revisions_needed, "5+")
+        self.assertEqual(project.revisions_needed, "0")
         self.assertRedirects(
             response,
             f"/orders/{project.id}/",

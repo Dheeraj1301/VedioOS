@@ -164,6 +164,7 @@ class CustomService(Record):
 
 class Project(Record):
     class RevisionsNeeded(models.TextChoices):
+        NONE = "0", "0"
         ONE_TO_TWO = "1-2", "1-2"
         THREE_TO_FOUR = "3-4", "3-4"
         FIVE_PLUS = "5+", "5+"

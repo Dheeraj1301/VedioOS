@@ -371,3 +371,11 @@ Status: approved and implemented
 Owner / source of explicit decision: Hamsa requested removal of the green Estimated price summary from the Customize Your Edit form while preserving quotation and payment behavior.
 
 Decision: the custom form no longer renders a live estimate summary. Option changes may continue to call the protected estimate endpoint in the background, but Save and Proceed remains authoritative: it recalculates and persists the server-owned quotation snapshot, and the checkout page continues to display that saved quotation and its breakdown. No custom inputs, checkout presentation or payment rules change.
+
+## 2026-10-23 — Allow zero requested revisions
+
+Status: approved and implemented
+
+Owner / source of explicit decision: Hamsa requested `0` as the first Revisions needed option in Customize Your Edit.
+
+Decision: custom briefs may persist `0` to express that the client currently needs no revisions. The existing `1-2`, `3-4` and `5+` values remain available and the historical default remains `1-2`. Revisions needed is brief metadata and is not an input to the quotation engine, so choosing `0` adds no revision-related price and does not change quote, checkout or payment calculation behavior.
