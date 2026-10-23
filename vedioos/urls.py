@@ -49,6 +49,7 @@ urlpatterns = [
     path("dashboard/", views.dashboard, name="dashboard"),
     path("client/", views.client_dashboard, name="client_dashboard"),
     path("client/new-order/", views.new_order, name="new_order"),
+    path("client/revisions/", commerce.revision_plans, name="revision_plans"),
     path("client/projects/<uuid:project_id>/edit/", views.edit_project, name="edit_project"),
     path("client/projects/", views.my_projects, name="my_projects"),
     path("client/communication/", client_communication, name="client_communication"),
@@ -140,6 +141,12 @@ urlpatterns = [
     path("admin/pricing/", commerce.pricing, name="pricing"),
     path("admin/landing-page/", landing_views.landing_page_control, name="landing_page_control"),
     path("admin/pricing/plans/<int:slot>/", commerce.catalog_edit, {"kind": "plan"}, name="plan_edit"),
+    path(
+        "admin/pricing/revision-plans/<int:slot>/",
+        commerce.catalog_edit,
+        {"kind": "revision_plan"},
+        name="revision_plan_edit",
+    ),
     path("admin/pricing/services/new/", commerce.catalog_edit, {"kind": "service"}, name="service_new"),
     path("admin/pricing/packages/new/", commerce.catalog_edit, {"kind": "package"}, name="package_new"),
     path(

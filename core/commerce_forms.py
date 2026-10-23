@@ -8,6 +8,7 @@ from .models import (
     Plan,
     Project,
     QuotationFeature,
+    RevisionPlan,
 )
 from .money import (
     CURRENCY_CHOICES,
@@ -192,6 +193,26 @@ class PlanForm(CatalogForm):
                     self.add_error(field, "Must be greater than zero.")
             if not data.get("features"):
                 self.add_error("features", "List the included features/services.")
+        return data
+
+
+class RevisionPlanForm(CatalogForm):
+    price_minor = major_unit_field("Revision plan price")
+    money_field_labels = {"price_minor": "Revision plan price"}
+
+    class Meta:
+        model = RevisionPlan
+        fields = ["name", "price_minor", "currency", "description", "active"]
+        labels = {"name": "Plan name / title", "description": "Description / details"}
+        help_texts = {
+            "active": "Publish this revision plan to the client Revisions page.",
+        }
+        widgets = {"description": forms.Textarea(attrs={"rows": 5})}
+
+    def clean(self):
+        data = super().clean()
+        if data.get("active") and not data.get("description", "").strip():
+            self.add_error("description", "Enter plan details before publishing.")
         return data
 
 

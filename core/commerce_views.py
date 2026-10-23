@@ -22,6 +22,7 @@ from .commerce_forms import (
     PolicyForm,
     QuotationFeatureForm,
     QuoteSelectionForm,
+    RevisionPlanForm,
     ServiceForm,
 )
 from .models import (
@@ -32,6 +33,7 @@ from .models import (
     Payment,
     Plan,
     QuotationFeature,
+    RevisionPlan,
 )
 from .payments import (
     apply_sandbox_event,
@@ -56,6 +58,13 @@ def pricing(request):
             "slots": [
                 (slot, Plan.objects.filter(slot=slot).first() or Plan(slot=slot)) for slot in range(1, 4)
             ],
+            "revision_slots": [
+                (
+                    slot,
+                    RevisionPlan.objects.filter(slot=slot).first() or RevisionPlan(slot=slot),
+                )
+                for slot in range(1, 4)
+            ],
             "services": CustomService.objects.order_by("name"),
             "quotation_features": QuotationFeature.objects.order_by("code"),
             "packages": InfluencerPackage.objects.order_by("name"),
@@ -71,6 +80,11 @@ def catalog_edit(request, kind, slot=None, item_id=None, feature_code=None):
             raise PermissionDenied
         instance = Plan.objects.filter(slot=slot).first() or Plan(slot=slot)
         form_class, title = PlanForm, f"Plan {slot}"
+    elif kind == "revision_plan":
+        if slot not in [1, 2, 3]:
+            raise PermissionDenied
+        instance = RevisionPlan.objects.filter(slot=slot).first() or RevisionPlan(slot=slot)
+        form_class, title = RevisionPlanForm, f"Revision plan {slot}"
     elif kind == "service":
         instance = get_object_or_404(CustomService, pk=item_id) if item_id else CustomService()
         form_class, title = ServiceForm, "Custom service"
@@ -97,6 +111,18 @@ def catalog_edit(request, kind, slot=None, item_id=None, feature_code=None):
         except IntegrityError:
             form.add_error(None, "This item was changed elsewhere or already exists. Reload and try again.")
     return render(request, "commerce/edit.html", {"title": title, "form": form})
+
+
+@role_required("client")
+def revision_plans(request):
+    return render(
+        request,
+        "client/revisions.html",
+        {
+            "title": "Revisions",
+            "revision_plans": RevisionPlan.objects.filter(active=True).order_by("slot"),
+        },
+    )
 
 
 @role_required("client")

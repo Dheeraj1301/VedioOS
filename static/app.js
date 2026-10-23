@@ -668,6 +668,28 @@ if (notificationMenu) {
   document.addEventListener('keydown', event => { if (event.key === 'Escape') { close(); toggle.focus(); } });
 }
 
+const revisionPlanGroup = document.querySelector('[data-revision-plans]');
+if (revisionPlanGroup) {
+  const cards = [...revisionPlanGroup.querySelectorAll('[data-revision-plan]')];
+  const status = document.querySelector('[data-revision-selection-status]');
+  cards.forEach(card => {
+    card.addEventListener('click', () => {
+      const willSelect = card.getAttribute('aria-pressed') !== 'true';
+      cards.forEach(candidate => {
+        candidate.setAttribute('aria-pressed', 'false');
+        candidate.querySelector('[data-revision-plan-state]').textContent = 'Select plan';
+      });
+      if (willSelect) {
+        card.setAttribute('aria-pressed', 'true');
+        card.querySelector('[data-revision-plan-state]').textContent = 'Selected';
+        status.textContent = `${card.querySelector('strong').textContent} selected.`;
+      } else {
+        status.textContent = 'No revision plan selected.';
+      }
+    });
+  });
+}
+
 const notificationForm = document.querySelector('[data-notification-form]');
 if (notificationForm) {
   const audience = notificationForm.querySelector('#id_audience');

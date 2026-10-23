@@ -123,6 +123,25 @@ class Plan(Record):
         return getattr(self, field) if field else None
 
 
+class RevisionPlan(Record):
+    slot = models.PositiveSmallIntegerField(unique=True)
+    name = models.CharField(max_length=100)
+    price_minor = models.PositiveBigIntegerField(null=True, blank=True)
+    currency = models.CharField(max_length=3, blank=True)
+    description = models.TextField(blank=True, max_length=2000)
+    active = models.BooleanField(default=False)
+
+    class Meta:
+        db_table = "revision_plans"
+        ordering = ["slot"]
+        constraints = [
+            models.CheckConstraint(
+                condition=models.Q(slot__gte=1, slot__lte=3),
+                name="three_revision_plan_slots",
+            )
+        ]
+
+
 class CustomService(Record):
     class Code(models.TextChoices):
         COLOUR_GRADING = "colour_grading", "Colour grading"

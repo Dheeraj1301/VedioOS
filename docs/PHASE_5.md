@@ -2,6 +2,10 @@
 
 Implemented and verified on 2026-09-17 against the original brief's editor work, revisions, client approval, original-quality delivery and acceptance-before-earnings requirements.
 
+## Configurable revision-plan catalog — 2026-10-23
+
+The client workspace includes a separate `/client/revisions/` comparison page backed by three administrator-managed revision-plan slots. Published title, direct-currency price and descriptive details render dynamically; unpublished slots remain private. The cards allow exclusive selection and click-again deselection. This display-only choice is deliberately separate from project revision requests and from the editing-plan quotation/payment workflow because no revision purchase, order snapshot or fulfillment policy has been approved.
+
 ## Workflow
 
 1. An approved current editor starts a verified paid assignment explicitly, or the first successfully verified deliverable starts it automatically.

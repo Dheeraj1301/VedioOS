@@ -3,6 +3,7 @@ NAV = {
         ("Overview", "/client/"),
         ("Plan a new edit", "/client/new-order/"),
         ("My projects", "/client/projects/"),
+        ("Revisions", "/client/revisions/"),
         ("Payment history", "/client/payments/"),
         ("Project Communication", "/client/communication/"),
         ("Support", "/client/support/"),

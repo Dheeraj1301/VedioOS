@@ -1,0 +1,20 @@
+{% extends 'workspace.html' %}{% load money %}
+{% block workspace_content %}
+<div class="page-heading"><div><p class="eyebrow">Revision options</p><h1>Choose a revision plan.</h1><p class="muted">Select one plan to compare it with your needs. Click the selected plan again to deselect it.</p></div></div>
+{% if revision_plans %}
+<section class="revision-plan-grid" aria-label="Published revision plans" data-revision-plans>
+  {% for plan in revision_plans %}
+  <button class="revision-plan-card" type="button" aria-pressed="false" data-revision-plan>
+    <span class="eyebrow">Revision plan {{ plan.slot }}</span>
+    <strong>{{ plan.name }}</strong>
+    <span class="plan-price">{{ plan.price_minor|money:plan.currency }}</span>
+    <span class="revision-plan-description">{{ plan.description|linebreaksbr }}</span>
+    <span class="revision-plan-state" data-revision-plan-state>Select plan</span>
+  </button>
+  {% endfor %}
+</section>
+<p class="muted revision-selection-status" role="status" aria-live="polite" data-revision-selection-status>No revision plan selected.</p>
+{% else %}
+<section class="panel empty-state"><h2>Revision plans are being prepared.</h2><p>The team has not published revision pricing yet. Please check again later or contact support.</p></section>
+{% endif %}
+{% endblock %}

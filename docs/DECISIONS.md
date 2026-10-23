@@ -315,3 +315,13 @@ Decision: when `SUPABASE_AUTH_PASSWORD_LOGIN_ENABLED` is enabled, an email ident
 No hosting provider was selected by this authentication decision. A public HTTPS URL requires an approved hosted runtime with production host, CSRF, cookie, secret, database, storage and email configuration; a loopback preview or tunnel does not satisfy that release requirement.
 
 Verification required: confirmed linked client and linked administrator login, immutable UUID mismatch denial, unknown-user client-only provisioning, unlinked admin/editor takeover denial, provider outage/rate-limit handling, role isolation, session replacement and selected-project binding.
+
+## 2026-10-23 — Separate configurable revision-plan catalog
+
+Status: approved and implemented for display and selection
+
+Owner / source of explicit decision: Hamsa requested three administrator-configured revision plans on a dedicated client Revisions page without changing the existing new-edit, quotation or payment flows.
+
+Decision: store revision plans in three fixed slots separate from editing `plans`. Administrators can set each title, direct-currency amount, description and publication state under Plans / Pricing. Clients see only published slots and can select one card at a time or click the selected card again to clear the comparison. Selection is browser UI state only because this request does not define a revision purchase, project association, commercial snapshot, checkout or fulfillment workflow. No revision plan is seeded or published without owner-approved commercial values.
+
+Verification required: three admin slots, major-to-minor currency conversion, published-only client visibility, client/admin role denial, exclusive selection, click-again deselection, mobile layout, unchanged editing-plan quotation and payment tests, and private-schema/RLS protection.
