@@ -220,6 +220,64 @@ class CommerceTests(TestCase):
         self.assertEqual(response.json()["model"], "weighted_heuristic_v1")
         self.assertEqual(len(response.json()["breakdown"]), 8)
 
+    def test_revision_tier_price_is_added_to_api_and_locked_checkout_quote(self):
+        self.enable_weighted_engine()
+        CommercePolicy.objects.filter(pk=1).update(
+            revision_price_zero_minor=0,
+            revision_price_one_to_two_minor=1000,
+            revision_price_three_to_four_minor=2000,
+            revision_price_five_plus_minor=3000,
+        )
+        selection = {
+            "colour_grading": True,
+            "quality_enhancement": True,
+            "reel_duration": "20_30",
+            "wants_wording": True,
+            "wording_direction": "editor_choice",
+            "song_choice": "suggest",
+            "overlays": True,
+            "beat_sync": True,
+        }
+        self.client.force_login(self.user)
+        free = self.client.post(
+            "/api/quote/",
+            json.dumps({**selection, "revisions_needed": "0"}),
+            content_type="application/json",
+        )
+        paid = self.client.post(
+            "/api/quote/",
+            json.dumps({**selection, "revisions_needed": "5+"}),
+            content_type="application/json",
+        )
+        self.assertEqual(free.status_code, 200)
+        self.assertEqual(paid.status_code, 200)
+        self.assertEqual(free.json()["total_minor"], 12380)
+        self.assertEqual(paid.json()["total_minor"], 15380)
+        self.assertEqual(paid.json()["breakdown"][-1]["name"], "Revisions needed: 5+")
+
+        response = self.client.post(
+            "/client/new-order/?new=1",
+            {
+                "title": "Paid revision quote",
+                "order_choice": "custom",
+                **selection,
+                "revisions_needed": "5+",
+            },
+        )
+        project = Project.objects.get(title="Paid revision quote")
+        self.assertRedirects(response, f"/orders/{project.id}/", fetch_redirect_response=False)
+        self.assertEqual(project.quotation_snapshot["total_minor"], 15380)
+        self.assertEqual(project.quotation_snapshot["quotation"]["revision"]["tier"], "5+")
+        self.assertEqual(project.order.quotes.get().total_minor, 15380)
+        checkout = self.client.get(f"/orders/{project.id}/")
+        self.assertContains(checkout, "Revisions needed: 5+")
+        self.assertContains(checkout, format_money(3000, "INR"))
+        self.assertContains(checkout, format_money(15380, "INR"))
+        CommercePolicy.objects.filter(pk=1).update(revision_price_five_plus_minor=999999)
+        locked_checkout = self.client.get(f"/orders/{project.id}/")
+        self.assertContains(locked_checkout, format_money(15380, "INR"))
+        self.assertNotContains(locked_checkout, format_money(999999, "INR"))
+
     def test_test_quotation_setup_is_persisted_and_cannot_run_as_production(self):
         call_command(
             "configure_test_quotation",
@@ -788,6 +846,7 @@ class CommerceTests(TestCase):
         self.client.force_login(self.admin)
         pricing = self.client.get("/admin/pricing/")
         self.assertContains(pricing, "Weighted quotation engine")
+        self.assertContains(pricing, "Revision pricing")
         self.assertContains(pricing, "Beat sync")
         response = self.client.post(
             "/admin/pricing/quotation-features/beat_sync/",
@@ -802,6 +861,38 @@ class CommerceTests(TestCase):
         feature = QuotationFeature.objects.get(code="beat_sync")
         self.assertEqual(feature.complexity_score, 4)
         self.assertEqual(str(feature.multiplier), "1.250")
+
+        policy_response = self.client.post(
+            "/admin/pricing/policy/",
+            {
+                "pricing_context": "production",
+                "currency": "INR",
+                "custom_base_minor": "100.00",
+                "custom_revision_limit": "2",
+                "custom_delivery_hours": "24",
+                "custom_duration_limit_seconds": "60",
+                "custom_priority": "1",
+                "quotation_time_weight": "40",
+                "quotation_importance_weight": "20",
+                "quotation_complexity_weight": "40",
+                "revision_price_zero_minor": "0",
+                "revision_price_one_to_two_minor": "500",
+                "revision_price_three_to_four_minor": "900",
+                "revision_price_five_plus_minor": "1400",
+                "terms": "TEST service terms",
+                "delivery_terms": "TEST delivery terms",
+                "refund_terms": "TEST refund terms",
+                "tax_terms": "TEST tax terms",
+                "quotes_enabled": "on",
+                "review_rule": "",
+            },
+        )
+        self.assertRedirects(policy_response, "/admin/pricing/")
+        self.policy.refresh_from_db()
+        self.assertEqual(self.policy.revision_price_zero_minor, 0)
+        self.assertEqual(self.policy.revision_price_one_to_two_minor, 50000)
+        self.assertEqual(self.policy.revision_price_three_to_four_minor, 90000)
+        self.assertEqual(self.policy.revision_price_five_plus_minor, 140000)
 
     def test_quote_and_accepted_terms_survive_catalog_edits(self):
         quote = self.quote()

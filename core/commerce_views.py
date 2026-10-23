@@ -204,6 +204,7 @@ def estimate_custom(request):
         "song_choice",
         "overlays",
         "beat_sync",
+        "revisions_needed",
     }
     try:
         data = json.loads(request.body)

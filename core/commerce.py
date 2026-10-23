@@ -16,6 +16,12 @@ from .models import CommercePolicy, CustomService, Order, OrderQuote, Plan, Proj
 from .views import audit
 
 CUSTOM_CODE_LABELS = dict(CustomService.Code.choices)
+REVISION_PRICE_FIELDS = {
+    Project.RevisionsNeeded.NONE: "revision_price_zero_minor",
+    Project.RevisionsNeeded.ONE_TO_TWO: "revision_price_one_to_two_minor",
+    Project.RevisionsNeeded.THREE_TO_FOUR: "revision_price_three_to_four_minor",
+    Project.RevisionsNeeded.FIVE_PLUS: "revision_price_five_plus_minor",
+}
 
 
 def custom_service_codes(subject):
@@ -41,6 +47,24 @@ def _subject_value(subject, key, default=None):
     return subject.get(key, default) if isinstance(subject, dict) else getattr(subject, key, default)
 
 
+def _revision_price(subject, policy):
+    configured = {tier: getattr(policy, field) for tier, field in REVISION_PRICE_FIELDS.items()}
+    if all(value is None for value in configured.values()):
+        return None
+    if any(value is None for value in configured.values()):
+        raise ValidationError("Revision pricing is incomplete. Contact the team.")
+    tier = _subject_value(subject, "revisions_needed", Project.RevisionsNeeded.ONE_TO_TWO)
+    if tier not in configured:
+        raise ValidationError("Choose a valid revisions tier.")
+    amount = configured[tier]
+    return {
+        "id": f"revisions:{tier}",
+        "name": f"Revisions needed: {tier}",
+        "amount_minor": amount,
+        "tier": tier,
+    }
+
+
 def _legacy_custom_estimate(subject, policy, *, lock=False):
     codes = custom_service_codes(subject)
     service_query = CustomService.objects.select_for_update() if lock else CustomService.objects
@@ -55,12 +79,18 @@ def _legacy_custom_estimate(subject, policy, *, lock=False):
     for service in services:
         validate_catalog(service, ServiceForm, policy.currency)
         items.append({"id": str(service.id), "name": service.name, "amount_minor": service.price_minor})
+    revision = _revision_price(subject, policy)
+    breakdown = list(items)
+    if revision:
+        breakdown.append(revision)
+        if revision["amount_minor"]:
+            items.append(revision)
     total = sum(item["amount_minor"] for item in items)
     return {
         "policy": policy,
         "services": services,
         "items": items,
-        "breakdown": items,
+        "breakdown": breakdown,
         "total_minor": total,
         "quotation": {"version": 1, "model": "catalog_v1"},
     }
@@ -154,8 +184,16 @@ def _weighted_custom_estimate(subject, policy, *, lock=False):
             }
         )
     raw_total = sum(item["amount_minor"] for item in breakdown)
-    total = max(policy.quotation_min_minor, min(raw_total, policy.quotation_max_minor))
-    items = [{"id": "weighted-estimate", "name": "Weighted custom estimate", "amount_minor": total}]
+    feature_total = max(policy.quotation_min_minor, min(raw_total, policy.quotation_max_minor))
+    items = [
+        {"id": "weighted-estimate", "name": "Weighted custom estimate", "amount_minor": feature_total}
+    ]
+    revision = _revision_price(subject, policy)
+    if revision:
+        breakdown.append(revision)
+        if revision["amount_minor"]:
+            items.append(revision)
+    total = feature_total + (revision["amount_minor"] if revision else 0)
     quotation = {
         "version": 1,
         "model": "weighted_heuristic_v1",
@@ -166,6 +204,8 @@ def _weighted_custom_estimate(subject, policy, *, lock=False):
         "minimum_minor": policy.quotation_min_minor,
         "maximum_minor": policy.quotation_max_minor,
         "raw_total_minor": raw_total,
+        "feature_total_minor": feature_total,
+        "revision": deepcopy(revision),
         "total_complexity_score": str(total_score.normalize()),
         "features": feature_snapshot,
         "inputs": {
@@ -177,6 +217,9 @@ def _weighted_custom_estimate(subject, policy, *, lock=False):
             "song_choice": _subject_value(subject, "song_choice", ""),
             "overlays": bool(_subject_value(subject, "overlays", False)),
             "beat_sync": bool(_subject_value(subject, "beat_sync", False)),
+            "revisions_needed": _subject_value(
+                subject, "revisions_needed", Project.RevisionsNeeded.ONE_TO_TWO
+            ),
         },
     }
     return {

@@ -279,11 +279,19 @@ class PolicyForm(MajorUnitPriceFormMixin, forms.ModelForm):
     quotation_point_minor = major_unit_field("Price per complexity point")
     quotation_min_minor = major_unit_field("Minimum estimated price")
     quotation_max_minor = major_unit_field("Maximum estimated price")
+    revision_price_zero_minor = major_unit_field("0 revisions")
+    revision_price_one_to_two_minor = major_unit_field("1-2 revisions")
+    revision_price_three_to_four_minor = major_unit_field("3-4 revisions")
+    revision_price_five_plus_minor = major_unit_field("5+ revisions")
     money_field_labels = {
         "custom_base_minor": "Custom base price",
         "quotation_point_minor": "Price per complexity point",
         "quotation_min_minor": "Minimum estimated price",
         "quotation_max_minor": "Maximum estimated price",
+        "revision_price_zero_minor": "0 revisions",
+        "revision_price_one_to_two_minor": "1-2 revisions",
+        "revision_price_three_to_four_minor": "3-4 revisions",
+        "revision_price_five_plus_minor": "5+ revisions",
     }
     currency = forms.ChoiceField(choices=CURRENCIES, required=False)
 
@@ -304,6 +312,10 @@ class PolicyForm(MajorUnitPriceFormMixin, forms.ModelForm):
             "quotation_point_minor",
             "quotation_min_minor",
             "quotation_max_minor",
+            "revision_price_zero_minor",
+            "revision_price_one_to_two_minor",
+            "revision_price_three_to_four_minor",
+            "revision_price_five_plus_minor",
             "terms",
             "delivery_terms",
             "refund_terms",
@@ -372,6 +384,16 @@ class PolicyForm(MajorUnitPriceFormMixin, forms.ModelForm):
             maximum = data.get("quotation_max_minor")
             if minimum is not None and maximum is not None and minimum > maximum:
                 self.add_error("quotation_max_minor", "Maximum price must be at least the minimum price.")
+        revision_fields = [
+            "revision_price_zero_minor",
+            "revision_price_one_to_two_minor",
+            "revision_price_three_to_four_minor",
+            "revision_price_five_plus_minor",
+        ]
+        if any(data.get(field) is not None for field in revision_fields):
+            for field in revision_fields:
+                if data.get(field) is None:
+                    self.add_error(field, "Enter all four revision-tier prices.")
         return data
 
 
@@ -444,6 +466,7 @@ class CustomEstimateForm(forms.Form):
     )
     overlays = forms.BooleanField(required=False)
     beat_sync = forms.BooleanField(required=False)
+    revisions_needed = forms.ChoiceField(choices=Project.RevisionsNeeded.choices, required=False)
     wording_direction = forms.ChoiceField(
         choices=[("", "Choose direction"), *Project.WordingDirection.choices], required=False
     )
@@ -456,4 +479,6 @@ class CustomEstimateForm(forms.Form):
             data["wording_direction"] = ""
         if not data.get("song_choice"):
             data["song_choice"] = "suggest"
+        if not data.get("revisions_needed"):
+            data["revisions_needed"] = Project.RevisionsNeeded.ONE_TO_TWO
         return data

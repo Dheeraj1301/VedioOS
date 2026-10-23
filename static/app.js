@@ -267,6 +267,7 @@ if (newOrderForm) {
         song_choice: songChoice.value,
         overlays: newOrderForm.querySelector('#id_overlays').checked,
         beat_sync: newOrderForm.querySelector('#id_beat_sync').checked,
+        revisions_needed: newOrderForm.querySelector('#id_revisions_needed').value,
       });
       if (requestNumber !== estimateRequest) return;
     } catch (_error) {
