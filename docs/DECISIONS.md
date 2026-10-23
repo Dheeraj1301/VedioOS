@@ -443,3 +443,11 @@ Status: approved and implemented
 Owner / source of explicit decision: Hamsa requested that only an explicit Admin action may make an Editor system-wide Not Available.
 
 Decision: workload continues to derive Available versus Unavailable (Busy) from open assignments. An Editor may submit or update one pending Not Available request only with a reason; this creates a persistent, deep-linked Admin notification but does not change assignment eligibility. The Admin may apply Not Available or return the Editor to automatic workload-derived status, with a required decision reason and audit event. The override takes precedence in display and excludes the Editor from manual and round-robin assignment. Existing assignments are retained rather than reassigned implicitly.
+
+## 2026-10-23 — Unpaid brief-file removal deletes private storage
+
+Status: approved and implemented
+
+Owner / source of explicit decision: Hamsa requested that Remove on Edit Brief and Order Summary delete the uploaded file from both storage and the active project file list.
+
+Decision: for an owning Client's unversioned source/reference/asset on a pending unpaid project, removal deletes every storage version and delete marker for the exact private object key before changing the file metadata to the audited `removed` tombstone state. The tombstone remains for attribution and retry safety but is excluded from active project-file queries. If private storage cannot confirm deletion, the endpoint returns a specific retryable error and leaves the metadata active; paid projects, versioned deliverables, unsupported categories and non-owners remain denied.

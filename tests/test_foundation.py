@@ -4,6 +4,7 @@ from datetime import timedelta
 from io import StringIO
 from unittest.mock import patch
 
+from botocore.exceptions import ClientError
 from django.core.management import call_command
 from django.db import IntegrityError, connection, transaction
 from django.test import Client as Browser
@@ -974,7 +975,8 @@ class FoundationTests(TestCase):
         for saved_file in [*saved_files, added_file]:
             self.assertContains(refreshed, saved_file.filename)
 
-    def test_client_can_remove_own_unpaid_brief_file_without_deleting_record(self):
+    @patch("core.views.delete_private_object_versions", return_value=1)
+    def test_client_can_remove_own_unpaid_brief_file_without_deleting_record(self, delete_versions):
         browser = self.auth(self.owner)
         file = File.objects.create(
             project=self.project,
@@ -995,6 +997,7 @@ class FoundationTests(TestCase):
         self.assertContains(edit, "Remove")
         response = browser.post(f"/api/files/{file.id}/remove/")
         self.assertEqual(response.status_code, 200)
+        delete_versions.assert_called_once_with(file.object_key)
         file.refresh_from_db()
         self.assertEqual(file.state, "removed")
         self.assertNotContains(
@@ -1010,6 +1013,34 @@ class FoundationTests(TestCase):
             self.auth(self.other).post(f"/api/files/{file.id}/remove/").status_code,
             404,
         )
+
+    @patch("core.views.delete_private_object_versions")
+    def test_storage_failure_leaves_brief_file_active_and_returns_specific_error(self, delete_versions):
+        delete_versions.side_effect = ClientError(
+            {"Error": {"Code": "ServiceUnavailable", "Message": "synthetic"}},
+            "ListObjectVersions",
+        )
+        file = File.objects.create(
+            project=self.project,
+            uploader=self.owner,
+            filename="retained-reference.mp4",
+            object_key=f"private/brief/{self.project.id}/retained",
+            size_bytes=100,
+            sha256="a" * 64,
+            content_type="video/mp4",
+            category="reference",
+            state="ready",
+            storage_version="v1",
+            expires_at=timezone.now(),
+            completed_at=timezone.now(),
+        )
+
+        response = self.auth(self.owner).post(f"/api/files/{file.id}/remove/")
+
+        self.assertEqual(response.status_code, 503)
+        self.assertIn("could not be removed from storage", response.json()["error"])
+        file.refresh_from_db()
+        self.assertEqual(file.state, "ready")
 
     @patch("core.views.upload_permission", return_value={"method": "PUT", "url": "private", "headers": {}})
     def test_removed_reference_frees_one_of_three_server_enforced_slots(self, _permission):

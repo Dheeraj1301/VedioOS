@@ -348,7 +348,8 @@ class CommerceTests(TestCase):
         self.assertEqual(quote.snapshot["quotation"]["weights"]["time"], 40)
         self.assertEqual(quote.snapshot["quotation"]["inputs"]["overlays"], True)
 
-    def test_custom_checkout_displays_locked_quote_and_starts_existing_payment_flow(self):
+    @patch("core.views.delete_private_object_versions", return_value=1)
+    def test_custom_checkout_displays_locked_quote_and_starts_existing_payment_flow(self, delete_versions):
         self.enable_weighted_engine()
         self.client.force_login(self.user)
         form_page = self.client.get("/client/new-order/?new=1")
@@ -409,6 +410,7 @@ class CommerceTests(TestCase):
 
         removed = self.client.post(f"/api/files/{checkout_file.id}/remove/")
         self.assertEqual(removed.status_code, 200)
+        delete_versions.assert_called_once_with(checkout_file.object_key)
         checkout_file.refresh_from_db()
         self.assertEqual(checkout_file.state, "removed")
         self.assertNotContains(self.client.get(summary_url), "checkout-reference.jpg")
@@ -541,8 +543,11 @@ class CommerceTests(TestCase):
         RAZORPAY_KEY_SECRET=RAZORPAY_SECRET,
         RAZORPAY_API_BASE="https://api.razorpay.com/v1",
     )
+    @patch("core.views.delete_private_object_versions", return_value=1)
     @patch("core.payments.requests.request")
-    def test_fixed_plan_save_bypasses_quote_ui_and_opens_razorpay_for_catalog_price(self, request):
+    def test_fixed_plan_save_bypasses_quote_ui_and_opens_razorpay_for_catalog_price(
+        self, request, delete_versions
+    ):
         self.client.force_login(self.user)
         saved = self.client.post(
             "/client/new-order/?new=1",
@@ -650,6 +655,7 @@ class CommerceTests(TestCase):
 
         removed = self.client.post(f"/api/files/{fixed_file.id}/remove/")
         self.assertEqual(removed.status_code, 200)
+        delete_versions.assert_called_once_with(fixed_file.object_key)
         fixed_file.refresh_from_db()
         self.assertEqual(fixed_file.state, "removed")
         refreshed = self.client.get(f"/orders/{project.id}/")

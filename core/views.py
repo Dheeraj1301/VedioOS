@@ -49,7 +49,7 @@ from .sessions import (
     pending_login,
     remember_pending_login,
 )
-from .storage import download_permission, inspect_object, upload_permission
+from .storage import delete_private_object_versions, download_permission, inspect_object, upload_permission
 from .v1 import v1_status
 
 FONT_REFERENCE_MAX_BYTES = 1024 * 1024
@@ -1097,6 +1097,18 @@ def remove_brief_file(request, file_id):
         or hasattr(file, "projectversion")
     ):
         raise PermissionDenied
+    try:
+        delete_private_object_versions(file.object_key)
+    except (ClientError, BotoCoreError):
+        return JsonResponse(
+            {
+                "error": (
+                    "The private file could not be removed from storage. "
+                    "Please try again; its project record is unchanged."
+                )
+            },
+            status=503,
+        )
     updated = File.objects.filter(pk=file.pk, state__in=["pending", "ready"]).update(
         state="removed", updated_at=timezone.now()
     )

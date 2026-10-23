@@ -1,9 +1,17 @@
 /* Original bytes go directly to object storage. No media transformation. */
 const csrf = () => document.querySelector('[name=csrfmiddlewaretoken]')?.value || decodeURIComponent(document.cookie.split('; ').find(x => x.startsWith('csrftoken='))?.split('=')[1] || '');
 async function postJSON(url, data = {}) {
-  const response = await fetch(url, {method: 'POST', credentials: 'same-origin', headers: {'Content-Type': 'application/json', 'X-CSRFToken': csrf()}, body: JSON.stringify(data)});
-  const body = await response.json().catch(() => ({error: 'The request could not be completed. Please try again.'}));
-  if (!response.ok) throw new Error(body.error || 'Request failed.');
+  let response;
+  try {
+    response = await fetch(url, {method: 'POST', credentials: 'same-origin', headers: {'Content-Type': 'application/json', 'X-CSRFToken': csrf()}, body: JSON.stringify(data)});
+  } catch (_error) {
+    throw new Error('The server could not be reached. Check your connection and try again.');
+  }
+  const body = await response.json().catch(() => null);
+  if (!response.ok) {
+    throw new Error(body?.error || `The server could not complete the request (${response.status}). Please try again.`);
+  }
+  if (!body) throw new Error('The server returned an invalid response. Please try again.');
   return body;
 }
 
