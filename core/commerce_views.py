@@ -412,6 +412,7 @@ def razorpay_checkout(request, payment_id):
             "payment": payment,
             "project": payment.order.project,
             "checkout": checkout_data,
+            "auto_open": payment.order.kind == "plan",
         },
     )
 

@@ -689,8 +689,22 @@ def _project_form(request, project=None, *, create_new=False):
                     or "A valid quotation could not be generated. Review the pricing configuration and try again.",
                 )
             return redirect("order_summary", project_id=saved_project.pk)
-        messages.success(request, "Creative brief saved. Add or review your private files below.")
-        return redirect("client_project", project_id=saved_project.pk)
+        try:
+            from .commerce import accept_quote, create_quote
+
+            quote = create_quote(
+                request.user,
+                saved_project.pk,
+                "plan",
+                plan_id=selected_plan.pk,
+                pricing_period=pricing_period,
+            )
+            accept_quote(request.user, saved_project.pk, quote.id)
+        except ValidationError as exc:
+            messages.error(request, " ".join(exc.messages))
+            return redirect("client_project", project_id=saved_project.pk)
+        messages.success(request, "Creative brief and fixed plan price saved. Continue to payment.")
+        return redirect("order_summary", project_id=saved_project.pk)
     if request.method == "POST" and request.headers.get("X-Requested-With") == "XMLHttpRequest":
         return JsonResponse(
             {

@@ -335,3 +335,13 @@ Owner / source of explicit decision: Hamsa requested a public Contact Us accordi
 Decision: landing FAQs are an ordered list inside the existing singleton landing-page JSON configuration. Administrators can create, edit, delete, reorder, publish and unpublish entries; the public page renders only published entries using its existing native accordion pattern. Existing installations with the former four fixed question/answer keys are upgraded in memory and retain their edited copy, with a published Contact Us entry appended. The default Contact Us answer directs existing clients to the protected Support workspace and new visitors to account creation; administrators can replace it with approved email, form or phone details. FAQ content remains escaped plain text rather than administrator-authored HTML.
 
 No schema migration is required because this extends the established JSON configuration contract. Verification required: default and legacy rendering, administrator-only access, persisted ordering and edits, delete/unpublish filtering, escaped output and unchanged non-FAQ landing content.
+
+## 2026-10-23 — Direct fixed-plan checkout
+
+Status: approved and implemented for the three standard plan slots
+
+Owner / source of explicit decision: Hamsa requested a streamlined Plan 1/2/3 checkout while explicitly preserving the Customize Your Edit quotation workflow.
+
+Decision: saving a standard-plan brief creates and accepts a server-owned immutable commercial snapshot from the selected active plan and its current administrator-configured per-reel price, then opens the order checkout directly. The fixed-plan checkout shows private project files and one Make Payment action; it does not display the quotation, price-estimate, payment-choice or terms-review sections. With Razorpay Test Mode configured, that action creates the provider order from the persisted integer-minor-unit snapshot and the gateway opens automatically on the secure checkout page. The server continues to verify signature, provider order, captured status, amount and currency before activating the project.
+
+Custom orders retain their existing generated quotation, breakdown, explicit acceptance control, commercial terms, payment action and non-automatic Razorpay launch. No client-supplied price is accepted, and later catalog edits do not rewrite an already-saved fixed-plan agreement.

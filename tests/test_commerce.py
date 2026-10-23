@@ -466,6 +466,75 @@ class CommerceTests(TestCase):
         RAZORPAY_API_BASE="https://api.razorpay.com/v1",
     )
     @patch("core.payments.requests.request")
+    def test_fixed_plan_save_bypasses_quote_ui_and_opens_razorpay_for_catalog_price(self, request):
+        self.client.force_login(self.user)
+        saved = self.client.post(
+            "/client/new-order/?new=1",
+            {
+                "title": "Direct fixed checkout",
+                "order_choice": f"plan:{self.plan.id}",
+                "pricing_period": "per_reel",
+            },
+        )
+        project = Project.objects.get(title="Direct fixed checkout")
+        self.assertRedirects(saved, f"/orders/{project.id}/", fetch_redirect_response=False)
+        project.order.refresh_from_db()
+        self.assertEqual(project.order.total_minor, self.plan.price_minor)
+        self.assertEqual(project.order.currency, self.plan.currency)
+        self.assertEqual(project.order.terms_snapshot["kind"], "plan")
+
+        File.objects.create(
+            project=project,
+            uploader=self.user,
+            filename="fixed-plan-source.mp4",
+            object_key=f"projects/{project.id}/fixed-plan-source",
+            size_bytes=128,
+            sha256="b" * 64,
+            content_type="video/mp4",
+            category="source",
+            state="ready",
+            expires_at=timezone.now() + timedelta(hours=1),
+            completed_at=timezone.now(),
+        )
+        summary = self.client.get(f"/orders/{project.id}/")
+        self.assertContains(summary, "Project Files")
+        self.assertContains(summary, "fixed-plan-source.mp4")
+        self.assertContains(summary, "Make Payment")
+        self.assertNotContains(summary, "Quotation details")
+        self.assertNotContains(summary, "Price estimate")
+        self.assertNotContains(summary, "<h2>Payment</h2>", html=False)
+        self.assertNotContains(summary, "Choose / change package")
+
+        gateway_order = Mock()
+        gateway_order.raise_for_status.return_value = None
+        gateway_order.json.return_value = {
+            "id": "order_fixed_plan",
+            "amount": self.plan.price_minor,
+            "currency": self.plan.currency,
+            "status": "created",
+        }
+        request.return_value = gateway_order
+        checkout = self.client.post(f"/orders/{project.id}/checkout/")
+        payment = project.order.payments.get()
+        self.assertRedirects(
+            checkout,
+            f"/payments/{payment.id}/razorpay/",
+            fetch_redirect_response=False,
+        )
+        self.assertEqual(payment.amount_minor, self.plan.price_minor)
+        self.assertEqual(request.call_args.kwargs["json"]["amount"], self.plan.price_minor)
+        razorpay_page = self.client.get(f"/payments/{payment.id}/razorpay/")
+        self.assertContains(razorpay_page, 'data-auto-open="true"', html=False)
+        self.assertContains(razorpay_page, "Fixed plan total")
+        self.assertNotContains(razorpay_page, "Saved quotation total")
+
+    @override_settings(
+        PAYMENT_MODE="razorpay_test",
+        RAZORPAY_KEY_ID="rzp_test_synthetic",
+        RAZORPAY_KEY_SECRET=RAZORPAY_SECRET,
+        RAZORPAY_API_BASE="https://api.razorpay.com/v1",
+    )
+    @patch("core.payments.requests.request")
     def test_razorpay_test_order_checkout_and_captured_confirmation(self, request):
         quote = self.quote()
         accept_quote(self.user, self.project.id, quote.id)
@@ -614,6 +683,9 @@ class CommerceTests(TestCase):
             f"/payments/{payment.id}/razorpay/",
             fetch_redirect_response=False,
         )
+        razorpay_page = self.client.get(f"/payments/{payment.id}/razorpay/")
+        self.assertNotContains(razorpay_page, "data-auto-open")
+        self.assertContains(razorpay_page, "Saved quotation total")
 
     def test_admin_can_manage_weighted_policy_and_feature_scores(self):
         invalid_values = {

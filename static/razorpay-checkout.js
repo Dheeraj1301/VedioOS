@@ -8,7 +8,7 @@ if (razorpayForm) {
     status.textContent = message;
     status.setAttribute('role', failed ? 'alert' : 'status');
   };
-  button.addEventListener('click', () => {
+  const openCheckout = () => {
     if (typeof window.Razorpay !== 'function') {
       report('Secure checkout could not load. Check your connection and try again.', true);
       return;
@@ -51,5 +51,7 @@ if (razorpayForm) {
     });
     checkout.on('payment.failed', () => report('The payment failed. Try again.', true));
     checkout.open();
-  });
+  };
+  button.addEventListener('click', openCheckout);
+  if (razorpayForm.dataset.autoOpen === 'true') openCheckout();
 }
