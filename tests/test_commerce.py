@@ -500,6 +500,11 @@ class CommerceTests(TestCase):
         self.assertContains(summary, "Project Files")
         self.assertContains(summary, "fixed-plan-source.mp4")
         self.assertContains(summary, "Make Payment")
+        self.assertContains(summary, "Additional terms")
+        self.assertContains(summary, "Market-reference estimate based on the selected editing scope. Final commercial rates require administrator approval before live launch.")
+        self.assertContains(summary, "Estimated 24-hour turnaround begins after complete source files and a valid payment are received; final service-level terms require approval.")
+        self.assertContains(summary, "No live charge is collected in preview checkout. The production cancellation and refund policy requires administrator approval.")
+        self.assertContains(summary, "Taxes and invoice treatment require business approval and are not included in this preview quotation.")
         self.assertNotContains(summary, "Quotation details")
         self.assertNotContains(summary, "Price estimate")
         self.assertNotContains(summary, "<h2>Payment</h2>", html=False)
@@ -527,6 +532,9 @@ class CommerceTests(TestCase):
         self.assertContains(razorpay_page, 'data-auto-open="true"', html=False)
         self.assertContains(razorpay_page, "Fixed plan total")
         self.assertNotContains(razorpay_page, "Saved quotation total")
+
+        content = summary.content.decode()
+        self.assertLess(content.index("Make Payment"), content.index("Additional terms"))
 
     @override_settings(
         PAYMENT_MODE="razorpay_test",
@@ -686,6 +694,8 @@ class CommerceTests(TestCase):
         razorpay_page = self.client.get(f"/payments/{payment.id}/razorpay/")
         self.assertNotContains(razorpay_page, "data-auto-open")
         self.assertContains(razorpay_page, "Saved quotation total")
+        custom_summary = self.client.get(f"/orders/{project.id}/")
+        self.assertNotContains(custom_summary, "Market-reference estimate based on the selected editing scope")
 
     def test_admin_can_manage_weighted_policy_and_feature_scores(self):
         invalid_values = {

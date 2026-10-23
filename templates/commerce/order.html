@@ -13,6 +13,13 @@
       {% if razorpay_test and pending and pending.provider == 'razorpay_test' and pending.status == 'pending' %}<a class="button" href="{% url 'razorpay_checkout' pending.id %}">Make Payment <span>↗</span></a>
       {% else %}<form method="post" action="{% url 'checkout' project.id %}">{% csrf_token %}<button class="button" type="submit">Make Payment <span>↗</span></button></form>{% endif %}
     {% endwith %}{% endif %}
+    <div class="fixed-plan-terms">
+      <h2>Additional terms</h2>
+      <h3>Service agreement</h3><p>Market-reference estimate based on the selected editing scope. Final commercial rates require administrator approval before live launch.</p>
+      <h3>Delivery</h3><p>Estimated 24-hour turnaround begins after complete source files and a valid payment are received; final service-level terms require approval.</p>
+      <h3>Cancellation &amp; refunds</h3><p>No live charge is collected in preview checkout. The production cancellation and refund policy requires administrator approval.</p>
+      <h3>Taxes</h3><p>Taxes and invoice treatment require business approval and are not included in this preview quotation.</p>
+    </div>
   </section>
 {% elif order.kind == 'custom' and snapshot %}
   {% include 'commerce/custom_quotation.html' %}
