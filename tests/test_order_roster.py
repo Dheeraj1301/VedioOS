@@ -106,6 +106,22 @@ class OrderRosterTests(TestCase):
                 self.assertEqual(filtered.status_code, 200)
                 self.assertContains(filtered, "Order total")
 
+    def test_admin_page_defaults_to_the_sole_pending_tab(self):
+        admin = Browser()
+        admin.force_login(self.admin)
+
+        response = admin.get("/admin/orders/")
+
+        self.assertContains(response, "Payment: Pending")
+        self.assertContains(response, "Order state 1")
+        self.assertNotContains(response, "Paid editing order")
+        filter_nav = response.content.decode().split(
+            '<nav class="commerce-filters"', 1
+        )[1].split("</nav>", 1)[0]
+        self.assertIn(">Pending</a>", filter_nav)
+        for removed_tab in (">All</a>", ">Confirmed</a>", ">Failed</a>", ">Refunded</a>"):
+            self.assertNotIn(removed_tab, filter_nav)
+
     def test_admin_order_detail_retains_metadata_removed_from_roster(self):
         admin = Browser()
         admin.force_login(self.admin)

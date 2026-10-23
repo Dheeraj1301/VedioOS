@@ -411,3 +411,11 @@ Status: approved and implemented
 Owner / source of explicit decision: Hamsa requested removal of the Consultations card and Metrics awaiting policy placeholder from Admin Analytics.
 
 Decision: the Admin Analytics page no longer renders those two sections. All other analytics cards, counts and protected operational destinations remain unchanged; consultation records and their dedicated administration page are not removed.
+
+## 2026-10-23 — Pending-only Admin Orders tab
+
+Status: approved and implemented
+
+Owner / source of explicit decision: Hamsa requested that Pending remain as the sole visible payment-state tab on Admin Orders.
+
+Decision: Admin Orders defaults to the Pending payment filter and renders only its Pending tab. Search and workflow filtering preserve the active payment state. Existing protected server-side reconciliation filters and order records remain available and unchanged; only the roster's visible tab inventory and default are narrowed.
