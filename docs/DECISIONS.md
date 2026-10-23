@@ -403,3 +403,11 @@ Status: approved and implemented for client/editor shared communication
 Owner / source of explicit decision: Hamsa requested that Clients and Editors cannot share six or more consecutive digits through Project Communication.
 
 Decision: shared Client and Editor project messages reject `\d{6,}`. The browser prevents an insertion or paste that would create the sequence, retains the last valid value, and shows the supplied warning with an invalid-field state. The protected service repeats the same rule and the posting endpoints return HTTP 400 for a bypassed request without saving or notifying. Sequences separated before six digits remain valid. The restriction is limited to shared project communication; support content and private administrator/internal operational notes are unchanged.
+
+## 2026-10-23 — Simplified Admin Analytics presentation
+
+Status: approved and implemented
+
+Owner / source of explicit decision: Hamsa requested removal of the Consultations card and Metrics awaiting policy placeholder from Admin Analytics.
+
+Decision: the Admin Analytics page no longer renders those two sections. All other analytics cards, counts and protected operational destinations remain unchanged; consultation records and their dedicated administration page are not removed.
