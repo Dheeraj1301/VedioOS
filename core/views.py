@@ -584,7 +584,6 @@ def edit_project(request, project_id):
         project.status != "payment_pending"
         or project.order.payment_status != "pending"
         or project.order.payments.filter(status="confirmed").exists()
-        or (project.order.terms_snapshot and project.order.kind != "custom")
     ):
         raise PermissionDenied
     return _project_form(request, project)
@@ -601,6 +600,9 @@ def _project_form(request, project=None, *, create_new=False):
             selected_plan = form.cleaned_data.get("selected_plan")
             if selected_plan:
                 saved_project.quotation_snapshot = {}
+                saved_project.song_information = form.cleaned_data[
+                    "standard_song_preference"
+                ].strip()
             else:
                 try:
                     from .commerce import saved_custom_estimate_snapshot
@@ -624,8 +626,6 @@ def _project_form(request, project=None, *, create_new=False):
                 ):
                     raise PermissionDenied
                 if existing_order.terms_snapshot:
-                    if existing_order.kind != "custom":
-                        raise PermissionDenied
                     for payment in existing_order.payments.select_for_update().filter(
                         status="pending"
                     ):
@@ -722,6 +722,7 @@ def _project_form(request, project=None, *, create_new=False):
     ]
     active_inspiration_count = 0
     existing_brief_files = File.objects.none()
+    standard_existing_brief_files = File.objects.none()
     if project:
         active_inspiration_count = project.files.filter(category="reference").filter(
             Q(state="ready") | Q(state="pending", expires_at__gt=timezone.now())
@@ -731,6 +732,9 @@ def _project_form(request, project=None, *, create_new=False):
             original__isnull=True,
             category__in=["source", "image", "audio", "reference", "font_reference", "asset"],
         ).filter(Q(state="ready") | Q(state="pending", expires_at__gt=timezone.now()))
+        if project.order.kind == "plan":
+            standard_existing_brief_files = existing_brief_files
+            existing_brief_files = File.objects.none()
     upload_policy = UploadPolicy.objects.filter(pk=1, enabled=True).first()
     return render(
         request,
@@ -744,6 +748,7 @@ def _project_form(request, project=None, *, create_new=False):
             "plan_slots": plan_slots,
             "active_inspiration_count": active_inspiration_count,
             "existing_brief_files": existing_brief_files,
+            "standard_existing_brief_files": standard_existing_brief_files,
             "upload_policy": upload_policy,
         },
     )

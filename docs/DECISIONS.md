@@ -355,3 +355,11 @@ Status: approved and implemented for fixed and custom orders
 Owner / source of explicit decision: Hamsa requested removal controls for every uploaded checkout file across Plan 1/2/3 and Customize My Edit.
 
 Decision: an owning client may remove a source, image, audio, reference, font-reference or asset file while both the project and payment remain pending, including after fixed-plan terms have been snapshotted or a payment attempt has started. Removal uses the existing protected API and durable `removed` state with an attributable audit event; the private storage object is not physically destroyed because retention and recovery policy remain unresolved. Removed records disappear from normal file queries immediately, free reference-upload capacity and cannot be downloaded. Paid projects, project versions, other clients and other roles remain denied. File removal does not recalculate or rewrite plan prices, custom quotations, accepted terms or pending payment amounts.
+
+## 2026-10-23 — Editable standard-plan song preference
+
+Status: approved and implemented for the three standard plan slots
+
+Owner / source of explicit decision: Hamsa requested an optional song preference and an editable Creative Brief for Plan 1/2/3 while explicitly prohibiting changes to Customize My Edit.
+
+Decision: standard-plan briefs store the optional Song preference / name in the existing project song-information field. Before payment confirmation, the owning client may reopen the standard-plan form from checkout with the plan, project name, song preference and existing private files restored. Saving replaces the pending fixed-plan commercial snapshot with a fresh server-calculated snapshot from the currently selected active plan and cancels any superseded pending payment attempt. Confirmed payments and non-pending projects remain immutable through this route. The custom form, quotation fields, checkout branch and payment flow are unchanged.

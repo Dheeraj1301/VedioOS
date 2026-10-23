@@ -134,6 +134,12 @@ class ProjectForm(forms.ModelForm):
         label="Pricing period",
         required=False,
     )
+    standard_song_preference = forms.CharField(
+        required=False,
+        max_length=500,
+        label="Song preference / name",
+        widget=forms.TextInput(attrs={"placeholder": "e.g. Shape of You by Ed Sheeran"}),
+    )
 
     def __init__(self, *args, **kwargs):
         kwargs.setdefault("label_suffix", "")
@@ -153,6 +159,8 @@ class ProjectForm(forms.ModelForm):
             order = self.instance.order
             self.initial["order_choice"] = f"plan:{order.plan_id}" if order.plan_id else "custom"
             self.initial["pricing_period"] = order.pricing_period
+            if order.kind == "plan":
+                self.initial["standard_song_preference"] = self.instance.song_information
 
     def clean(self):
         data = super().clean()

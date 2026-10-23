@@ -489,6 +489,7 @@ class CommerceTests(TestCase):
                 "title": "Direct fixed checkout",
                 "order_choice": f"plan:{self.plan.id}",
                 "pricing_period": "per_reel",
+                "standard_song_preference": "Shape of You by Ed Sheeran",
             },
         )
         project = Project.objects.get(title="Direct fixed checkout")
@@ -497,6 +498,7 @@ class CommerceTests(TestCase):
         self.assertEqual(project.order.total_minor, self.plan.price_minor)
         self.assertEqual(project.order.currency, self.plan.currency)
         self.assertEqual(project.order.terms_snapshot["kind"], "plan")
+        self.assertEqual(project.song_information, "Shape of You by Ed Sheeran")
 
         fixed_file = File.objects.create(
             project=project,
@@ -513,6 +515,9 @@ class CommerceTests(TestCase):
         )
         summary = self.client.get(f"/orders/{project.id}/")
         self.assertContains(summary, "Project Files")
+        self.assertContains(summary, "Creative Brief")
+        self.assertContains(summary, "Shape of You by Ed Sheeran")
+        self.assertContains(summary, f'/client/projects/{project.id}/edit/', html=False)
         self.assertContains(summary, "fixed-plan-source.mp4")
         self.assertContains(summary, f'data-file-id="{fixed_file.id}"', html=False)
         self.assertContains(summary, "Remove")
@@ -526,6 +531,35 @@ class CommerceTests(TestCase):
         self.assertNotContains(summary, "Price estimate")
         self.assertNotContains(summary, "<h2>Payment</h2>", html=False)
         self.assertNotContains(summary, "Choose / change package")
+
+        edit_page = self.client.get(f"/client/projects/{project.id}/edit/")
+        self.assertEqual(edit_page.status_code, 200)
+        self.assertContains(edit_page, 'value="Direct fixed checkout"', html=False)
+        self.assertContains(edit_page, 'value="Shape of You by Ed Sheeran"', html=False)
+        self.assertEqual(edit_page.context["selected_choice"], f"plan:{self.plan.id}")
+        self.assertContains(edit_page, "fixed-plan-source.mp4")
+        edit_content = edit_page.content.decode()
+        self.assertLess(edit_content.index("Song preference / name"), edit_content.index("Upload Your Clips"))
+
+        updated = self.client.post(
+            f"/client/projects/{project.id}/edit/",
+            {
+                "title": "Updated fixed checkout",
+                "order_choice": f"plan:{self.plan.id}",
+                "pricing_period": "per_reel",
+                "standard_song_preference": "Blinding Lights by The Weeknd",
+            },
+        )
+        self.assertRedirects(updated, f"/orders/{project.id}/", fetch_redirect_response=False)
+        project.refresh_from_db()
+        project.order.refresh_from_db()
+        self.assertEqual(project.title, "Updated fixed checkout")
+        self.assertEqual(project.song_information, "Blinding Lights by The Weeknd")
+        self.assertEqual(project.order.total_minor, self.plan.price_minor)
+        summary = self.client.get(f"/orders/{project.id}/")
+        self.assertContains(summary, "Updated fixed checkout")
+        self.assertContains(summary, "Blinding Lights by The Weeknd")
+        self.assertContains(summary, "fixed-plan-source.mp4")
 
         gateway_order = Mock()
         gateway_order.raise_for_status.return_value = None
