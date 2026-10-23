@@ -188,7 +188,6 @@ if (newOrderForm) {
   const projectTitle = newOrderForm.querySelector('#id_title');
   const reelDuration = newOrderForm.querySelector('#id_reel_duration');
   const fontNameInput = newOrderForm.querySelector('#id_font_name');
-  const estimate = newOrderForm.querySelector('#custom-estimate');
   const pricingPeriodFields = [...newOrderForm.querySelectorAll('[name="pricing_period"]')];
   const lockedPricingPeriods = [...newOrderForm.querySelectorAll('[data-pricing-period-locked]')];
   const pricingPeriodUpcoming = newOrderForm.querySelector('#pricing-period-upcoming');
@@ -257,13 +256,9 @@ if (newOrderForm) {
   const updateCustomEstimate = async () => {
     const requestNumber = ++estimateRequest;
     const duration = newOrderForm.querySelector('#id_reel_duration').value;
-    if (!duration) {
-      announce(estimate, 'Estimated price: choose a duration to calculate the configured amount.');
-      return;
-    }
-    announce(estimate, 'Calculating the configured price…');
+    if (!duration) return;
     try {
-      const result = await postJSON('/api/quote/', {
+      await postJSON('/api/quote/', {
         colour_grading: newOrderForm.querySelector('#id_colour_grading').checked,
         quality_enhancement: newOrderForm.querySelector('#id_quality_enhancement').checked,
         reel_duration: duration,
@@ -274,12 +269,8 @@ if (newOrderForm) {
         beat_sync: newOrderForm.querySelector('#id_beat_sync').checked,
       });
       if (requestNumber !== estimateRequest) return;
-      const breakdown = (result.breakdown || result.items)
-        .map(item => `${item.name}: ${item.display_amount}`)
-        .join(' · ');
-      announce(estimate, `Estimated price: ${result.display_total}. ${breakdown}. Final pricing is confirmed before payment.`);
-    } catch (error) {
-      if (requestNumber === estimateRequest) announce(estimate, `Estimate unavailable: ${error.message}`);
+    } catch (_error) {
+      // Save and Proceed remains authoritative and reports any quotation error.
     }
   };
   newOrderForm.addEventListener('click', event => {

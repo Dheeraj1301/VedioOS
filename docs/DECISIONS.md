@@ -363,3 +363,11 @@ Status: approved and implemented for the three standard plan slots
 Owner / source of explicit decision: Hamsa requested an optional song preference and an editable Creative Brief for Plan 1/2/3 while explicitly prohibiting changes to Customize My Edit.
 
 Decision: standard-plan briefs store the optional Song preference / name in the existing project song-information field. Before payment confirmation, the owning client may reopen the standard-plan form from checkout with the plan, project name, song preference and existing private files restored. Saving replaces the pending fixed-plan commercial snapshot with a fresh server-calculated snapshot from the currently selected active plan and cancels any superseded pending payment attempt. Confirmed payments and non-pending projects remain immutable through this route. The custom form, quotation fields, checkout branch and payment flow are unchanged.
+
+## 2026-10-23 — Hide the in-form custom estimate
+
+Status: approved and implemented
+
+Owner / source of explicit decision: Hamsa requested removal of the green Estimated price summary from the Customize Your Edit form while preserving quotation and payment behavior.
+
+Decision: the custom form no longer renders a live estimate summary. Option changes may continue to call the protected estimate endpoint in the background, but Save and Proceed remains authoritative: it recalculates and persists the server-owned quotation snapshot, and the checkout page continues to display that saved quotation and its breakdown. No custom inputs, checkout presentation or payment rules change.

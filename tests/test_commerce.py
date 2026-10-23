@@ -293,6 +293,9 @@ class CommerceTests(TestCase):
     def test_custom_checkout_displays_locked_quote_and_starts_existing_payment_flow(self):
         self.enable_weighted_engine()
         self.client.force_login(self.user)
+        form_page = self.client.get("/client/new-order/?new=1")
+        self.assertNotContains(form_page, 'id="custom-estimate"', html=False)
+        self.assertNotContains(form_page, "Estimated price:")
         response = self.client.post(
             "/client/new-order/?new=1",
             {
