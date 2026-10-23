@@ -37,6 +37,33 @@ document.querySelectorAll('[data-faq-editor]').forEach((editor) => {
   });
   syncOrder();
 });
+
+document.querySelectorAll('[data-checkout-files]').forEach((list) => {
+  const status = list.nextElementSibling;
+  list.querySelectorAll('.checkout-file-remove').forEach((button) => {
+    button.addEventListener('click', async () => {
+      const row = button.closest('[data-checkout-file]');
+      const filename = row.querySelector('strong').textContent;
+      if (!window.confirm(`Remove ${filename} from this project?`)) return;
+      button.disabled = true;
+      try {
+        await postJSON(`/api/files/${row.dataset.fileId}/remove/`);
+        row.remove();
+        if (!list.querySelector('[data-checkout-file]')) {
+          const empty = document.createElement('p');
+          empty.className = 'muted';
+          empty.dataset.checkoutFilesEmpty = '';
+          empty.textContent = 'No files have been uploaded for this project yet.';
+          list.append(empty);
+        }
+        announce(status, `${filename} removed from this project.`);
+      } catch (error) {
+        announce(status, error.message, true);
+        button.disabled = false;
+      }
+    });
+  });
+});
 async function getJSON(url) {
   const response = await fetch(url, {credentials: 'same-origin'});
   const body = await response.json().catch(() => ({error: 'The request could not be completed. Please try again.'}));

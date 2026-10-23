@@ -7,7 +7,7 @@
 {% if order.kind == 'plan' and snapshot %}
   <section class="panel detail-panel">
     <h2>Project Files</h2>
-    {% for file in files %}<div class="file-row"><div><strong>{{ file.filename }}</strong><p>{{ file.get_category_display }} · {{ file.size_bytes|filesizeformat }}</p></div><span class="badge">Uploaded</span></div>{% empty %}<p class="muted">No files have been uploaded for this project yet.</p>{% endfor %}
+    <div data-checkout-files>{% for file in files %}<div class="file-row" data-checkout-file data-file-id="{{ file.id }}"><div><strong>{{ file.filename }}</strong><p>{{ file.get_category_display }} · {{ file.size_bytes|filesizeformat }}</p></div>{% if request.user.role == 'client' and order.payment_status == 'pending' %}<button class="text-button checkout-file-remove" type="button" aria-label="Remove {{ file.filename }}">Remove</button>{% else %}<span class="badge">Uploaded</span>{% endif %}</div>{% empty %}<p class="muted" data-checkout-files-empty>No files have been uploaded for this project yet.</p>{% endfor %}</div><p class="checkout-file-remove-status" role="status" aria-live="polite"></p>
     {% if order.payment_status == 'confirmed' %}<p class="notice">Payment recorded {{ project.payment_completed_at|date:"M j, Y H:i" }} UTC.</p>
     {% elif request.user.role == 'client' %}{% with pending=payments.first %}
       {% if razorpay_test and pending and pending.provider == 'razorpay_test' and pending.status == 'pending' %}<a class="button" href="{% url 'razorpay_checkout' pending.id %}">Make Payment <span>↗</span></a>
@@ -25,7 +25,7 @@
   {% include 'commerce/custom_quotation.html' %}
   <section class="panel detail-panel">
     <h2>Private project files</h2>
-    {% for file in files %}<div class="file-row"><div><strong>{{ file.filename }}</strong><p>{{ file.get_category_display }} · {{ file.size_bytes|filesizeformat }}</p></div><span class="badge">Uploaded</span></div>{% empty %}<p class="muted">No files have been uploaded for this project yet.</p>{% endfor %}
+    <div data-checkout-files>{% for file in files %}<div class="file-row" data-checkout-file data-file-id="{{ file.id }}"><div><strong>{{ file.filename }}</strong><p>{{ file.get_category_display }} · {{ file.size_bytes|filesizeformat }}</p></div>{% if request.user.role == 'client' and order.payment_status == 'pending' %}<button class="text-button checkout-file-remove" type="button" aria-label="Remove {{ file.filename }}">Remove</button>{% else %}<span class="badge">Uploaded</span>{% endif %}</div>{% empty %}<p class="muted" data-checkout-files-empty>No files have been uploaded for this project yet.</p>{% endfor %}</div><p class="checkout-file-remove-status" role="status" aria-live="polite"></p>
   </section>
 {% elif snapshot %}
   {% include 'commerce/breakdown.html' %}

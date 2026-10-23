@@ -309,7 +309,7 @@ class CommerceTests(TestCase):
             },
         )
         project = Project.objects.get(title="Checkout quotation")
-        File.objects.create(
+        checkout_file = File.objects.create(
             project=project,
             uploader=self.user,
             filename="checkout-reference.jpg",
@@ -335,6 +335,8 @@ class CommerceTests(TestCase):
         self.assertContains(page, "Make Payment")
         self.assertContains(page, "Edit details")
         self.assertContains(page, "checkout-reference.jpg")
+        self.assertContains(page, f'data-file-id="{checkout_file.id}"', html=False)
+        self.assertContains(page, "Remove")
         self.assertContains(page, "Reference")
         self.assertContains(page, "Additional terms")
         self.assertNotContains(page, "Refresh quotation with current rates")
@@ -343,6 +345,19 @@ class CommerceTests(TestCase):
         payment_heading = content.index("<h2>Payment</h2>")
         self.assertLess(content.index("Quotation details"), payment_heading)
         self.assertLess(payment_heading, content.index("Additional terms"))
+
+        removed = self.client.post(f"/api/files/{checkout_file.id}/remove/")
+        self.assertEqual(removed.status_code, 200)
+        checkout_file.refresh_from_db()
+        self.assertEqual(checkout_file.state, "removed")
+        self.assertNotContains(self.client.get(summary_url), "checkout-reference.jpg")
+        self.assertTrue(
+            AuditLog.objects.filter(
+                action="file.removed_from_brief",
+                actor=self.user,
+                target_id=str(checkout_file.id),
+            ).exists()
+        )
 
         project_detail = self.client.get(f"/client/projects/{project.id}/")
         self.assertContains(project_detail, "Complete your order")
@@ -483,7 +498,7 @@ class CommerceTests(TestCase):
         self.assertEqual(project.order.currency, self.plan.currency)
         self.assertEqual(project.order.terms_snapshot["kind"], "plan")
 
-        File.objects.create(
+        fixed_file = File.objects.create(
             project=project,
             uploader=self.user,
             filename="fixed-plan-source.mp4",
@@ -499,6 +514,8 @@ class CommerceTests(TestCase):
         summary = self.client.get(f"/orders/{project.id}/")
         self.assertContains(summary, "Project Files")
         self.assertContains(summary, "fixed-plan-source.mp4")
+        self.assertContains(summary, f'data-file-id="{fixed_file.id}"', html=False)
+        self.assertContains(summary, "Remove")
         self.assertContains(summary, "Make Payment")
         self.assertContains(summary, "Additional terms")
         self.assertContains(summary, "Market-reference estimate based on the selected editing scope. Final commercial rates require administrator approval before live launch.")
@@ -535,6 +552,22 @@ class CommerceTests(TestCase):
 
         content = summary.content.decode()
         self.assertLess(content.index("Make Payment"), content.index("Additional terms"))
+
+        removed = self.client.post(f"/api/files/{fixed_file.id}/remove/")
+        self.assertEqual(removed.status_code, 200)
+        fixed_file.refresh_from_db()
+        self.assertEqual(fixed_file.state, "removed")
+        refreshed = self.client.get(f"/orders/{project.id}/")
+        self.assertNotContains(refreshed, "fixed-plan-source.mp4")
+        self.assertContains(refreshed, "No files have been uploaded")
+        self.assertContains(refreshed, "Make Payment")
+        self.assertTrue(
+            AuditLog.objects.filter(
+                action="file.removed_from_checkout",
+                actor=self.user,
+                target_id=str(fixed_file.id),
+            ).exists()
+        )
 
     @override_settings(
         PAYMENT_MODE="razorpay_test",

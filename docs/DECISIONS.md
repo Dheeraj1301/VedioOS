@@ -347,3 +347,11 @@ Decision: saving a standard-plan brief creates and accepts a server-owned immuta
 Custom orders retain their existing generated quotation, breakdown, explicit acceptance control, commercial terms, payment action and non-automatic Razorpay launch. No client-supplied price is accepted, and later catalog edits do not rewrite an already-saved fixed-plan agreement.
 
 Later clarification: the fixed-plan checkout includes the owner-supplied preview Additional terms directly below Make Payment as visually secondary static copy. This narrow addition supersedes only the earlier decision to omit terms-review content from the fixed-plan page; it does not add an acceptance control or alter the custom checkout branch.
+
+## 2026-10-23 — Checkout file removal before payment
+
+Status: approved and implemented for fixed and custom orders
+
+Owner / source of explicit decision: Hamsa requested removal controls for every uploaded checkout file across Plan 1/2/3 and Customize My Edit.
+
+Decision: an owning client may remove a source, image, audio, reference, font-reference or asset file while both the project and payment remain pending, including after fixed-plan terms have been snapshotted or a payment attempt has started. Removal uses the existing protected API and durable `removed` state with an attributable audit event; the private storage object is not physically destroyed because retention and recovery policy remain unresolved. Removed records disappear from normal file queries immediately, free reference-upload capacity and cannot be downloaded. Paid projects, project versions, other clients and other roles remain denied. File removal does not recalculate or rewrite plan prices, custom quotations, accepted terms or pending payment amounts.

@@ -1074,9 +1074,10 @@ def complete_upload(request, file_id):
 
 @require_POST
 @role_required("client")
+@transaction.atomic
 def remove_brief_file(request, file_id):
     file = get_object_or_404(
-        File.objects.select_related("project__order"),
+        File.objects.select_for_update().select_related("project__order"),
         pk=file_id,
         uploader=request.user,
         project__client__user=request.user,
@@ -1088,7 +1089,6 @@ def remove_brief_file(request, file_id):
     if (
         project.status != Project.Status.PENDING
         or project.order.payment_status != "pending"
-        or project.order.terms_snapshot
         or hasattr(file, "projectversion")
     ):
         raise PermissionDenied
@@ -1098,7 +1098,7 @@ def remove_brief_file(request, file_id):
     if updated:
         audit(
             request.user,
-            "file.removed_from_brief",
+            "file.removed_from_checkout" if project.order.terms_snapshot else "file.removed_from_brief",
             file.id,
             {"project": str(project.id), "category": file.category},
         )
