@@ -6,6 +6,37 @@ async function postJSON(url, data = {}) {
   if (!response.ok) throw new Error(body.error || 'Request failed.');
   return body;
 }
+
+document.querySelectorAll('[data-faq-editor]').forEach((editor) => {
+  const list = editor.querySelector('[data-faq-list]');
+  const total = editor.querySelector('[name="faqs-TOTAL_FORMS"]');
+  const syncOrder = () => [...list.querySelectorAll('[data-faq-item]')].forEach((item, index) => {
+    const order = item.querySelector('[name$="-ORDER"]');
+    if (order) order.value = index + 1;
+  });
+  const bind = (item) => {
+    item.querySelector('[data-move-up]').addEventListener('click', () => { if (item.previousElementSibling) list.insertBefore(item, item.previousElementSibling); syncOrder(); });
+    item.querySelector('[data-move-down]').addEventListener('click', () => { if (item.nextElementSibling) list.insertBefore(item.nextElementSibling, item); syncOrder(); });
+    item.querySelector('[data-delete-faq]').addEventListener('click', () => {
+      const deletion = item.querySelector('[name$="-DELETE"]');
+      if (deletion) deletion.checked = true;
+      item.hidden = true;
+    });
+  };
+  list.querySelectorAll('[data-faq-item]').forEach(bind);
+  editor.querySelector('[data-add-faq]').addEventListener('click', () => {
+    const index = Number(total.value);
+    const wrapper = document.createElement('div');
+    wrapper.innerHTML = editor.querySelector('[data-empty-faq]').innerHTML.replaceAll('__prefix__', index);
+    const item = wrapper.firstElementChild;
+    list.append(item);
+    total.value = index + 1;
+    bind(item);
+    syncOrder();
+    item.querySelector('input:not([type="hidden"])').focus();
+  });
+  syncOrder();
+});
 async function getJSON(url) {
   const response = await fetch(url, {credentials: 'same-origin'});
   const body = await response.json().catch(() => ({error: 'The request could not be completed. Please try again.'}));

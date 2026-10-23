@@ -44,3 +44,17 @@ class LandingPageForm(forms.Form):
 
     def content(self):
         return {key: self.cleaned_data[key] for key, *_rest in LANDING_FIELDS}
+
+
+class FAQItemForm(forms.Form):
+    id = forms.CharField(required=False, widget=forms.HiddenInput())
+    title = forms.CharField(label="Title", max_length=240)
+    content = forms.CharField(
+        label="Content / answer", max_length=2000, widget=forms.Textarea(attrs={"rows": 3})
+    )
+    published = forms.BooleanField(required=False, initial=True, label="Published")
+
+
+FAQFormSet = forms.formset_factory(
+    FAQItemForm, extra=0, can_delete=True, can_order=True, max_num=50, validate_max=True
+)

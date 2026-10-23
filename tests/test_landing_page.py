@@ -3,7 +3,7 @@ from unittest.mock import Mock, patch
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
 
-from core.landing_content import LANDING_DEFAULTS
+from core.landing_content import FAQ_DEFAULTS, LANDING_DEFAULTS
 from core.models import LandingPageSettings, User
 
 
@@ -13,14 +13,42 @@ class LandingPageTests(TestCase):
             email="landing-admin@example.test", password="ValidPass!123", name="Landing Admin", role="admin"
         )
         self.client_user = User.objects.create_user(
-            email="landing-client@example.test", password="ValidPass!123", name="Landing Client", role="client"
+            email="landing-client@example.test",
+            password="ValidPass!123",
+            name="Landing Client",
+            role="client",
         )
+
+    def landing_form_data(self, faqs=None, **overrides):
+        faqs = list(faqs if faqs is not None else FAQ_DEFAULTS)
+        data = {
+            **LANDING_DEFAULTS,
+            "faqs-TOTAL_FORMS": str(len(faqs)),
+            "faqs-INITIAL_FORMS": str(len(faqs)),
+            "faqs-MIN_NUM_FORMS": "0",
+            "faqs-MAX_NUM_FORMS": "50",
+        }
+        for index, faq in enumerate(faqs):
+            data.update(
+                {
+                    f"faqs-{index}-id": faq.get("id", ""),
+                    f"faqs-{index}-title": faq["title"],
+                    f"faqs-{index}-content": faq["content"],
+                    f"faqs-{index}-ORDER": str(index + 1),
+                }
+            )
+            if faq.get("published", False):
+                data[f"faqs-{index}-published"] = "on"
+        data.update(overrides)
+        return data
 
     def test_defaults_preserve_existing_landing_page(self):
         response = self.client.get("/")
         self.assertContains(response, "You shoot.")
         self.assertContains(response, "Made by people.")
         self.assertContains(response, "Does AI edit my video?")
+        self.assertContains(response, "Contact Us")
+        self.assertContains(response, "open Support in your workspace")
         self.assertNotContains(response, "landing-hero-video")
 
     def test_only_admin_can_open_landing_controls(self):
@@ -31,10 +59,12 @@ class LandingPageTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Every visible landing-page label")
         self.assertContains(response, "Hero heading line 1")
+        self.assertContains(response, "Contact Us")
+        self.assertContains(response, "Create, edit, reorder, publish, or remove")
 
     def test_admin_copy_changes_render_escaped_without_changing_links(self):
         self.client.force_login(self.admin)
-        data = {**LANDING_DEFAULTS, "hero_line_1": "A safer <script>alert(1)</script> edit."}
+        data = self.landing_form_data(hero_line_1="A safer <script>alert(1)</script> edit.")
         response = self.client.post("/admin/landing-page/", data)
         self.assertRedirects(response, "/admin/landing-page/")
         page = self.client.get("/")
@@ -49,9 +79,7 @@ class LandingPageTests(TestCase):
         storage_client.return_value = storage
         upload = SimpleUploadedFile("showreel.mp4", b"\x00\x00\x00\x18ftypisom0000", content_type="video/mp4")
         self.client.force_login(self.admin)
-        response = self.client.post(
-            "/admin/landing-page/", {**LANDING_DEFAULTS, "hero_video": upload}
-        )
+        response = self.client.post("/admin/landing-page/", self.landing_form_data(hero_video=upload))
         self.assertRedirects(response, "/admin/landing-page/")
         config = LandingPageSettings.objects.get(pk=1)
         self.assertTrue(config.hero_video_object_key.startswith("landing/hero/"))
@@ -64,9 +92,7 @@ class LandingPageTests(TestCase):
     def test_non_mp4_upload_is_rejected(self):
         self.client.force_login(self.admin)
         upload = SimpleUploadedFile("wrong.mp4", b"not-a-video", content_type="video/mp4")
-        response = self.client.post(
-            "/admin/landing-page/", {**LANDING_DEFAULTS, "hero_video": upload}
-        )
+        response = self.client.post("/admin/landing-page/", self.landing_form_data(hero_video=upload))
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "not a valid MP4")
         self.assertFalse(LandingPageSettings.objects.exists())
@@ -86,7 +112,8 @@ class LandingPageTests(TestCase):
         )
         self.client.force_login(self.admin)
         response = self.client.post(
-            "/admin/landing-page/", {**LANDING_DEFAULTS, "hero_line_1": "Saved heading", "remove_hero_video": "on"}
+            "/admin/landing-page/",
+            self.landing_form_data(hero_line_1="Saved heading", remove_hero_video="on"),
         )
         self.assertRedirects(response, "/admin/landing-page/")
         config = LandingPageSettings.objects.get(pk=1)
@@ -109,3 +136,45 @@ class LandingPageTests(TestCase):
 
     def test_video_route_is_not_present_without_published_video(self):
         self.assertEqual(self.client.get("/landing/hero-video/").status_code, 404)
+
+    def test_legacy_saved_faq_copy_is_preserved_and_contact_is_added(self):
+        LandingPageSettings.objects.create(
+            content={"faq_1_question": "Legacy question", "faq_1_answer": "Legacy answer"}
+        )
+        page = self.client.get("/")
+        self.assertContains(page, "Legacy question")
+        self.assertContains(page, "Legacy answer")
+        self.assertContains(page, "Contact Us")
+
+    def test_admin_can_create_edit_delete_reorder_and_unpublish_faqs(self):
+        faqs = [
+            {
+                "id": "contact-us",
+                "title": "Talk to BRIO",
+                "content": "Email hello@example.test",
+                "published": True,
+            },
+            {"id": "hidden", "title": "Hidden question", "content": "Hidden answer", "published": False},
+            {"id": "new", "title": "New question", "content": "New answer", "published": True},
+        ]
+        self.client.force_login(self.admin)
+        response = self.client.post("/admin/landing-page/", self.landing_form_data(faqs))
+        self.assertRedirects(response, "/admin/landing-page/")
+
+        config = LandingPageSettings.objects.get(pk=1)
+        self.assertEqual(
+            [item["title"] for item in config.content["faqs"]],
+            ["Talk to BRIO", "Hidden question", "New question"],
+        )
+        page = self.client.get("/")
+        self.assertContains(page, "Talk to BRIO")
+        self.assertContains(page, "Email hello@example.test")
+        self.assertContains(page, "New question")
+        self.assertNotContains(page, "Hidden question")
+        self.assertNotContains(page, "Does AI edit my video?")
+
+        reordered = [faqs[2], faqs[0]]
+        response = self.client.post("/admin/landing-page/", self.landing_form_data(reordered))
+        self.assertRedirects(response, "/admin/landing-page/")
+        config.refresh_from_db()
+        self.assertEqual([item["id"] for item in config.content["faqs"]], ["new", "contact-us"])

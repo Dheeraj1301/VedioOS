@@ -325,3 +325,13 @@ Owner / source of explicit decision: Hamsa requested three administrator-configu
 Decision: store revision plans in three fixed slots separate from editing `plans`. Administrators can set each title, direct-currency amount, description and publication state under Plans / Pricing. Clients see only published slots and can select one card at a time or click the selected card again to clear the comparison. Selection is browser UI state only because this request does not define a revision purchase, project association, commercial snapshot, checkout or fulfillment workflow. No revision plan is seeded or published without owner-approved commercial values.
 
 Verification required: three admin slots, major-to-minor currency conversion, published-only client visibility, client/admin role denial, exclusive selection, click-again deselection, mobile layout, unchanged editing-plan quotation and payment tests, and private-schema/RLS protection.
+
+## 2026-10-23 — Administrator-managed landing-page FAQs
+
+Status: approved and implemented
+
+Owner / source of explicit decision: Hamsa requested a public Contact Us accordion and complete FAQ management in the existing Landing Page editor.
+
+Decision: landing FAQs are an ordered list inside the existing singleton landing-page JSON configuration. Administrators can create, edit, delete, reorder, publish and unpublish entries; the public page renders only published entries using its existing native accordion pattern. Existing installations with the former four fixed question/answer keys are upgraded in memory and retain their edited copy, with a published Contact Us entry appended. The default Contact Us answer directs existing clients to the protected Support workspace and new visitors to account creation; administrators can replace it with approved email, form or phone details. FAQ content remains escaped plain text rather than administrator-authored HTML.
+
+No schema migration is required because this extends the established JSON configuration contract. Verification required: default and legacy rendering, administrator-only access, persisted ordering and edits, delete/unpublish filtering, escaped output and unchanged non-FAQ landing content.

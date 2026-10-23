@@ -28,7 +28,7 @@ from .email_verification import (
     send_verification_email,
 )
 from .forms import LoginForm, PasswordResetSetForm, ProjectForm, RegistrationForm
-from .landing_content import landing_content
+from .landing_content import landing_content, landing_faqs
 from .models import (
     AuthAttempt,
     Client,
@@ -79,11 +79,17 @@ def auth_rate_limited(request):
 
 def landing(request):
     config = LandingPageSettings.objects.filter(pk=1).first()
-    return render(request, "landing.html", {
-        "plans": Plan.objects.filter(active=True),
-        "landing_content": landing_content(config.content if config else None),
-        "landing_has_video": bool(config and config.hero_video_object_key),
-    })
+    saved_content = config.content if config else None
+    return render(
+        request,
+        "landing.html",
+        {
+            "plans": Plan.objects.filter(active=True),
+            "landing_content": landing_content(saved_content),
+            "landing_faqs": [faq for faq in landing_faqs(saved_content) if faq.get("published")],
+            "landing_has_video": bool(config and config.hero_video_object_key),
+        },
+    )
 
 
 def register(request):
