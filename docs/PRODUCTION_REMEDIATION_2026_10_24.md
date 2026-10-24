@@ -19,16 +19,18 @@ the audit rule, not damaged financial records.
 
 ## Gate 2 — Audit-history integrity
 
-- [ ] Enumerate the eight gaps by safe aggregate category.
-- [ ] Separate reconstructable missing events from legacy history that cannot be attributed honestly.
-- [ ] Add or correct prospective event creation and reconciliation rules.
-- [ ] Prepare a reviewed backfill plan for any reconstructable historical event.
-- [ ] Capture a verified private snapshot before any approved historical write.
-- [ ] Rerun audit-history reconciliation and focused lifecycle tests.
+- [x] Enumerate the eight gaps by safe aggregate category.
+- [x] Separate ticket-opening/system events from genuinely missing history.
+- [x] Correct reconciliation for atomic ticket openings and approved system actions.
+- [x] Verify that later support replies and unknown unattributed actions still fail.
+- [x] Confirm that no historical backfill or snapshot is required because no audit rows are missing.
+- [x] Rerun audit-history reconciliation: 230 events, zero critical findings.
 
-Historical audit events will not be invented. Any data backfill requires an
-attributable source and the owner-approved data-repair plan required by
-`AGENTS.md`.
+No audit rows were changed. Three opening messages were already covered by their
+atomic `support.request_opened` events; five actorless rows were approved system
+actions for Supabase identity deletion or catalog publication reconciliation.
+Three imported clients without a historical registration event remain honest
+legacy warnings and are not backfilled.
 
 ## Gate 3 — Shared media storage
 

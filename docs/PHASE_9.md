@@ -98,6 +98,16 @@ The command reports aggregate category counts only. It never prints event detail
 
 On 2026-09-26 the connected reconciliation passed all critical checks across 17 audit events. Every current project and ready file has its required events, and no unsafe detail payload was found. Two imported clients and one imported admin without matching onboarding events remain explicit legacy warnings.
 
+On 2026-10-24, eight apparent connected gaps were classified without changing
+history. Three first support messages are created atomically with their tickets
+and are covered by the attributable `support.request_opened` event; later replies
+still require `support.message_posted`. Two Supabase identity-deletion events and
+three catalog-publication reconciliation events are deliberately actorless system
+actions. Focused tests preserve failure behavior for later unaudited replies and
+unknown actorless actions. Connected reconciliation now passes across 230 events
+with zero critical findings; three imported clients without reconstructable
+registration events remain explicit legacy warnings.
+
 ## Notification-outbox reconciliation
 
 `reconcile_notification_outbox` validates the durable external-delivery state machine without sending email. Every in-app notice must have exactly one delivery row. Held, pending, processing, failed, sent and cancelled rows must have consistent attempt, retry, lease, sent and provider metadata; retryable rows cannot remain at the attempt limit. Queued recipients must still be active, have an address and retain current project access. Error codes and provider references cannot contain URLs or signed-request material.

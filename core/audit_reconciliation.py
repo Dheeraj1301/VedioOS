@@ -10,13 +10,18 @@ from operations.models import (
     EditorAssignment,
     ProjectMessage,
     RedemptionRequest,
-    SupportMessage,
     SupportRequest,
 )
 
 from .models import Client, DeliveryAcceptance, File, Payment, Project, ProjectVersion, RevisionRequest
 
-SYSTEM_ACTIONS = {"deadline.overdue_alerted", "payment.confirmed", "payment.failed"}
+SYSTEM_ACTIONS = {
+    "catalog.plan_publication_reconciled",
+    "deadline.overdue_alerted",
+    "identity.supabase_deleted",
+    "payment.confirmed",
+    "payment.failed",
+}
 FORBIDDEN_DETAIL_KEYS = {
     "body",
     "database_url",
@@ -70,6 +75,37 @@ def _unsafe_detail_rows():
     return unsafe, malformed
 
 
+def _missing_support_message_events():
+    """Count messages without their own event or the ticket-opening event.
+
+    A client's first message and its SupportRequest are created in one
+    transaction and represented by ``support.request_opened``. Later replies
+    require their own ``support.message_posted`` event.
+    """
+    posted = set(
+        AuditLog.objects.filter(action="support.message_posted").values_list(
+            "target_id", flat=True
+        )
+    )
+    opened = set(
+        AuditLog.objects.filter(action="support.request_opened").values_list(
+            "target_id", flat=True
+        )
+    )
+    missing = 0
+    for support_request in SupportRequest.objects.prefetch_related("messages").iterator(
+        chunk_size=100
+    ):
+        messages = list(support_request.messages.order_by("created_at", "id"))
+        for index, message in enumerate(messages):
+            if str(message.pk) in posted:
+                continue
+            if index == 0 and str(support_request.pk) in opened:
+                continue
+            missing += 1
+    return missing
+
+
 def audit_reconciliation_report():
     critical = {
         "projects_missing_creation_event": _missing_events(
@@ -105,9 +141,7 @@ def audit_reconciliation_report():
         "support_requests_missing_event": _missing_events(
             SupportRequest.objects.all(), {"support.request_opened"}
         ),
-        "support_messages_missing_event": _missing_events(
-            SupportMessage.objects.all(), {"support.message_posted"}
-        ),
+        "support_messages_missing_event": _missing_support_message_events(),
         "redemptions_missing_request_event": _missing_events(
             RedemptionRequest.objects.all(), {"redemption.requested"}
         ),
