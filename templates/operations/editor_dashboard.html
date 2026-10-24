@@ -1,4 +1,5 @@
-{% extends 'workspace.html' %}
+{% extends 'workspace.html' %}{% load static %}
+{% block page_scripts %}<script defer src="{% static 'availability.js' %}?v=20261024-1"></script>{% endblock %}
 {% block workspace_content %}
 <div class="page-heading">
   <div>

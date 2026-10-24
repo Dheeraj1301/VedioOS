@@ -1,4 +1,5 @@
-{% extends 'workspace.html' %}{% load money %}
+{% extends 'workspace.html' %}{% load static money %}
+{% block page_scripts %}<script defer src="{% static 'vendor/sha256.umd.min.js' %}"></script><script defer src="{% static 'hash-original.js' %}"></script>{% endblock %}
 {% block workspace_content %}
 <div class="page-heading"><div><p class="eyebrow">Plan an edit / 01</p><h1>{% if project %}Edit your creative brief.{% else %}Tell us about your edit.{% endif %}</h1><p class="muted">Choose a configured plan or shape a custom brief, then add your private files.</p></div>{% if project %}<a class="button" href="{% url 'new_order' %}?new=1">Create New <span>+</span></a>{% endif %}</div>
 <div class="notice" role="note"><strong>Before you upload:</strong> Share only footage, music, fonts, and references you have permission to use. Do not include passwords or unrelated personal documents.</div>

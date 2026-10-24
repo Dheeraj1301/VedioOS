@@ -32,7 +32,7 @@
     }
   };
 
-  window.setInterval(refresh, 5000);
+  window.setInterval(refresh, 30000);
   document.addEventListener('visibilitychange', refresh);
   window.addEventListener('focus', refresh);
   refresh();

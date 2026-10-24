@@ -15,7 +15,7 @@ try {
 
   await page.goto(`${fixture.base}/client/new-order/?new=1`);
   await page.locator('input[name="order_choice"][value="custom"]').check();
-  await page.getByLabel('Project name').fill('Recovery browser brief');
+  await page.locator('#id_title').fill('Recovery browser brief');
   await page.getByLabel('Describe the edit').fill('Keep this description after validation.');
   await page.getByLabel('Add wording or on-screen text').check();
   await page.getByLabel('Font selection').selectOption('font_inspiration');
@@ -46,7 +46,7 @@ try {
   await page.locator('#id_reel_duration[aria-invalid="true"]').waitFor();
   await page.getByText('This field is required.', {exact: true}).waitFor();
   assert.equal(await page.locator('#id_reel_duration').evaluate(field => field === document.activeElement), true);
-  assert.equal(await page.getByLabel('Project name').inputValue(), 'Recovery browser brief');
+  assert.equal(await page.locator('#id_title').inputValue(), 'Recovery browser brief');
   assert.equal(await page.getByLabel('Add wording or on-screen text').isChecked(), true);
   assert.equal(await page.getByLabel('Font selection').inputValue(), 'font_inspiration');
   assert.equal(await page.locator('[data-wording-direction]').isVisible(), true);
