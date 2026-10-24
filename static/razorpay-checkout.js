@@ -24,7 +24,7 @@ if (razorpayForm) {
         name: razorpayForm.dataset.clientName,
         email: razorpayForm.dataset.clientEmail,
       },
-      theme: {color: '#173f35'},
+      theme: {color: '#a44724'},
       modal: {ondismiss: () => report('Checkout closed. No payment was recorded.')},
       handler: async response => {
         button.disabled = true;

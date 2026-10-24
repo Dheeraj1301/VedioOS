@@ -4,6 +4,10 @@ Do not substitute invented production values for these decisions. Development fi
 
 Use the [owner decision checklist](OWNER_DECISION_CHECKLIST.md) to collect exact activation values or explicitly exclude a capability from the first release. Record approved answers in this file; never record credentials here.
 
+## UI redesign version 1 palette — 2026-10-24
+
+Owner direction: create an isolated redesign branch that preserves the approved layout, control inventory, destinations, text and behavior while replacing the dark-green palette with rusty orange and the pale-green palette with beige. White, black/ink, error red and warning colors remain unchanged. The implemented design tokens use rusty orange `#A44724` with `#85391F` for hover states and warm beige `#E8D7BD` with lighter beige surfaces. This is a presentation-only change on `codex/ui-redesign-version-1`; it does not change production configuration, business policy, persistence or authorization.
+
 ## D18 — Administrator-managed landing page (2026-10-19)
 
 Decision: preserve the approved public landing-page layout and link destinations while allowing administrators to edit every landing-page label, number, heading, paragraph, FAQ question and answer from a dedicated **Landing page** workspace screen. Dynamic plan names, prices, revision counts and features remain governed by the existing pricing catalog rather than duplicated in landing settings. The hero frame may be replaced with one validated MP4 (maximum 100 MB); it is stored in the existing private, versioned object store and rendered through a short-lived signed playback address with muted inline autoplay and looping. Removing or replacing the video returns the frame to its existing artwork and does not affect project media.
