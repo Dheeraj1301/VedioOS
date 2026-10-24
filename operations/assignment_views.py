@@ -141,6 +141,8 @@ def editor_availability_override(request, editor_id):
             messages.error(request, " ".join(exc.messages))
     else:
         messages.error(request, "Choose a status and provide a reason.")
+    if request.POST.get("return_to") == "editor_list":
+        return redirect("/admin/editors/")
     return redirect("editor_detail", editor_id=editor.pk)
 
 

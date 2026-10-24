@@ -444,6 +444,8 @@ Owner / source of explicit decision: Hamsa requested that only an explicit Admin
 
 Decision: workload continues to derive Available versus Unavailable (Busy) from open assignments. An Editor may submit or update one pending Not Available request only with a reason; this creates a persistent, deep-linked Admin notification but does not change assignment eligibility. The Admin may apply Not Available or return the Editor to automatic workload-derived status, with a required decision reason and audit event. The override takes precedence in display and excludes the Editor from manual and round-robin assignment. Existing assignments are retained rather than reassigned implicitly.
 
+Update, 2026-10-24: the existing audited override is exposed directly on each Admin Editors roster row as a binary Available / Not Available control. Available clears the override and displays the effective workload-derived state, so an editor with active work remains Busy and returns to Available automatically after all active projects finish. The control adds no availability state and does not alter allocation, project, or editor-dashboard workflows.
+
 ## 2026-10-23 — Unpaid brief-file removal deletes private storage
 
 Status: approved and implemented

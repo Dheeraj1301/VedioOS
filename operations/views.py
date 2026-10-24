@@ -237,7 +237,9 @@ def admin_page(request, page):
         editor_sort = request.GET.get("sort", "newest")
         if editor_sort not in EDITOR_SORTS:
             editor_sort = "newest"
-        editors = editor_roster(editor_search, editor_sort)
+        editors = list(editor_roster(editor_search, editor_sort))
+        for editor in editors:
+            editor.availability = availability_state(editor)
         return render(
             request,
             "operations/editors.html",
