@@ -34,8 +34,9 @@ legacy warnings and are not backfilled.
 
 ## Gate 3 — Shared media storage
 
-- [ ] Inventory all 38 inaccessible ready-file records by safe aggregate category.
-- [ ] Determine whether each exact object version exists on another teammate's storage or a backup.
+- [x] Inventory all ready-file records by safe aggregate category.
+- [x] Check the currently configured private store for exact versions and same-key alternatives.
+- [ ] Locate the absent originals on a teammate's storage or an approved media backup.
 - [ ] Select and configure one shared private HTTPS S3-compatible provider.
 - [ ] Copy recoverable object versions byte-for-byte and verify stored size and SHA-256.
 - [ ] Preserve unrecoverable metadata as evidence; do not create replacement media.
@@ -45,6 +46,12 @@ Manual configuration is required: the owner must privately supply the chosen
 shared storage endpoint, region, bucket and restricted server credentials. Git
 and Supabase PostgreSQL contain metadata only; they do not contain the 38 media
 objects.
+
+Current evidence: 40 ready records reference immutable object versions. Two are
+available and pass metadata access; 38 exact keys are absent. The current bucket
+contains 21 versions, including 19 versions not referenced by the shared
+database. None of the 38 missing records has a same-key alternative version, so
+the missing bytes cannot be reconstructed or safely relinked from this store.
 
 ## Gate 4 — Production readiness
 
