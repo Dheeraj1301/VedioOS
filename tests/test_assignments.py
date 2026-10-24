@@ -17,7 +17,7 @@ from operations.assignments import (
     process_queue,
     save_policy,
 )
-from operations.availability import availability_state
+from operations.availability import availability_state, set_availability_override
 from operations.models import (
     AssignmentPolicy,
     AssignmentQueue,
@@ -121,6 +121,22 @@ class AssignmentTests(TestCase):
         queue.refresh_from_db()
         self.assertEqual(queue.status, "assigned")
         self.assertEqual(queue.attempts, 2)
+
+    def test_admin_unavailable_override_is_skipped_without_extra_rotation(self):
+        unavailable = self.editors[0]
+        set_availability_override(
+            self.admin,
+            unavailable.id,
+            "not_available",
+            "Synthetic approved leave",
+        )
+
+        assignment = assign_next(self.queue().id)
+
+        self.assertEqual(assignment.editor_id, self.editors[1].id)
+        state = RoundRobinState.objects.get(proficiency_id="beginner")
+        self.assertEqual(state.last_editor_id, self.editors[1].id)
+        self.assertEqual(state.sequence, 1)
 
     def test_no_capacity_and_inactive_approval_are_excluded(self):
         for editor in self.editors:
