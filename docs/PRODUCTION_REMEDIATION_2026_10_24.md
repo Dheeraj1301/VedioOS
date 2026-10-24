@@ -36,6 +36,8 @@ legacy warnings and are not backfilled.
 
 - [x] Inventory all ready-file records by safe aggregate category.
 - [x] Check the currently configured private store for exact versions and same-key alternatives.
+- [x] Search common local folders and OneDrive Documents for byte-identical originals; none were found.
+- [x] Add a dry-run-first, checksum-verified recovery command for files later supplied from a teammate or backup.
 - [ ] Locate the absent originals on a teammate's storage or an approved media backup.
 - [ ] Select and configure one shared private HTTPS S3-compatible provider.
 - [ ] Copy recoverable object versions byte-for-byte and verify stored size and SHA-256.

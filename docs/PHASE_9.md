@@ -42,6 +42,17 @@ Cleanup runs after success and failure and deletes every version and delete mark
 
 `reconcile_private_storage` performs the complementary read-only consistency check. For every database file marked ready, it requests the exact persisted object version and compares stored byte size and SHA-256 checksum with database metadata. Errors are aggregated by category; client filenames, object keys, credentials and signed URLs are omitted. On 2026-09-24 both ready Supabase file records reconciled with their private objects.
 
+The 2026-10-24 connected inventory contains 40 ready file records: two exact
+versions are available and 38 object keys are absent from the configured local
+store. No same-key alternative version exists. A filename-first scan of more
+than 669,000 entries across common local folders and OneDrive Documents found no
+byte-identical recovery candidate. These active-client records were not deleted
+or relabeled. `restore_missing_storage_objects` now provides an explicit dry run
+and a separately confirmed apply path for originals later recovered from a
+teammate or backup; it requires exact saved size/SHA-256, verifies the uploaded
+immutable version and records the metadata repair without printing private
+identifiers.
+
 The reconciliation is database-to-storage only. It does not list or delete unreferenced bucket objects because retention and orphan-cleanup policy remain part of D02.
 
 `inventory_private_storage` closes the read-only inventory gap by paginating every object version and delete marker in the configured private bucket and comparing exact key/version pairs with database file records. It fails for ready records without immutable versions, referenced versions missing from storage, leftover synthetic preflight objects or invalid provider pagination. It reports unreferenced versions and delete markers as aggregate warnings because D02 has not authorized retention or deletion behavior. It never prints filenames, object keys, credentials or signed URLs and never modifies storage.

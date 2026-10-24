@@ -19,6 +19,7 @@ SYSTEM_ACTIONS = {
     "catalog.plan_publication_reconciled",
     "deadline.overdue_alerted",
     "identity.supabase_deleted",
+    "file.storage_recovered",
     "payment.confirmed",
     "payment.failed",
 }

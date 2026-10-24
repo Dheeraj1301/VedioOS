@@ -1,8 +1,8 @@
 # Production configuration handoff
 
 This is a provider-neutral handoff. It does not authorize deployment and does
-not contain credentials. Populate `.env.production.example` only in the chosen
-deployment platform's private environment from `docs/production.env.example`.
+not contain credentials. Populate the chosen deployment platform's private
+environment from `docs/production.env.example`.
 
 ## Required owner inputs
 
@@ -46,6 +46,43 @@ deployment platform's private environment from `docs/production.env.example`.
    deployed HTTPS address.
 7. Rehearse database and media restore to disposable targets before accepting
    production data.
+
+## Recovering missing media safely
+
+When an original file is recovered from a teammate or backup, create an ignored
+`.runtime/storage-recovery.json` manifest. It contains private local paths and
+must never be committed:
+
+```json
+{
+  "files": [
+    {
+      "file_id": "database-file-uuid",
+      "path": "C:/private-recovery/original-file.mp4"
+    }
+  ]
+}
+```
+
+Validate every byte without changing storage or the database:
+
+```powershell
+.venv/Scripts/python.exe manage.py restore_missing_storage_objects .runtime/storage-recovery.json
+```
+
+After reviewing the dry run, taking a verified private database snapshot and
+receiving the owner approval required for historical metadata repair, apply it:
+
+```powershell
+.venv/Scripts/python.exe manage.py restore_missing_storage_objects .runtime/storage-recovery.json --apply --confirm-restore
+```
+
+The command accepts only existing ready file records whose local byte size and
+SHA-256 exactly match the saved metadata. It refuses accessible targets, uploads
+to the existing private object key, verifies the new immutable version and
+checksum, updates only the version reference under a database lock, and creates
+an actorless `file.storage_recovered` audit event. Output omits filenames, paths,
+object keys and version identifiers.
 
 Do not use `scripts/start_shared_preview.py` as a production process manager.
 It is a development guard and may start loopback storage. The production host
