@@ -49,14 +49,19 @@ def _quote_snapshot_findings():
 
 def _accepted_quote_findings():
     missing_or_mismatched = 0
-    for quote in OrderQuote.objects.filter(accepted_at__isnull=False).select_related("order").iterator(
-        chunk_size=100
-    ):
-        order = quote.order
+    for order in Order.objects.exclude(terms_snapshot={}).iterator(chunk_size=100):
         snapshot = order.terms_snapshot
-        quote_snapshot = quote.snapshot
+        quote_id = snapshot.get("quote_id") if isinstance(snapshot, dict) else None
+        quote = (
+            OrderQuote.objects.filter(pk=quote_id, order=order).first()
+            if quote_id
+            else None
+        )
+        quote_snapshot = quote.snapshot if quote else None
         if (
-            not isinstance(snapshot, dict)
+            quote is None
+            or quote.accepted_at is None
+            or not isinstance(snapshot, dict)
             or not isinstance(quote_snapshot, dict)
             or str(snapshot.get("quote_id", "")) != str(quote.pk)
             or snapshot.get("accepted_at") != quote.accepted_at.isoformat()
@@ -105,7 +110,15 @@ def _missing_paid_calls():
 def commerce_reconciliation_report():
     confirmed_payments = Payment.objects.filter(status="confirmed")
     failed_payments = Payment.objects.filter(status="failed")
-    payment_counts = Order.objects.annotate(payment_count=Count("payments"))
+    # Cancelled and failed attempts are immutable history. Requoting an unpaid
+    # order deliberately keeps them, so only simultaneous live attempts are a
+    # reconciliation failure.
+    payment_counts = Order.objects.annotate(
+        payment_count=Count(
+            "payments",
+            filter=Q(payments__status__in={"pending", "confirmed"}),
+        )
+    )
     critical = {
         "malformed_quote_snapshots": _quote_snapshot_findings(),
         "accepted_quote_order_mismatch": _accepted_quote_findings(),
@@ -114,20 +127,23 @@ def commerce_reconciliation_report():
         .count(),
         "orders_with_multiple_payments": payment_counts.filter(payment_count__gt=1).count(),
         "payment_amount_or_currency_mismatch": Payment.objects.filter(
-            Q(amount_minor__lte=0)
-            | Q(order__total_minor__isnull=True)
-            | Q(order__currency="")
-            | ~Q(amount_minor=F("order__total_minor"))
-            | ~Q(currency=F("order__currency"))
+            Q(status__in={"pending", "confirmed"})
+            & (
+                Q(amount_minor__lte=0)
+                | Q(order__total_minor__isnull=True)
+                | Q(order__currency="")
+                | ~Q(amount_minor=F("order__total_minor"))
+                | ~Q(currency=F("order__currency"))
+            )
         ).count(),
         "confirmed_payment_state_mismatch": confirmed_payments.filter(
             Q(confirmed_at__isnull=True)
             | ~Q(order__payment_status="confirmed")
             | Q(order__project__payment_completed_at__isnull=True)
         ).count(),
-        "failed_payment_state_mismatch": failed_payments.exclude(
-            order__payment_status="failed"
-        ).count(),
+        "failed_payment_state_mismatch": Order.objects.filter(payment_status="failed")
+        .exclude(payments__status="failed")
+        .count(),
         "confirmed_payments_missing_event": confirmed_payments.exclude(
             events__outcome="confirmed"
         ).count(),

@@ -110,9 +110,25 @@ On 2026-09-26 the connected audit passed with zero notices and zero delivery row
 
 `reconcile_commerce` validates the persisted financial workflow without contacting a payment provider. Quote snapshots must contain itemized positive integer amounts, a matching total and currency, a supported quote kind and captured terms. Accepted quotes must match the order's immutable agreement snapshot. Payment records must match their order total and currency, maintain a single payment per order, follow confirmed/failed state transitions and retain a valid provider-event digest. Paid projects must contain each requested consultation stage, and consultation requests must belong to the project client.
 
+Superseded accepted quotes and cancelled/failed payment attempts are retained as
+immutable history when an unpaid client edits a brief. Reconciliation therefore
+compares the order with the accepted quote referenced by its current agreement
+snapshot and enforces amount/currency plus uniqueness only for live pending or
+confirmed payment attempts. It does not compare historical cancelled attempts
+with a later requoted total.
+
 The command reports only aggregate inventory and finding counts. It never prints quote contents, provider references, event identifiers or user/project identifiers, and it does not create, repair or settle records.
 
 On 2026-09-26 the connected audit passed with two pending orders and zero quotes, payments, payment events or consultation requests. It found no critical inconsistencies or operational warnings. Real checkout remains disabled pending D03-D05 commercial policy and provider decisions.
+
+On 2026-10-24, four apparent connected inconsistencies were traced to the
+reconciliation rule treating two superseded accepted test quotes and one
+cancelled Razorpay test attempt as current state. No commerce rows were changed.
+Focused regression coverage now proves preserved historical attempts pass while
+multiple live attempts still fail. Connected reconciliation passes for 19
+orders, 31 quotes, 8 payments and 1 event with zero critical findings; 10
+accepted-but-unpaid orders remain operational warnings rather than manufactured
+payments.
 
 ## Earnings and redemption reconciliation
 

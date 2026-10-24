@@ -106,6 +106,84 @@ class CommerceReconciliationTests(TestCase):
         self.assertEqual(report["critical"]["malformed_quote_snapshots"], 1)
         self.assertEqual(report["critical"]["accepted_quote_order_mismatch"], 1)
 
+    def test_superseded_quote_and_cancelled_payment_remain_valid_history(self):
+        old_quote = self.quote
+        old_payment = self.payment
+        old_payment.status = "cancelled"
+        old_payment.confirmed_at = None
+        old_payment.save(update_fields=["status", "confirmed_at"])
+        PaymentEvent.objects.filter(payment=old_payment).delete()
+
+        snapshot = {
+            **old_quote.snapshot,
+            "items": [{"id": "base", "name": "Base", "amount_minor": 12000}],
+            "total_minor": 12000,
+        }
+        current_quote = OrderQuote.objects.create(
+            order=self.order,
+            snapshot=snapshot,
+            total_minor=12000,
+            currency="INR",
+            accepted_at=timezone.now(),
+        )
+        self.order.total_minor = 12000
+        self.order.terms_snapshot = {
+            **snapshot,
+            "quote_id": str(current_quote.pk),
+            "accepted_at": current_quote.accepted_at.isoformat(),
+        }
+        self.order.save(update_fields=["total_minor", "terms_snapshot"])
+        Payment.objects.create(
+            order=self.order,
+            provider="synthetic",
+            provider_reference="current-reference",
+            amount_minor=12000,
+            currency="INR",
+            status="pending",
+        )
+
+        report = commerce_reconciliation_report()
+
+        self.assertEqual(report["status"], "pass")
+        self.assertEqual(report["critical"]["accepted_quote_order_mismatch"], 0)
+        self.assertEqual(report["critical"]["orders_with_multiple_payments"], 0)
+        self.assertEqual(report["critical"]["payment_amount_or_currency_mismatch"], 0)
+
+    def test_multiple_live_payments_are_reported(self):
+        Payment.objects.create(
+            order=self.order,
+            provider="synthetic",
+            provider_reference="second-live-reference",
+            amount_minor=10000,
+            currency="INR",
+            status="pending",
+        )
+
+        report = commerce_reconciliation_report()
+
+        self.assertEqual(report["critical"]["orders_with_multiple_payments"], 1)
+
+    def test_failed_attempt_before_confirmed_retry_remains_valid_history(self):
+        failed = Payment.objects.create(
+            order=self.order,
+            provider="synthetic",
+            provider_reference="failed-reference",
+            amount_minor=10000,
+            currency="INR",
+            status="failed",
+        )
+        PaymentEvent.objects.create(
+            provider="synthetic",
+            event_id="failed-event",
+            payment=failed,
+            payload_digest=hashlib.sha256(b"failed-synthetic").hexdigest(),
+            outcome="failed",
+        )
+
+        report = commerce_reconciliation_report()
+
+        self.assertEqual(report["critical"]["failed_payment_state_mismatch"], 0)
+
 
 class CommerceReconciliationCommandTests(TestCase):
     def test_command_fails_closed_with_aggregate_output(self):
