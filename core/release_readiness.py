@@ -34,8 +34,13 @@ def current_release_config():
         "database_options": database.get("OPTIONS", {}),
         "storage_endpoint": settings.S3_ENDPOINT_URL,
         "storage_bucket": settings.S3_BUCKET,
+        "storage_access_key_configured": bool(settings.S3_ACCESS_KEY),
+        "storage_secret_key_configured": bool(settings.S3_SECRET_KEY),
         "supabase_auth_url": settings.SUPABASE_AUTH_URL,
         "supabase_auth_key_configured": bool(settings.SUPABASE_AUTH_PUBLISHABLE_KEY),
+        "supabase_secret_key_configured": bool(settings.SUPABASE_SECRET_KEY),
+        "supabase_deletion_sync_enabled": settings.SUPABASE_DELETION_SYNC_ENABLED,
+        "supabase_password_login_enabled": settings.SUPABASE_AUTH_PASSWORD_LOGIN_ENABLED,
         "email_backend": settings.EMAIL_BACKEND,
         "default_from_email": settings.DEFAULT_FROM_EMAIL,
         "payment_mode": settings.PAYMENT_MODE,
@@ -79,7 +84,10 @@ def release_findings(config, policies):
     hosts = {host.strip().lower() for host in config["allowed_hosts"] if host.strip()}
     if not hosts or hosts <= LOCAL_HOSTS or "*" in hosts:
         block("allowed_hosts", "ALLOWED_HOSTS must contain explicit production hostnames.")
-    if not config["csrf_trusted_origins"]:
+    if not config["csrf_trusted_origins"] or any(
+        not str(origin).lower().startswith("https://")
+        for origin in config["csrf_trusted_origins"]
+    ):
         block("csrf_origins", "CSRF_TRUSTED_ORIGINS must contain the HTTPS production origin.")
     if not config["session_cookie_secure"]:
         block("session_cookie", "SESSION_COOKIE_SECURE must be enabled.")
@@ -98,10 +106,23 @@ def release_findings(config, policies):
         block("storage_tls", "Private object storage must use HTTPS.")
     if not config["storage_bucket"]:
         block("storage_bucket", "A private production storage bucket is required.")
+    if not config["storage_access_key_configured"] or not config[
+        "storage_secret_key_configured"
+    ]:
+        block("storage_credentials", "Private object storage server credentials are required.")
     if not str(config["supabase_auth_url"]).lower().startswith("https://") or not config[
         "supabase_auth_key_configured"
     ]:
         block("supabase_auth", "Configure the selected Supabase Auth project and publishable key.")
+    if not config["supabase_password_login_enabled"]:
+        block("supabase_password_login", "Supabase password login must be enabled for shared clients.")
+    if not config["supabase_secret_key_configured"] or not config[
+        "supabase_deletion_sync_enabled"
+    ]:
+        block(
+            "supabase_deletion_sync",
+            "Configure the server-only Supabase secret and enable identity-deletion synchronization.",
+        )
     if config["payment_mode"] in {"sandbox", "razorpay_test"}:
         block("payment_sandbox", "A test payment gateway cannot run in production.")
     if config["payout_mode"] == "sandbox":

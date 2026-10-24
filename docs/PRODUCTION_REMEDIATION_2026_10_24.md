@@ -55,6 +55,9 @@ the missing bytes cannot be reconstructed or safely relinked from this store.
 
 ## Gate 4 — Production readiness
 
+- [x] Create a credential-free production environment template and deployment handoff.
+- [x] Separate code-safe limited launch from commerce launch requirements.
+- [x] Fail closed when storage credentials, Supabase password login or server-side Auth deletion synchronization are missing.
 - [ ] Configure production host names and trusted HTTPS origins.
 - [ ] disable debug mode and rotate a production Django secret.
 - [ ] Enable secure session/CSRF cookies, HTTPS redirect and approved HSTS policy.
@@ -65,6 +68,11 @@ the missing bytes cannot be reconstructed or safely relinked from this store.
 - [ ] Complete representative browser, accessibility, large-file and end-to-end lifecycle checks.
 - [ ] Complete provider-backed database/media backup and restore rehearsal against approved recovery targets.
 - [ ] Run the consolidated release, database-security, dependency and deployment-health gates.
+
+The hardened audit currently reports 11 blockers in the shared development
+environment. The original ten remain, plus a previously undetected missing
+server-only Supabase deletion-sync configuration. This is intentional fail-closed
+evidence; the local preview has not been relabeled as production.
 
 Production secrets must be supplied through the private deployment environment,
 never chat or Git. Production deployment remains a separate owner-authorized

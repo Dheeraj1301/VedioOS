@@ -194,6 +194,16 @@ This remains a pre-migration row-level rehearsal. It does not restore PostgreSQL
 
 The connected development configuration reports 10 expected blockers: debug mode; local-only hosts; no trusted production CSRF origin; non-secure development cookies; no HTTPS redirect/HSTS; loopback HTTP storage; console email; and a localhost sender. It reports five disabled-workflow warnings for real payments, payouts, external notification email, automatic assignment and prospective earnings.
 
+The 2026-10-24 hardening pass also requires configured private-storage server
+credentials, Supabase password login, and the server-only Supabase Auth secret
+with identity-deletion synchronization. It rejects non-HTTPS CSRF origins rather
+than accepting any nonempty value. The connected development environment now
+reports 11 blockers: the original runtime/test-commerce findings plus the
+previously undetected missing deletion-sync secret. A credential-free
+`.env.production.example` and [production configuration handoff](PRODUCTION_CONFIGURATION.md)
+record the exact inputs without committing real credentials. No production
+setting was applied to the shared preview.
+
 These results are evidence that the checker fails closed. They are not a request to replace development settings with invented production values.
 
 Admin → Feature controls now displays D02–D16 as an explicit launch-decision queue and links to the repository's owner checklist. The checklist asks for exact activation values or an explicit first-release exclusion; it stores no credentials and changes no runtime setting by itself.
