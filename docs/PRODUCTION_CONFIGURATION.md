@@ -2,7 +2,7 @@
 
 This is a provider-neutral handoff. It does not authorize deployment and does
 not contain credentials. Populate `.env.production.example` only in the chosen
-deployment platform's private environment.
+deployment platform's private environment from `docs/production.env.example`.
 
 ## Required owner inputs
 
@@ -33,7 +33,7 @@ deployment platform's private environment.
 
 ## Deployment procedure
 
-1. Create the private environment from `.env.production.example`; replace every
+1. Create the private environment from `docs/production.env.example`; replace every
    placeholder and generate a new high-entropy Django secret.
 2. Install the exact locked dependencies and collect static files.
 3. Run migrations with the migration role; do not use browser Supabase keys.

@@ -200,7 +200,7 @@ with identity-deletion synchronization. It rejects non-HTTPS CSRF origins rather
 than accepting any nonempty value. The connected development environment now
 reports 11 blockers: the original runtime/test-commerce findings plus the
 previously undetected missing deletion-sync secret. A credential-free
-`.env.production.example` and [production configuration handoff](PRODUCTION_CONFIGURATION.md)
+`docs/production.env.example` and [production configuration handoff](PRODUCTION_CONFIGURATION.md)
 record the exact inputs without committing real credentials. No production
 setting was applied to the shared preview.
 
