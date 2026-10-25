@@ -412,7 +412,7 @@ class AssignmentTests(TestCase):
         state = self.client.get("/api/editor/availability/").json()
         self.assertEqual(state["status"], "busy")
         self.assertEqual(state["active_count"], 2)
-        self.assertEqual(state["summary"], "Unavailable (Busy) — 2 active projects")
+        self.assertEqual(state["summary"], "Busy — working on 2 active projects")
 
         first.status = "completed"
         first.save(update_fields=["status", "updated_at"])
@@ -434,8 +434,8 @@ class AssignmentTests(TestCase):
         self.client.force_login(editor.user)
         self.assertContains(self.client.get("/editor/"), "Editor availability control")
         page = self.client.get("/editor/availability/")
-        self.assertContains(page, "Available</button>")
-        self.assertContains(page, "Every new Not Available period requires Admin approval.")
+        self.assertContains(page, "Return to Available</button>")
+        self.assertNotContains(page, 'class="availability-toggle"')
 
         restored = self.client.post("/editor/availability/", {"action": "available"})
         self.assertRedirects(restored, "/editor/availability/")

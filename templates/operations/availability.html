@@ -24,14 +24,16 @@
 </section>
 <section class="panel availability-panel">
   <h2>Availability control</h2>
-  <div class="availability-toggle" aria-label="Editor availability control">
+  {% if availability.status == 'not_available' or availability.pending_request %}
     <form method="post">
       {% csrf_token %}
-      <button type="submit" name="action" value="available" class="{% if availability.status != 'not_available' and not availability.pending_request %}active{% endif %}" aria-pressed="{% if availability.status != 'not_available' and not availability.pending_request %}true{% else %}false{% endif %}"{% if availability.status != 'not_available' and not availability.pending_request %} disabled{% endif %}>Available</button>
+      <button class="button" type="submit" name="action" value="available">Return to Available</button>
     </form>
-    <a href="#not-available-request" class="{% if availability.status == 'not_available' or availability.pending_request %}active{% endif %}" aria-pressed="{% if availability.status == 'not_available' or availability.pending_request %}true{% else %}false{% endif %}">Not Available</a>
-  </div>
-  <p class="muted">Available removes an approved override. Active projects may still show Busy. Every new Not Available period requires Admin approval.</p>
+    <p class="muted">This removes an approved Not Available override or withdraws your pending request. If you have an active project, your workload status will correctly remain Busy.</p>
+  {% else %}
+    <a class="button" href="#not-available-request">Request Not Available</a>
+    <p class="muted">Busy means you are working on an active project—not that you are on leave. Every Not Available period requires Admin approval.</p>
+  {% endif %}
 </section>
 <section class="panel availability-panel" id="not-available-request">
   <h2>Request Not Available</h2>

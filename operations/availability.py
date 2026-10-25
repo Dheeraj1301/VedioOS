@@ -35,8 +35,8 @@ def availability_state(editor):
         status, label, icon = "not_available", "Not Available", "🔴"
         summary = "Not Available — set by Admin"
     elif count:
-        status, label, icon = "busy", "Unavailable (Busy)", "🟠"
-        summary = f"Unavailable (Busy) — {count} active project{'s' if count != 1 else ''}"
+        status, label, icon = "busy", "Busy", "🟠"
+        summary = f"Busy — working on {count} active project{'s' if count != 1 else ''}"
     else:
         status, label, icon = "available", "Available", "✅"
         summary = "Available — no active projects"

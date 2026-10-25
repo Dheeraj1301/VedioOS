@@ -7,7 +7,7 @@
   <section class="panel detail-panel">
     <h2>Availability control</h2>
     {% if pending_request %}<div class="notice"><strong>Pending request: Not Available</strong><br>{{ pending_request.reason }}</div>{% endif %}
-    <p class="muted">Only this Admin control changes the system-wide Not Available status. Automatic mode continues to show Busy while active projects exist.</p>
+    <p class="muted">This Admin control immediately applies or removes Not Available. Busy means the editor already has active work; selecting Available clears leave but does not erase or duplicate that project.</p>
     <form method="post" action="{% url 'editor_availability_override' editor.id %}" class="stack-form">
       {% csrf_token %}
       <div class="field"><label for="{{ availability_form.status.id_for_label }}">Status</label>{{ availability_form.status }}</div>

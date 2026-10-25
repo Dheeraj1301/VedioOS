@@ -30,6 +30,7 @@
       <div>
         <h3><a class="text-link" href="{% url 'editor_detail' editor.id %}">{{ editor.user.name }}</a> <span class="badge">{% if editor.approved %}{{ editor.proficiency.get_level_display }}{% else %}Awaiting review{% endif %}</span></h3>
         <p>{{ editor.availability.icon }} {{ editor.availability.summary }}</p>
+        {% if editor.availability.status == 'busy' %}<p>Available control is on; active work keeps this editor Busy for new assignments.</p>{% endif %}
       </div>
       <form class="availability-toggle" action="{% url 'editor_availability_override' editor.id %}" method="post" aria-label="Availability override for {{ editor.user.name }}">
         {% csrf_token %}
