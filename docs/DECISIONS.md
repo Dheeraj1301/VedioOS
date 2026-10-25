@@ -474,6 +474,8 @@ Decision: payment confirmation continues to stop before assignment until an admi
 
 Update, 2026-10-24: the existing audited override is exposed directly on each Admin Editors roster row as a binary Available / Not Available control. Available clears the override and displays the effective workload-derived state, so an editor with active work remains Busy and returns to Available automatically after all active projects finish. The control adds no availability state and does not alter allocation, project, or editor-dashboard workflows.
 
+Update, 2026-10-25: Editors now receive the same binary control on their dashboard and Availability page. Not Available continues to create an Admin approval request and never changes assignment eligibility immediately. Available may be selected by the Editor to remove an approved Not Available override, withdraw any still-pending request and return to workload-derived Available/Busy status. The action is audited, informs active Admins, and retries the existing automatic waiting queue. Admin Available/Not Available controls remain immediate, audited overrides, inform the Editor and also retry the queue when availability is restored. Existing assignments are never removed by an availability toggle.
+
 ## 2026-10-23 — Unpaid brief-file removal deletes private storage
 
 Status: approved and implemented

@@ -98,6 +98,60 @@ def request_not_available(user, reason):
 
 
 @transaction.atomic
+def restore_automatic_availability(user):
+    """Let an editor return from an Admin-applied Not Available override."""
+
+    if not user or not user.is_active or user.role != "editor":
+        raise PermissionDenied
+    editor = Editor.objects.select_for_update().select_related("user").get(user=user)
+    previous = editor.availability_override
+    editor.availability_override = Editor.AvailabilityOverride.AUTOMATIC
+    editor.availability_override_reason = ""
+    editor.availability_override_by = None
+    editor.availability_override_at = None
+    editor.save(
+        update_fields=[
+            "availability_override",
+            "availability_override_reason",
+            "availability_override_by",
+            "availability_override_at",
+            "updated_at",
+        ]
+    )
+    editor.availability_requests.select_for_update().filter(
+        status=EditorAvailabilityRequest.Status.PENDING
+    ).update(
+        status=EditorAvailabilityRequest.Status.DECLINED,
+        decided_by=None,
+        decided_at=timezone.now(),
+        updated_at=timezone.now(),
+    )
+    if previous == Editor.AvailabilityOverride.NOT_AVAILABLE:
+        for admin in User.objects.filter(
+            role="admin", is_active=True, auth_deleted_at__isnull=True
+        ):
+            Notification.objects.create(
+                recipient=admin,
+                reference_type=Notification.ReferenceType.EDITOR,
+                reference_id=editor.pk,
+                event_key=(
+                    f"editor-availability-restored:{editor.pk}:admin:{admin.pk}:"
+                    f"{timezone.now().timestamp()}"
+                ),
+                message=(
+                    f"{editor.user.name} ({editor.login_id}) returned to automatic availability."
+                ),
+            )
+    audit(
+        user,
+        "editor.availability_restored",
+        editor.pk,
+        {"previous": previous or "automatic", "status": "automatic"},
+    )
+    return editor
+
+
+@transaction.atomic
 def set_availability_override(user, editor_id, status, reason):
     _admin_only(user)
     reason = reason.strip()

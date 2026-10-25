@@ -136,6 +136,11 @@ def editor_availability_override(request, editor_id):
                 form.cleaned_data["status"],
                 form.cleaned_data["reason"],
             )
+            if form.cleaned_data["status"] == Editor.AvailabilityOverride.AUTOMATIC:
+                try:
+                    process_queue(request.user)
+                except ValidationError:
+                    pass
             messages.success(request, "Editor availability status updated.")
         except ValidationError as exc:
             messages.error(request, " ".join(exc.messages))

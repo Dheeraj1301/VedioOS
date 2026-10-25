@@ -16,8 +16,8 @@ from core.v1 import attach_v1_status
 
 from .analytics import operational_analytics
 from .assignment_forms import EditorAvailabilityRequestForm
-from .assignments import EDITOR_SORTS, approve_proficiency, editor_roster, open_workload
-from .availability import availability_state, request_not_available
+from .assignments import EDITOR_SORTS, approve_proficiency, editor_roster, open_workload, process_queue
+from .availability import availability_state, request_not_available, restore_automatic_availability
 from .calls import complete_call, schedule_call
 from .clients import CLIENT_STATES, client_page, client_record
 from .features import feature_controls
@@ -114,8 +114,21 @@ def editor_page(request, page):
         )
     if page == "availability":
         form = EditorAvailabilityRequestForm(request.POST or None)
-        if request.method == "POST" and form.is_valid():
+        if request.method == "POST":
             try:
+                if request.POST.get("action") == "available":
+                    restore_automatic_availability(request.user)
+                    try:
+                        process_queue()
+                    except ValidationError:
+                        pass
+                    messages.success(
+                        request,
+                        "Your Not Available override was removed. Workload now determines whether you are Available or Busy.",
+                    )
+                    return redirect("/editor/availability/")
+                if not form.is_valid():
+                    raise ValidationError("Provide a reason for your Not Available request.")
                 request_not_available(request.user, form.cleaned_data["reason"])
                 messages.success(
                     request,

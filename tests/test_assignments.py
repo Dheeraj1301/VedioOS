@@ -423,6 +423,53 @@ class AssignmentTests(TestCase):
         self.assertEqual(final_state["status"], "available")
         self.assertEqual(final_state["active_count"], 0)
 
+    def test_editor_can_return_to_available_and_must_request_future_unavailability(self):
+        editor = self.editors[0]
+        set_availability_override(
+            self.admin,
+            editor.id,
+            "not_available",
+            "Approved leave",
+        )
+        self.client.force_login(editor.user)
+        self.assertContains(self.client.get("/editor/"), "Editor availability control")
+        page = self.client.get("/editor/availability/")
+        self.assertContains(page, "Available</button>")
+        self.assertContains(page, "Every new Not Available period requires Admin approval.")
+
+        restored = self.client.post("/editor/availability/", {"action": "available"})
+        self.assertRedirects(restored, "/editor/availability/")
+        editor.refresh_from_db()
+        self.assertEqual(editor.availability_override, "")
+        self.assertEqual(availability_state(editor)["status"], "available")
+        self.assertTrue(
+            AuditLog.objects.filter(
+                actor=editor.user,
+                action="editor.availability_restored",
+                target_id=str(editor.id),
+            ).exists()
+        )
+        self.assertTrue(
+            Notification.objects.filter(
+                recipient=self.admin,
+                reference_id=editor.id,
+                message__contains="returned to automatic availability",
+            ).exists()
+        )
+
+        requested_again = self.client.post(
+            "/editor/availability/",
+            {"status": "not_available", "reason": "A new leave period"},
+        )
+        self.assertRedirects(requested_again, "/editor/availability/")
+        self.assertTrue(
+            EditorAvailabilityRequest.objects.filter(
+                editor=editor,
+                status=EditorAvailabilityRequest.Status.PENDING,
+                reason="A new leave period",
+            ).exists()
+        )
+
     def test_admin_editor_roster_has_binary_availability_override(self):
         editor = self.editors[0]
         self.client.force_login(self.admin)
