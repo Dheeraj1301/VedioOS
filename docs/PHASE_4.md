@@ -68,6 +68,15 @@ PostgreSQL concurrency verification creates narrowly scoped synthetic records an
 
 On 2026-09-26 the connected reconciliation passed with zero complexity reviews, queue records or assignments and three zero-position proficiency rotations. The shared assignment policy remains disabled, and the command made no allocation or pointer changes.
 
+### 2026-10-25 payment-to-assignment regression
+
+An isolated synthetic regression now exercises two complete activation paths in one transactionally reset test database:
+
+1. A custom order receives a server-owned quote, accepts its terms, starts sandbox checkout, passes the signed payment-event boundary, receives a Beginner complexity review and is assigned to the first eligible editor.
+2. A non-basic fixed order using Plan slot 2 follows the same verified payment and review path and is assigned to the next eligible editor.
+
+The check confirms both orders and projects move through confirmed payment to `editor_assigned`, the two assignments remain current, and the Beginner round-robin state advances to sequence 2 with the second editor as its durable pointer. The focused assignment run passed 22 tests. The complete local suite passed 365 tests with 14 environment-dependent skips. These tests use synthetic identities and the disposable Django test database; they do not create, alter or delete shared Supabase records.
+
 ## Remaining decisions and next milestone
 
 - D07/D09: owner-approved capacities and operational choices must be configured before activating allocation. No answer to the skip/wait question has been recorded; the shared policy remains unset.

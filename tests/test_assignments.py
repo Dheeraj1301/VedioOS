@@ -393,3 +393,44 @@ class AssignmentTests(TestCase):
         final_state = self.client.get("/api/editor/availability/").json()
         self.assertEqual(final_state["status"], "available")
         self.assertEqual(final_state["active_count"], 0)
+
+    def test_admin_editor_roster_has_binary_availability_override(self):
+        editor = self.editors[0]
+        self.client.force_login(self.admin)
+
+        page = self.client.get("/admin/editors/")
+        self.assertContains(page, f'aria-label="Availability override for {editor.user.name}"')
+        self.assertContains(page, '>Available</button>', html=False)
+        self.assertContains(page, '>Not Available</button>', html=False)
+
+        unavailable = self.client.post(
+            f"/admin/editors/{editor.id}/availability/",
+            {
+                "status": "not_available",
+                "reason": "Admin availability toggle from Editors list",
+                "return_to": "editor_list",
+            },
+        )
+        self.assertRedirects(unavailable, "/admin/editors/")
+        editor.refresh_from_db()
+        self.assertEqual(editor.availability_override, "not_available")
+        self.assertEqual(availability_state(editor)["status"], "not_available")
+
+        project = self.queue()
+        EditorAssignment.objects.create(project=project, editor=editor, assigned_by=self.admin)
+        automatic = self.client.post(
+            f"/admin/editors/{editor.id}/availability/",
+            {
+                "status": "",
+                "reason": "Admin availability toggle from Editors list",
+                "return_to": "editor_list",
+            },
+        )
+        self.assertRedirects(automatic, "/admin/editors/")
+        editor.refresh_from_db()
+        self.assertEqual(editor.availability_override, "")
+        self.assertEqual(availability_state(editor)["status"], "busy")
+
+        project.status = "completed"
+        project.save(update_fields=["status", "updated_at"])
+        self.assertEqual(availability_state(editor)["status"], "available")
