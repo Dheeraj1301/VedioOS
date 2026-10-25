@@ -35,10 +35,19 @@ class LoginForm(AuthenticationForm):
     def __init__(self, *args, **kwargs):
         kwargs.setdefault("label_suffix", "")
         super().__init__(*args, **kwargs)
+        # Keep browser password managers from repeatedly replacing credentials
+        # that the user is trying to enter manually.
+        autofill_opt_out = {
+            "autocomplete": "off",
+            "data-lpignore": "true",
+            "data-1p-ignore": "true",
+        }
+        self.fields["username"].widget.attrs.update(autofill_opt_out)
+        self.fields["password"].widget.attrs.update(autofill_opt_out)
 
     username = forms.CharField(
         label="Email or editor ID",
-        widget=forms.TextInput(attrs={"autocomplete": "username"}),
+        widget=forms.TextInput(),
     )
 
     def clean_username(self):

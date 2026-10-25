@@ -456,6 +456,14 @@ Owner / source of explicit decision: Hamsa reported Django's raw CSRF failure pa
 
 Decision: retain Django CSRF validation without exemptions. A failed CSRF check on the Client or Editor sign-in path discards the POST and redirects to a freshly rendered sign-in form with a neutral expiration message. CSRF failures on all other protected forms keep HTTP 403 and render the application error page without exposing Django's debug diagnostics. No credential or submitted form value is replayed.
 
+## 2026-10-25 — Manual credential entry on sign-in forms
+
+Status: approved and implemented
+
+Owner / source of explicit decision: Hamsa reported that saved-password suggestions prevented replacing the credentials on the Editor sign-in page.
+
+Decision: opt the shared Client and Editor sign-in form and its identity/password fields out of browser and common password-manager autofill. The inputs remain ordinary editable controls and authentication behavior is unchanged. Registration and password-reset forms retain their purpose-specific autocomplete behavior.
+
 Update, 2026-10-24: the existing audited override is exposed directly on each Admin Editors roster row as a binary Available / Not Available control. Available clears the override and displays the effective workload-derived state, so an editor with active work remains Busy and returns to Available automatically after all active projects finish. The control adds no availability state and does not alter allocation, project, or editor-dashboard workflows.
 
 ## 2026-10-23 — Unpaid brief-file removal deletes private storage

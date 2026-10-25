@@ -99,6 +99,14 @@ class FoundationTests(TestCase):
         self.assertContains(register, ">Log in</a>", count=2)
         self.assertNotContains(register, ">Start creating <")
 
+    def test_login_fields_allow_manual_credentials_without_saved_password_takeover(self):
+        for path in ["/login/", "/editor/signin/"]:
+            response = Browser().get(path)
+            self.assertEqual(response.status_code, 200)
+            self.assertContains(response, 'autocomplete="off"')
+            self.assertContains(response, 'data-lpignore="true"')
+            self.assertContains(response, 'data-1p-ignore="true"')
+
     def test_client_overview_discards_queued_flash_messages(self):
         browser = Browser()
         with patch("core.views.send_verification_email", side_effect=RuntimeError):
