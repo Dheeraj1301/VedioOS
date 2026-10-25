@@ -476,6 +476,8 @@ Update, 2026-10-24: the existing audited override is exposed directly on each Ad
 
 Update, 2026-10-25: Editors receive one context-specific action rather than an Admin-style toggle. In normal Available or Busy workload state, the action opens the reason-required Not Available request. While that request is pending, the dashboard shows its pending state without offering a restoration action. Only after Admin approval applies Not Available does the Editor receive Become Available; the backend rejects that action in every other state, and a valid action removes the override and returns to workload-derived status. Busy is displayed as active-project work, not as leave. The restoration action is audited, informs active Admins and retries the automatic waiting queue. Admin Available/Not Available controls remain immediate, audited overrides, inform the Editor and also retry the queue when availability is restored. Existing assignments are never removed by an availability action.
 
+Update, 2026-10-26: Availability actions are centralized to one page per role. Admin notifications concerning an Editor open that Editor's anchored row on the Admin Editors roster, where the pending reason and the sole Admin Available / Not Available control appear; the individual profile is informational and links back to that control. The Editor dashboard is informational and links to the sole Editor Availability page, which owns both the request and approved-leave restoration actions. Existing profile, dashboard and authorization routes remain; no duplicate action page is introduced.
+
 ## 2026-10-23 — Unpaid brief-file removal deletes private storage
 
 Status: approved and implemented

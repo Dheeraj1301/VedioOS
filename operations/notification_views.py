@@ -46,7 +46,7 @@ def notification_destination(user, notice):
         and notice.reference_type == Notification.ReferenceType.EDITOR
         and notice.reference_id
     ):
-        return reverse("editor_detail", kwargs={"editor_id": notice.reference_id})
+        return f"/admin/editors/#editor-{notice.reference_id}"
     if notice.project_id:
         route = {
             "admin": "admin_project",

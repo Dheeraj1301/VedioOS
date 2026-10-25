@@ -101,7 +101,6 @@ def editor_detail(request, editor_id):
         pk=editor_id,
     )
     availability = availability_state(editor)
-    pending_request = editor.availability_requests.filter(status="pending").first()
     return render(
         request,
         "assignments/editor_detail.html",
@@ -110,13 +109,6 @@ def editor_detail(request, editor_id):
             "editor": editor,
             "availability": availability,
             "active_count": availability["active_count"],
-            "pending_request": pending_request,
-            "availability_form": AdminAvailabilityOverrideForm(
-                initial={
-                    "status": editor.availability_override,
-                    "reason": pending_request.reason if pending_request else editor.availability_override_reason,
-                }
-            ),
         },
     )
 
@@ -146,9 +138,7 @@ def editor_availability_override(request, editor_id):
             messages.error(request, " ".join(exc.messages))
     else:
         messages.error(request, "Choose a status and provide a reason.")
-    if request.POST.get("return_to") == "editor_list":
-        return redirect("/admin/editors/")
-    return redirect("editor_detail", editor_id=editor.pk)
+    return redirect(f"/admin/editors/#editor-{editor.pk}")
 
 
 @role_required("admin")

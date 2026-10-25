@@ -21,18 +21,7 @@
   <div class="notice">Approved editor · {{ editor.proficiency.get_level_display }}</div>
 {% endif %}
 <p>Active projects: <strong data-active-project-count>{{ active_count }}</strong> / {{ editor.workload_capacity|default_if_none:"Capacity pending" }}</p>
-<div class="editor-availability-action" aria-label="Editor availability control">
-  {% if availability.status == 'not_available' %}
-  <form method="post" action="/editor/availability/">
-    {% csrf_token %}
-    <button class="button small" type="submit" name="action" value="available">Become Available</button>
-  </form>
-  {% elif availability.pending_request %}
-  <a class="button small" href="/editor/availability/#not-available-request">Availability request pending</a>
-  {% else %}
-  <a class="button small" href="/editor/availability/#not-available-request">Request Not Available</a>
-  {% endif %}
-</div>
+<div class="editor-availability-action"><a class="button small" href="/editor/availability/">Manage availability</a></div>
 <section class="panel">
   <div class="panel-heading"><h2>Assigned projects</h2><a href="/editor/availability/">View availability status ↗</a></div>
   {% include 'partials/project_list.html' %}

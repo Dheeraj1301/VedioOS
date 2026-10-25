@@ -374,14 +374,16 @@ class AssignmentTests(TestCase):
         self.assertIn(editor.login_id, notice.message)
         self.assertIn("Synthetic vacation request", notice.message)
         self.client.force_login(self.admin)
-        notice_response = self.client.get(f"/notifications/{notice.id}/")
-        self.assertRedirects(notice_response, f"/admin/editors/{editor.id}/")
+        notice_response = self.client.get(f"/notifications/{notice.id}/", follow=True)
+        self.assertRedirects(notice_response, f"/admin/editors/#editor-{editor.id}")
+        self.assertContains(notice_response, "Pending Not Available request")
+        self.assertContains(notice_response, "Synthetic vacation request")
 
         applied = self.client.post(
             f"/admin/editors/{editor.id}/availability/",
             {"status": "not_available", "reason": "Approved leave"},
         )
-        self.assertRedirects(applied, f"/admin/editors/{editor.id}/")
+        self.assertRedirects(applied, f"/admin/editors/#editor-{editor.id}")
         editor.refresh_from_db()
         request_record.refresh_from_db()
         self.assertEqual(editor.availability_override, "not_available")
@@ -396,7 +398,7 @@ class AssignmentTests(TestCase):
             f"/admin/editors/{editor.id}/availability/",
             {"status": "", "reason": "Leave completed"},
         )
-        self.assertRedirects(restored, f"/admin/editors/{editor.id}/")
+        self.assertRedirects(restored, f"/admin/editors/#editor-{editor.id}")
         editor.refresh_from_db()
         self.assertEqual(editor.availability_override, "")
         self.assertEqual(availability_state(editor)["status"], "available")
@@ -432,7 +434,9 @@ class AssignmentTests(TestCase):
             "Approved leave",
         )
         self.client.force_login(editor.user)
-        self.assertContains(self.client.get("/editor/"), "Editor availability control")
+        dashboard = self.client.get("/editor/")
+        self.assertContains(dashboard, "Manage availability")
+        self.assertNotContains(dashboard, "Become Available")
         page = self.client.get("/editor/availability/")
         self.assertContains(page, "Become Available</button>")
         self.assertNotContains(page, 'class="availability-toggle"')
@@ -470,7 +474,8 @@ class AssignmentTests(TestCase):
             ).exists()
         )
         pending_dashboard = self.client.get("/editor/")
-        self.assertContains(pending_dashboard, "Availability request pending")
+        self.assertContains(pending_dashboard, "Manage availability")
+        self.assertNotContains(pending_dashboard, "Availability request pending")
         self.assertNotContains(pending_dashboard, "Become Available")
 
     def test_editor_cannot_bypass_request_workflow_with_available_action(self):
@@ -502,6 +507,9 @@ class AssignmentTests(TestCase):
         self.assertContains(page, f'aria-label="Availability override for {editor.user.name}"')
         self.assertContains(page, '>Available</button>', html=False)
         self.assertContains(page, '>Not Available</button>', html=False)
+        detail = self.client.get(f"/admin/editors/{editor.id}/")
+        self.assertNotContains(detail, "Apply availability status")
+        self.assertContains(detail, f'/admin/editors/#editor-{editor.id}')
 
         unavailable = self.client.post(
             f"/admin/editors/{editor.id}/availability/",
@@ -511,7 +519,7 @@ class AssignmentTests(TestCase):
                 "return_to": "editor_list",
             },
         )
-        self.assertRedirects(unavailable, "/admin/editors/")
+        self.assertRedirects(unavailable, f"/admin/editors/#editor-{editor.id}")
         editor.refresh_from_db()
         self.assertEqual(editor.availability_override, "not_available")
         self.assertEqual(availability_state(editor)["status"], "not_available")
@@ -526,7 +534,7 @@ class AssignmentTests(TestCase):
                 "return_to": "editor_list",
             },
         )
-        self.assertRedirects(automatic, "/admin/editors/")
+        self.assertRedirects(automatic, f"/admin/editors/#editor-{editor.id}")
         editor.refresh_from_db()
         self.assertEqual(editor.availability_override, "")
         self.assertEqual(availability_state(editor)["status"], "busy")

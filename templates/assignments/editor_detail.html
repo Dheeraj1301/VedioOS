@@ -4,16 +4,6 @@
   <section class="panel detail-panel"><h2>Profile details</h2><p><strong>Editor ID:</strong> {{ editor.login_id }}</p><p><strong>Email:</strong> {{ editor.user.email }}</p><p><strong>Phone:</strong> {{ editor.phone }}</p><h3>Experience</h3><p class="preserve-lines">{{ editor.experience|default:"Not provided" }}</p><h3>Tools</h3><p>{{ editor.tools|default:"Not provided" }}</p><h3>Expertise</h3><p>{{ editor.expertise|default:"Not provided" }}</p><h3>Previous work</h3><p class="preserve-lines">{{ editor.previous_work|default:"Not provided" }}</p>{% if editor.other_information %}<h3>Other information</h3><p class="preserve-lines">{{ editor.other_information }}</p>{% endif %}<p><a class="text-link" href="{{ editor.portfolio }}" target="_blank" rel="noopener noreferrer">View portfolio ↗</a></p></section>
 </div><aside>
   <section class="panel detail-panel"><h2>Operations</h2><p><strong>Availability:</strong> <span class="availability-badge compact is-{{ availability.status }}">{{ availability.summary }}</span></p><p><strong>Active projects:</strong> {{ active_count }} / {{ editor.workload_capacity|default_if_none:"Not configured" }}</p><p><strong>Approval:</strong> {% if editor.approved %}Approved{% else %}Awaiting review{% endif %}</p><p><strong>Proficiency:</strong> {{ editor.proficiency.get_level_display|default:"Not assigned" }}</p></section>
-  <section class="panel detail-panel">
-    <h2>Availability control</h2>
-    {% if pending_request %}<div class="notice"><strong>Pending request: Not Available</strong><br>{{ pending_request.reason }}</div>{% endif %}
-    <p class="muted">This Admin control immediately applies or removes Not Available. Busy means the editor already has active work; selecting Available clears leave but does not erase or duplicate that project.</p>
-    <form method="post" action="{% url 'editor_availability_override' editor.id %}" class="stack-form">
-      {% csrf_token %}
-      <div class="field"><label for="{{ availability_form.status.id_for_label }}">Status</label>{{ availability_form.status }}</div>
-      <div class="field"><label for="{{ availability_form.reason.id_for_label }}">Decision reason</label>{{ availability_form.reason }}</div>
-      <button class="button" type="submit">Apply availability status</button>
-    </form>
-  </section>
+  <section class="panel detail-panel"><p class="muted">Availability changes are centralized on the Editors page.</p><a class="button small" href="/admin/editors/#editor-{{ editor.id }}">Open availability control</a></section>
 </aside></div>
 {% endblock %}
