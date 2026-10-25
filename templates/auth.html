@@ -10,6 +10,7 @@
   <section class="auth-card">
     <p class="eyebrow">{% if mode == 'register' %}Let's get started{% else %}Welcome back{% endif %}</p>
     <h2>{% if mode == 'editor_login' %}Editor Sign In{% elif mode == 'login' %}Log in{% else %}Create an account{% endif %}</h2>
+    {% if form_expired %}<div class="auth-alert info" role="status">Your sign-in form expired after a session change. Please submit the refreshed form.</div>{% endif %}
     {% for message in messages %}<div class="auth-alert{% if message.tags %} {{ message.tags }}{% endif %}" role="status">{{ message }}</div>{% endfor %}
     <form method="post" class="form-stack">
       {% csrf_token %}

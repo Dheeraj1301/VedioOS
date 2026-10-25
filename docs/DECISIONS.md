@@ -448,6 +448,14 @@ Owner / source of explicit decision: Hamsa requested that only an explicit Admin
 
 Decision: workload continues to derive Available versus Unavailable (Busy) from open assignments. An Editor may submit or update one pending Not Available request only with a reason; this creates a persistent, deep-linked Admin notification but does not change assignment eligibility. The Admin may apply Not Available or return the Editor to automatic workload-derived status, with a required decision reason and audit event. The override takes precedence in display and excludes the Editor from manual and round-robin assignment. Existing assignments are retained rather than reassigned implicitly.
 
+## 2026-10-25 — Safe recovery for expired sign-in forms
+
+Status: approved and implemented
+
+Owner / source of explicit decision: Hamsa reported Django's raw CSRF failure page after submitting a login form whose token had become stale following a session change.
+
+Decision: retain Django CSRF validation without exemptions. A failed CSRF check on the Client or Editor sign-in path discards the POST and redirects to a freshly rendered sign-in form with a neutral expiration message. CSRF failures on all other protected forms keep HTTP 403 and render the application error page without exposing Django's debug diagnostics. No credential or submitted form value is replayed.
+
 Update, 2026-10-24: the existing audited override is exposed directly on each Admin Editors roster row as a binary Available / Not Available control. Available clears the override and displays the effective workload-derived state, so an editor with active work remains Busy and returns to Available automatically after all active projects finish. The control adds no availability state and does not alter allocation, project, or editor-dashboard workflows.
 
 ## 2026-10-23 — Unpaid brief-file removal deletes private storage

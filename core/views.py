@@ -492,6 +492,7 @@ def _login_view(request, *, editor_only=False):
             ),
             "button": "Editor Sign In" if editor_only else "Log in",
             "mode": "editor_login" if editor_only else "login",
+            "form_expired": request.GET.get("form") == "expired",
         },
     )
 

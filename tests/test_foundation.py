@@ -1371,6 +1371,31 @@ class FoundationTests(TestCase):
         self.assertEqual(browser.post("/client/new-order/", {"title": "Unsafe"}).status_code, 403)
         self.assertEqual(browser.post("/logout/").status_code, 403)
 
+    def test_stale_login_csrf_recovers_with_fresh_form(self):
+        for path in ["/login/", "/editor/signin/"]:
+            browser = Browser(enforce_csrf_checks=True)
+            browser.get(path)
+            response = browser.post(
+                path,
+                {
+                    "username": "unused@example.test",
+                    "password": "unused-password",
+                    "csrfmiddlewaretoken": "incorrect",
+                },
+            )
+            self.assertRedirects(response, f"{path}?form=expired")
+            refreshed = browser.get(response.url)
+            self.assertContains(refreshed, "Your sign-in form expired after a session change")
+            self.assertContains(refreshed, "csrfmiddlewaretoken")
+
+    def test_non_login_csrf_failure_uses_safe_error_page(self):
+        browser = Browser(enforce_csrf_checks=True)
+        browser.force_login(self.owner)
+        response = browser.post("/logout/")
+        self.assertEqual(response.status_code, 403)
+        self.assertContains(response, "This form is no longer current.", status_code=403)
+        self.assertNotContains(response, "CSRF verification failed", status_code=403)
+
     def test_case_insensitive_identity_and_constraints(self):
         with self.assertRaises(IntegrityError), transaction.atomic():
             User.objects.create_user("CLIENT@example.test", PASSWORD)
