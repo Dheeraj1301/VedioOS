@@ -27,9 +27,9 @@
   {% if availability.status == 'not_available' %}
     <form method="post">
       {% csrf_token %}
-      <button class="button" type="submit" name="action" value="available">Return to Available</button>
+      <button class="button" type="submit" name="action" value="available">Become Available</button>
     </form>
-    <p class="muted">This removes the approved Not Available status and returns you to workload-managed availability.</p>
+    <p class="muted">This immediately removes your approved Not Available status. Active-project workload may still show Busy.</p>
   {% elif availability.pending_request %}
     <div class="notice">Your Not Available request is waiting for Admin approval.</div>
     <a class="text-link" href="#not-available-request">View or update request</a>

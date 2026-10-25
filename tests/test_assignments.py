@@ -434,7 +434,7 @@ class AssignmentTests(TestCase):
         self.client.force_login(editor.user)
         self.assertContains(self.client.get("/editor/"), "Editor availability control")
         page = self.client.get("/editor/availability/")
-        self.assertContains(page, "Return to Available</button>")
+        self.assertContains(page, "Become Available</button>")
         self.assertNotContains(page, 'class="availability-toggle"')
 
         restored = self.client.post("/editor/availability/", {"action": "available"})
@@ -471,7 +471,28 @@ class AssignmentTests(TestCase):
         )
         pending_dashboard = self.client.get("/editor/")
         self.assertContains(pending_dashboard, "Availability request pending")
-        self.assertNotContains(pending_dashboard, "Return to Available")
+        self.assertNotContains(pending_dashboard, "Become Available")
+
+    def test_editor_cannot_bypass_request_workflow_with_available_action(self):
+        editor = self.editors[0]
+        self.client.force_login(editor.user)
+
+        response = self.client.post("/editor/availability/", {"action": "available"})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(
+            response,
+            "You can become Available after Admin approves a Not Available request.",
+        )
+        editor.refresh_from_db()
+        self.assertEqual(editor.availability_override, "")
+        self.assertFalse(
+            AuditLog.objects.filter(
+                actor=editor.user,
+                action="editor.availability_restored",
+                target_id=str(editor.id),
+            ).exists()
+        )
 
     def test_admin_editor_roster_has_binary_availability_override(self):
         editor = self.editors[0]

@@ -105,6 +105,10 @@ def restore_automatic_availability(user):
         raise PermissionDenied
     editor = Editor.objects.select_for_update().select_related("user").get(user=user)
     previous = editor.availability_override
+    if previous != Editor.AvailabilityOverride.NOT_AVAILABLE:
+        raise ValidationError(
+            "You can become Available after Admin approves a Not Available request."
+        )
     editor.availability_override = Editor.AvailabilityOverride.AUTOMATIC
     editor.availability_override_reason = ""
     editor.availability_override_by = None
