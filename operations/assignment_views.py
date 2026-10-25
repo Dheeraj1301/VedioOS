@@ -17,7 +17,7 @@ from .assignment_forms import (
 from .assignments import (
     TERMINAL,
     assign_next,
-    classify,
+    classify_and_allocate,
     configure_editor,
     editor_roster,
     eligibility,
@@ -215,14 +215,28 @@ def assignment_detail(request, project_id):
                 assessment = ComplexityForm(request.POST, prefix="assessment")
                 if assessment.is_valid():
                     data = assessment.cleaned_data
-                    classify(
+                    _, assignment = classify_and_allocate(
                         request.user,
                         project.id,
                         data["proficiency"].pk,
                         data["reason"],
                         data["expected_revision"],
                     )
-                    messages.success(request, "Complexity reviewed. Unassigned paid work is queued.")
+                    if assignment:
+                        messages.success(
+                            request,
+                            "Complexity reviewed and the next eligible editor was assigned automatically.",
+                        )
+                    elif AssignmentPolicy.objects.get(pk=1).automatic_enabled:
+                        messages.success(
+                            request,
+                            "Complexity reviewed. The project remains queued; see the waiting reason below.",
+                        )
+                    else:
+                        messages.success(
+                            request,
+                            "Complexity reviewed. Unassigned paid work is queued.",
+                        )
                     return redirect("assignment_detail", project_id=project.id)
             elif action == "manual":
                 manual = ManualAssignmentForm(request.POST, prefix="manual")

@@ -226,6 +226,20 @@ def classify(user, project_id, level, reason, expected_revision):
     return record
 
 
+@transaction.atomic
+def classify_and_allocate(user, project_id, level, reason, expected_revision):
+    """Save the required admin review and immediately run enabled automation.
+
+    Payment confirmation alone cannot safely infer a proficiency. Once an
+    administrator supplies that missing decision, an enabled automatic policy
+    should not require a second button press to start round-robin allocation.
+    """
+    record = classify(user, project_id, level, reason, expected_revision)
+    policy = AssignmentPolicy.objects.get(pk=1)
+    assignment = assign_next(project_id, user) if policy.automatic_enabled else None
+    return record, assignment
+
+
 def write_assignment(user, project, editor, policy, reason, current=None, automatic=False):
     now = timezone.now()
     if current:

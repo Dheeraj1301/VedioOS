@@ -12,6 +12,7 @@ from core.permissions import visible_projects
 from operations.assignments import (
     assign_next,
     classify,
+    classify_and_allocate,
     configure_editor,
     manual_assign,
     process_queue,
@@ -41,6 +42,34 @@ class AssignmentTests(TestCase):
         project = paid_project(self.client_profile)
         classify(self.admin, project.id, level, "Synthetic admin assessment", 0)
         return project
+
+    def test_admin_complexity_review_immediately_runs_enabled_round_robin(self):
+        project = paid_project(self.client_profile)
+        self.client.force_login(self.admin)
+        review_page = self.client.get(f"/admin/assignments/{project.id}/")
+        self.assertContains(
+            review_page,
+            "Saving this assessment will immediately run round-robin assignment",
+        )
+        self.assertContains(review_page, "Assign next in rotation ↗</button>")
+
+        complexity, assignment = classify_and_allocate(
+            self.admin,
+            project.id,
+            "beginner",
+            "Synthetic admin assessment",
+            0,
+        )
+
+        project.refresh_from_db()
+        self.assertEqual(complexity.proficiency_id, "beginner")
+        self.assertIsNotNone(assignment)
+        self.assertEqual(assignment.editor_id, self.editors[0].id)
+        self.assertEqual(project.status, "editor_assigned")
+        self.assertEqual(AssignmentQueue.objects.get(project=project).status, "assigned")
+        state = RoundRobinState.objects.get(proficiency_id="beginner")
+        self.assertEqual(state.sequence, 1)
+        self.assertEqual(state.last_editor_id, self.editors[0].id)
 
     def test_overdue_alerts_only_for_recorded_paid_open_deadlines(self):
         overdue = paid_project(self.client_profile)

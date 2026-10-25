@@ -464,6 +464,14 @@ Owner / source of explicit decision: Hamsa reported that saved-password suggesti
 
 Decision: opt the shared Client and Editor sign-in form and its identity/password fields out of browser and common password-manager autofill. The inputs remain ordinary editable controls and authentication behavior is unchanged. Registration and password-reset forms retain their purpose-specific autocomplete behavior.
 
+## 2026-10-25 — Allocate immediately after required complexity review
+
+Status: approved and implemented
+
+Owner / source of explicit decision: Hamsa requested that confirmed paid projects flow through round-robin without an unnecessary second administrator assignment step.
+
+Decision: payment confirmation continues to stop before assignment until an administrator records the required Beginner, Intermediate or Advanced complexity review; no proficiency is guessed from editor availability. When automatic allocation is enabled, saving that review immediately runs the existing transactional round-robin allocator. An eligible editor is assigned and both participants are notified, or the project remains in the durable queue with its waiting reason. Manual-only policy retains the existing queued workflow.
+
 Update, 2026-10-24: the existing audited override is exposed directly on each Admin Editors roster row as a binary Available / Not Available control. Available clears the override and displays the effective workload-derived state, so an editor with active work remains Busy and returns to Available automatically after all active projects finish. The control adds no availability state and does not alter allocation, project, or editor-dashboard workflows.
 
 ## 2026-10-23 — Unpaid brief-file removal deletes private storage
