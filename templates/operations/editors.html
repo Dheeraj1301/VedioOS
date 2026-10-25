@@ -1,6 +1,7 @@
 {% extends 'workspace.html' %}
 {% block workspace_content %}
 <div class="page-heading"><div><p class="eyebrow">The people behind the edits</p><h1>Editors</h1><p class="muted">Review administrator-issued editor accounts and set the approved proficiency level.</p></div></div>
+{% if pending_availability_count %}<div class="notice" role="status"><strong>{{ pending_availability_count }} Not Available request{{ pending_availability_count|pluralize }} waiting.</strong> The request message and the decision control are shown together in the matching editor row below.</div>{% endif %}
 <section class="panel">
 <form class="editor-roster-controls" method="get" action="/admin/editors/" data-editor-search-form>
   <div class="editor-search-wrap">

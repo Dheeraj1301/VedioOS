@@ -253,6 +253,9 @@ def admin_page(request, page):
         editors = list(editor_roster(editor_search, editor_sort))
         for editor in editors:
             editor.availability = availability_state(editor)
+        pending_availability_count = sum(
+            1 for editor in editors if editor.availability["pending_request"]
+        )
         return render(
             request,
             "operations/editors.html",
@@ -271,6 +274,7 @@ def admin_page(request, page):
                     ("id_desc", "Editor ID (Descending)"),
                 ],
                 "default_editor_sort": next(iter(EDITOR_SORTS)),
+                "pending_availability_count": pending_availability_count,
             },
         )
     if page == "clients":

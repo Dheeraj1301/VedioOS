@@ -478,6 +478,8 @@ Update, 2026-10-25: Editors receive one context-specific action rather than an A
 
 Update, 2026-10-26: Availability actions are centralized to one page per role. Admin notifications concerning an Editor open that Editor's anchored row on the Admin Editors roster, where the pending reason and the sole Admin Available / Not Available control appear; the individual profile is informational and links back to that control. The Editor dashboard is informational and links to the sole Editor Availability page, which owns both the request and approved-leave restoration actions. Existing profile, dashboard and authorization routes remain; no duplicate action page is introduced.
 
+The Admin Editors page also serves as the request inbox: it shows a pending-request count, the editor's transmitted reason and the decision toggle together. Availability notices use a specific title and open that same anchored row. Once Admin applies either decision, the pending request message leaves the active roster state while its durable notification and audit history remain retained.
+
 ## 2026-10-23 — Unpaid brief-file removal deletes private storage
 
 Status: approved and implemented
