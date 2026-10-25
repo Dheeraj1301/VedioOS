@@ -100,9 +100,14 @@ class FoundationTests(TestCase):
         self.assertNotContains(register, ">Start creating <")
 
     def test_login_fields_allow_manual_credentials_without_saved_password_takeover(self):
-        for path in ["/login/", "/editor/signin/"]:
+        for path, expected_label, unexpected_label in [
+            ("/login/", "Email address", "Editor ID or email address"),
+            ("/editor/signin/", "Editor ID or email address", "Email address</label>"),
+        ]:
             response = Browser().get(path)
             self.assertEqual(response.status_code, 200)
+            self.assertContains(response, expected_label)
+            self.assertNotContains(response, unexpected_label)
             self.assertContains(response, 'autocomplete="off"')
             self.assertContains(response, 'data-lpignore="true"')
             self.assertContains(response, 'data-1p-ignore="true"')

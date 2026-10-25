@@ -33,8 +33,13 @@ class RegistrationForm(UserCreationForm):
 
 class LoginForm(AuthenticationForm):
     def __init__(self, *args, **kwargs):
+        request = kwargs.get("request") or (args[0] if args else None)
+        editor_only = getattr(getattr(request, "resolver_match", None), "url_name", None) == "editor_login"
         kwargs.setdefault("label_suffix", "")
         super().__init__(*args, **kwargs)
+        self.fields["username"].label = (
+            "Editor ID or email address" if editor_only else "Email address"
+        )
         # Keep browser password managers from repeatedly replacing credentials
         # that the user is trying to enter manually.
         autofill_opt_out = {
@@ -46,7 +51,7 @@ class LoginForm(AuthenticationForm):
         self.fields["password"].widget.attrs.update(autofill_opt_out)
 
     username = forms.CharField(
-        label="Email or editor ID",
+        label="Email address",
         widget=forms.TextInput(),
     )
 

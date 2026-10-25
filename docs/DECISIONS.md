@@ -462,7 +462,7 @@ Status: approved and implemented
 
 Owner / source of explicit decision: Hamsa reported that saved-password suggestions prevented replacing the credentials on the Editor sign-in page.
 
-Decision: opt the shared Client and Editor sign-in form and its identity/password fields out of browser and common password-manager autofill. The inputs remain ordinary editable controls and authentication behavior is unchanged. Registration and password-reset forms retain their purpose-specific autocomplete behavior.
+Decision: opt the shared Client and Editor sign-in form and its identity/password fields out of browser and common password-manager autofill. The inputs remain ordinary editable controls and authentication behavior is unchanged. The Client page labels its identity field `Email address`; the Editor page labels the same authenticated identity input `Editor ID or email address`. Registration and password-reset forms retain their purpose-specific autocomplete behavior.
 
 ## 2026-10-25 — Allocate immediately after required complexity review
 
