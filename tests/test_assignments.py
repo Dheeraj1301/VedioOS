@@ -469,6 +469,9 @@ class AssignmentTests(TestCase):
                 reason="A new leave period",
             ).exists()
         )
+        pending_dashboard = self.client.get("/editor/")
+        self.assertContains(pending_dashboard, "Availability request pending")
+        self.assertNotContains(pending_dashboard, "Return to Available")
 
     def test_admin_editor_roster_has_binary_availability_override(self):
         editor = self.editors[0]

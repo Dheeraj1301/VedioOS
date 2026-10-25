@@ -24,12 +24,15 @@
 </section>
 <section class="panel availability-panel">
   <h2>Availability control</h2>
-  {% if availability.status == 'not_available' or availability.pending_request %}
+  {% if availability.status == 'not_available' %}
     <form method="post">
       {% csrf_token %}
       <button class="button" type="submit" name="action" value="available">Return to Available</button>
     </form>
-    <p class="muted">This removes an approved Not Available override or withdraws your pending request. If you have an active project, your workload status will correctly remain Busy.</p>
+    <p class="muted">This removes the approved Not Available status and returns you to workload-managed availability.</p>
+  {% elif availability.pending_request %}
+    <div class="notice">Your Not Available request is waiting for Admin approval.</div>
+    <a class="text-link" href="#not-available-request">View or update request</a>
   {% else %}
     <a class="button" href="#not-available-request">Request Not Available</a>
     <p class="muted">Busy means you are working on an active project—not that you are on leave. Every Not Available period requires Admin approval.</p>
