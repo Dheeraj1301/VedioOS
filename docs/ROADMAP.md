@@ -1,5 +1,7 @@
 # Development pathway
 
+**2026-10-26: immersive landing presentation implemented.** The public landing page now presents the existing admin-managed content and unchanged control inventory as reversible sticky editorial panels over the owner-selected orange silk background. Landing-only beige surfaces and rust-orange typography preserve authenticated workspace styling. Tablet spacing is reduced; mobile and reduced-motion layouts return to normal document flow. No backend, commercial, authentication, or storage behavior changed.
+
 ## How to use this pathway
 
 The [Day 1 local foundation](DAY_1_VERIFICATION.md) is implemented and verified. Phases 0–2 have progressed through that milestone; their broader production/large-file gates are not all complete. [Phase 3](PHASE_3.md) has a verified catalog/quote/payment-sandbox milestone. [Phase 4](PHASE_4.md) has a verified allocation milestone. [Phase 5](PHASE_5.md) has a verified review milestone. [Phase 6](PHASE_6.md) has a verified opt-in coin/sandbox payout milestone. Real checkout, payout provider, deadline rules, allocation activation and AI still require decisions. Work in dependency order, delivering small complete flows.

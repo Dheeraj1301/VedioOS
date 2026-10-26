@@ -44,6 +44,7 @@ class LandingPageTests(TestCase):
 
     def test_defaults_preserve_existing_landing_page(self):
         response = self.client.get("/")
+        self.assertContains(response, 'class="landing-page"')
         self.assertContains(response, "You shoot.")
         self.assertContains(response, "Made by people.")
         self.assertContains(response, "Does AI edit my video?")
