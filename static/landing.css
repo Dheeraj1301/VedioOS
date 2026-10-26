@@ -34,6 +34,7 @@
 
 .landing-page .public-header nav { color: var(--landing-rust); }
 .landing-page main { width: min(92vw, 1420px); margin: 0 auto; padding-bottom: 10vh; }
+.landing-page #how-it-works { display: none; }
 
 .landing-page main > .hero,
 .landing-page main > .section {
