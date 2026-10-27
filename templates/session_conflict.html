@@ -4,7 +4,7 @@
     <h1 id="session-heading">This account is already signed in</h1>
     <form class="session-actions" method="post" action="{% url 'session_decision' %}">{% csrf_token %}
       <button class="button secondary" name="action" value="keep" type="submit">Keep other device</button>
-      <button class="button" name="action" value="replace" type="submit">Sign out other device <span>↗</span></button>
+      <button class="button" name="action" value="replace" type="submit">Sign out other device</button>
     </form>
   </section>
 </div>

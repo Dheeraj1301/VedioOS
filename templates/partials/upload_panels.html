@@ -6,7 +6,7 @@
     <label for="category">File category</label><select id="category" name="category">{% for value,label in source_upload_categories %}<option value="{{ value }}">{{ label }}</option>{% endfor %}</select>
     <label class="file-drop" for="upload-files"><span aria-hidden="true">↑</span><strong>{% if user.role == 'editor' %}Choose edited files{% else %}Choose raw files{% endif %}</strong><small>Up to {{ max_upload_mb }} MB per file in this local setup</small></label>
     <input id="upload-files" class="upload-files" type="file" multiple required>
-    <button class="button" type="submit">{% if user.role == 'editor' %}Upload edited files{% else %}Upload source files{% endif %} ↗</button>
+    <button class="button" type="submit">{% if user.role == 'editor' %}Upload edited files{% else %}Upload source files{% endif %}</button>
     <progress id="upload-progress" class="upload-progress" max="100" value="0" hidden aria-label="Source upload progress"></progress>
     <p id="upload-status" class="upload-status" role="status" aria-live="polite"></p>
   </form>
@@ -19,7 +19,7 @@
   <form class="upload-form" data-project-id="{{ project.id }}" data-fixed-category="font_reference">{% csrf_token %}
     <label class="file-drop" for="font-inspiration-files"><span aria-hidden="true">Aa</span><strong>Click to Upload</strong><small>Image only · less than 1 MB</small></label>
     <input id="font-inspiration-files" class="upload-files" type="file" accept="image/*" required>
-    <button class="button" type="submit">Upload font inspiration ↗</button>
+    <button class="button" type="submit">Upload font inspiration</button>
     <progress class="upload-progress" max="100" value="0" hidden aria-label="Font inspiration upload progress"></progress>
     <p class="upload-status" role="status" aria-live="polite"></p>
   </form>
@@ -32,7 +32,7 @@
   <form class="upload-form" data-project-id="{{ project.id }}" data-fixed-category="reference" data-max-files="{{ inspiration_upload_limit }}" data-existing-files="{{ active_inspiration_count }}">{% csrf_token %}
     <label class="file-drop" for="inspiration-files"><span aria-hidden="true">◎</span><strong>Add Inspiration Reel/Video</strong><small>Reference files stay private with this project</small></label>
     <input id="inspiration-files" class="upload-files" type="file" multiple required>
-    <button class="button" type="submit">Upload inspiration ↗</button>
+    <button class="button" type="submit">Upload inspiration</button>
     <progress id="inspiration-progress" class="upload-progress" max="100" value="0" hidden aria-label="Inspiration upload progress"></progress>
     <p id="inspiration-status" class="upload-status" role="status" aria-live="polite"></p>
   </form>

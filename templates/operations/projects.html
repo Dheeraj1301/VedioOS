@@ -9,5 +9,5 @@
 <section class="panel"><ul class="data-list">{% for project in projects %}<li>
   <div class="feature-row"><div><h3><a class="text-link" href="{% url 'admin_project' project.id %}">{{ project.title }}</a></h3></div><div><span class="badge">{{ project.get_status_display }}</span><span class="badge">{% if project.order %}{{ project.order.get_payment_status_display }}{% else %}No order{% endif %}</span></div></div>
 </li>{% empty %}<li class="empty-state"><h3>No matching projects.</h3><p>Try another queue or search.</p></li>{% endfor %}</ul></section>
-{% if older_project_cursor %}<p><a class="text-link" href="?queue={{ admin_queue }}{% if project_search %}&amp;q={{ project_search|urlencode }}{% endif %}&amp;before={{ older_project_cursor|urlencode }}">Older projects →</a></p>{% endif %}
+{% if older_project_cursor %}<p><a class="text-link" href="?queue={{ admin_queue }}{% if project_search %}&amp;q={{ project_search|urlencode }}{% endif %}&amp;before={{ older_project_cursor|urlencode }}">Older projects</a></p>{% endif %}
 {% endblock %}

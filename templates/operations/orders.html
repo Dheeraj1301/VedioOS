@@ -9,5 +9,5 @@
 <section class="panel"><ul class="data-list">{% for order in orders %}<li>
   <div class="feature-row"><div><h3><a class="text-link" href="{% url 'admin_order_detail' order.id %}">{{ order.project.title }}</a></h3><p><strong>Order total:</strong> {{ order.total_minor|money:order.currency }}</p></div><div><span class="badge">{{ order.get_payment_status_display }}</span><span class="badge">{{ order.project.get_status_display }}</span></div></div>
 </li>{% empty %}<li class="empty-state"><h3>No matching orders.</h3><p>Try another payment state, workflow state or search.</p></li>{% endfor %}</ul></section>
-{% if older_order_cursor %}<p><a class="text-link" href="?payment={{ payment_filter }}&amp;workflow={{ workflow_filter }}{% if order_search %}&amp;q={{ order_search|urlencode }}{% endif %}&amp;before={{ older_order_cursor|urlencode }}">Older orders →</a></p>{% endif %}
+{% if older_order_cursor %}<p><a class="text-link" href="?payment={{ payment_filter }}&amp;workflow={{ workflow_filter }}{% if order_search %}&amp;q={{ order_search|urlencode }}{% endif %}&amp;before={{ older_order_cursor|urlencode }}">Older orders</a></p>{% endif %}
 {% endblock %}

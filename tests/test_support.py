@@ -80,7 +80,9 @@ class SupportWorkflowTests(TestCase):
 
         client_list = self.browser(self.client_user).get("/client/support/")
         self.assertNotContains(client_list, 'name="subject"')
-        self.assertContains(client_list, ">View</a>")
+        self.assertContains(client_list, ">Client project</a>")
+        self.assertNotContains(client_list, ">View</a>")
+        self.assertNotContains(client_list, "Updated")
         self.assertNotContains(client_list, "Project help: Client project")
         admin_list = self.browser(self.admin).get("/admin/support/?status=all")
         self.assertContains(admin_list, "Project help: Client project")

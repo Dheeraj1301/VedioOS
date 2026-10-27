@@ -470,6 +470,14 @@ Owner / source of explicit decision: Hamsa requested removal of duplicated sessi
 
 Decision: the account-in-use screen retains its heading and exactly two decisions: keep the other device signed in, or sign it out and continue locally. Duplicate explanatory cards and paragraphs are removed. CSRF validation remains enabled. A stale Client sign-in, Editor sign-in or session-decision submission is discarded and redirected to a freshly protected authentication form; the session decision is never replayed automatically. CSRF failures elsewhere retain a concise application 403 page rather than Django debug help.
 
+## 2026-10-27 — Simplified workspace copy, link styling and plan disclosure
+
+Status: approved and implemented
+
+Owner / source of explicit decision: Hamsa identified redundant client headings and helper copy, requested removal of decorative arrow glyphs, provider-neutral payment history, project-name support links and equal plan cards with hover details.
+
+Decision: remove the specified workspace labels, dashboard heading/copy, client list eyebrows and payment/communication helper paragraphs without changing their routes or controls. Decorative arrow glyphs are removed from link and button labels throughout the checked-in templates while destinations remain unchanged. Client payment history displays project, amount, calendar date, status and receipt access without provider names, provider references, IDs, clock time or UTC labels; backend payment records remain intact. Client support history links use the related project title, or `General support` when no project is related, and hide category/status/time metadata. Standard plan cards keep a consistent height, show one concise configured feature, and reveal the complete configured feature list as accessible bullets on hover or keyboard focus.
+
 ## 2026-10-23 — Unpaid brief-file removal deletes private storage
 
 Status: approved and implemented

@@ -23,7 +23,7 @@
 {% endif %}
 <p>Active projects: <strong data-active-project-count>{{ active_count }}</strong> / {{ editor.workload_capacity|default_if_none:"Capacity pending" }}</p>
 <section class="panel">
-  <div class="panel-heading"><h2>Assigned projects</h2><a href="/editor/availability/">View availability status ↗</a></div>
+  <div class="panel-heading"><h2>Assigned projects</h2><a href="/editor/availability/">View availability status</a></div>
   {% include 'partials/project_list.html' %}
 </section>
 {% endblock %}

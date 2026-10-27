@@ -5,7 +5,7 @@
   {% if detail %}<p class="error-detail">{{ detail }}</p>{% endif %}
   <div class="error-actions">
     {% if retry %}<a class="button" href="{{ request.path }}">Try again <span>↻</span></a>{% endif %}
-    <a class="{% if retry %}text-link{% else %}button{% endif %}" href="{% if user.is_authenticated %}/dashboard/{% else %}/{% endif %}">Return {% if user.is_authenticated %}to workspace{% else %}home{% endif %} {% if not retry %}↗{% endif %}</a>
+    <a class="{% if retry %}text-link{% else %}button{% endif %}" href="{% if user.is_authenticated %}/dashboard/{% else %}/{% endif %}">Return {% if user.is_authenticated %}to workspace{% else %}home{% endif %}</a>
   </div>
 </section>
 {% endblock %}

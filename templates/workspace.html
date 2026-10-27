@@ -4,9 +4,8 @@
 <div class="workspace">
   <aside class="sidebar">
     <a class="brand" href="/" aria-label="BRIO home"><img class="brand-logo" src="{% static 'images/brio-logo.jpeg' %}" alt="BRIO Logo">BRIO</a>
-    <p class="eyebrow workspace-label">{{ user.get_role_display }} workspace</p>
     <nav aria-label="Workspace navigation">
-      {% for item in navigation %}<a href="{{ item.url }}" {% if item.active %}class="active" aria-current="page"{% endif %}>{{ item.label }}<span aria-hidden="true">↗</span></a>{% endfor %}
+      {% for item in navigation %}<a href="{{ item.url }}" {% if item.active %}class="active" aria-current="page"{% endif %}>{{ item.label }}</a>{% endfor %}
     </nav>
     <div class="sidebar-bottom">
       <div class="avatar">{{ user.name|first|upper }}</div>
@@ -18,7 +17,6 @@
     <header class="workspace-header">
       <button class="back-button" type="button" aria-label="Go back to the previous page">← Back</button>
       <div class="workspace-header-actions">
-        {% if user.role != 'editor' %}<span class="privacy-label">◈ Private workspace</span>{% endif %}
         <div class="notification-menu" data-notification-menu>
           <button class="notification-bell" type="button" aria-label="Notifications" aria-haspopup="true" aria-expanded="false" data-notification-toggle>
             <span aria-hidden="true">&#128276;</span>

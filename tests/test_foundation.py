@@ -92,7 +92,7 @@ class FoundationTests(TestCase):
 
     def test_public_auth_header_shows_only_the_alternate_action(self):
         login = Browser().get("/login/")
-        self.assertContains(login, ">Start creating <", count=1)
+        self.assertContains(login, ">Start creating</a>", count=1)
         self.assertNotContains(login, '>Log in</a><a class="button small"')
 
         register = Browser().get("/register/")

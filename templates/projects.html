@@ -2,7 +2,6 @@
 {% block workspace_content %}
 <div class="page-heading">
   <div>
-    {% if user.role != 'editor' %}<p class="eyebrow">Your workspace</p>{% endif %}
     <h1>{{ title }}</h1>
   </div>
   {% if user.role == 'client' %}<a class="button" href="/client/new-order/">Plan a new edit +</a>{% endif %}

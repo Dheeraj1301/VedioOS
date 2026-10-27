@@ -67,7 +67,7 @@ class EditorCommunicationTests(TestCase):
         page = self.client.get("/editor/")
         self.assertNotContains(page, '>Calls<span', html=False)
         self.assertNotContains(page, '>Wallet<span', html=False)
-        self.assertContains(page, '>Project Communication<span', html=False)
+        self.assertContains(page, ">Project Communication</a>", html=False)
         self.assertNotContains(page, "Private workspace")
         self.assertNotContains(
             page,

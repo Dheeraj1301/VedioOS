@@ -6,7 +6,7 @@
   <div class="panel-heading"><h2 id="ongoing-projects-title">Ongoing</h2><span>{{ ongoing_projects|length }} project{{ ongoing_projects|length|pluralize }}</span></div>
   {% for project in ongoing_projects %}
   <a class="project-row" href="{% url 'editor_project_communication' project.id %}">
-    <span class="project-icon" aria-hidden="true">↗</span>
+    <span class="project-icon" aria-hidden="true">●</span>
     <div><h3>{{ project.title }}</h3><p>{% if project.latest_message %}{{ project.latest_message|truncatechars:110 }}{% else %}No messages yet.{% endif %}{% if project.latest_message_at %} · {{ project.latest_message_at|date:"M j, Y H:i" }} UTC{% endif %}</p></div>
     <span class="badge">{{ project.get_status_display }}</span>
   </a>
