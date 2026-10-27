@@ -1,5 +1,13 @@
 # Open decisions and decision record
 
+## 2026-10-27 — Workspace background and plan-details disclosure
+
+Status: approved and implemented
+
+Owner / source of explicit decision: Hamsa requested the landing page's rusty-orange background throughout workspace content areas while retaining beige cards and brown text. Plan features must use a click-to-expand list that does not interfere with selecting a plan.
+
+Decision: workspace content areas reuse the orange silk background and overlay from the landing page. Existing beige cards, controls, routes, and actions remain intact. Configured plan features appear in an independent, bullet-pointed disclosure beside the short description; opening it does not select the plan. Client payment rows retain their existing information and actions with consistent responsive inner spacing.
+
 ## 2026-10-27 — Unified landing-derived application theme
 
 Status: approved and implemented
