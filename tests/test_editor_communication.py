@@ -92,6 +92,10 @@ class EditorCommunicationTests(TestCase):
             communication_page,
             "Completed conversations for projects still assigned to you will remain here as read-only history.",
         )
+        self.assertNotContains(
+            communication_page,
+            "Choose one of your currently assigned projects to view its client conversation.",
+        )
 
     def test_list_contains_only_current_paid_assignments_grouped_by_status(self):
         response = self.client.get("/editor/communication/")

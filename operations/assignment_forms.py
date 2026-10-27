@@ -10,7 +10,7 @@ class EditorAvailabilityRequestForm(forms.Form):
     reason = forms.CharField(
         max_length=300,
         widget=forms.Textarea(attrs={"rows": 4}),
-        help_text="Required. Tell the Admin why you need to be unavailable.",
+        help_text="",
     )
 
 

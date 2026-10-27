@@ -328,7 +328,21 @@ class AssignmentTests(TestCase):
             page,
             "Assigned, editing, review, and revision projects count as active.",
         )
+        self.assertNotContains(
+            page,
+            "This status refreshes automatically while this page is open.",
+        )
+        self.assertNotContains(
+            page,
+            "Send a reason to Admin for review. This request does not change your assignment status immediately.",
+        )
+        self.assertNotContains(
+            page,
+            "Required. Tell the Admin why you need to be unavailable.",
+        )
         self.assertContains(page, "Request Not Available")
+        self.assertContains(page, 'name="reason"', html=False)
+        self.assertContains(page, "Send request to Admin")
         invalid = self.client.post(
             "/editor/availability/", {"status": "not_available", "reason": ""}
         )
