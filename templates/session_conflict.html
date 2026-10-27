@@ -1,14 +1,7 @@
 {% extends 'base.html' %}{% block content %}
 <div class="verification-layout">
   <section class="verification-card session-conflict" aria-labelledby="session-heading">
-    <div class="verification-icon warning" aria-hidden="true">!</div>
-    <p class="eyebrow">Account security</p>
     <h1 id="session-heading">This account is already signed in</h1>
-    <p class="verification-lead">Only one device can use a BRIO account at a time. You can keep the existing device signed in, or securely end that session and continue here.</p>
-    <div class="session-choice-list">
-      <div><strong>Keep the other device signed in</strong><span>This login attempt will be cancelled.</span></div>
-      <div><strong>Continue on this device</strong><span>The previous device will be signed out on its next request.</span></div>
-    </div>
     <form class="session-actions" method="post" action="{% url 'session_decision' %}">{% csrf_token %}
       <button class="button secondary" name="action" value="keep" type="submit">Keep other device</button>
       <button class="button" name="action" value="replace" type="submit">Sign out other device <span>↗</span></button>

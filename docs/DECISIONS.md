@@ -462,6 +462,14 @@ Decision: workload continues to derive Available versus Unavailable (Busy) from 
 
 Update, 2026-10-24: the existing audited override is exposed directly on each Admin Editors roster row as a binary Available / Not Available control. Available clears the override and displays the effective workload-derived state, so an editor with active work remains Busy and returns to Available automatically after all active projects finish. The control adds no availability state and does not alter allocation, project, or editor-dashboard workflows.
 
+## 2026-10-27 — Minimal session-conflict choice and safe expired-form recovery
+
+Status: approved and implemented
+
+Owner / source of explicit decision: Hamsa requested removal of duplicated session-conflict explanations and resolution of the raw CSRF failure shown after submitting a stale authentication form.
+
+Decision: the account-in-use screen retains its heading and exactly two decisions: keep the other device signed in, or sign it out and continue locally. Duplicate explanatory cards and paragraphs are removed. CSRF validation remains enabled. A stale Client sign-in, Editor sign-in or session-decision submission is discarded and redirected to a freshly protected authentication form; the session decision is never replayed automatically. CSRF failures elsewhere retain a concise application 403 page rather than Django debug help.
+
 ## 2026-10-23 — Unpaid brief-file removal deletes private storage
 
 Status: approved and implemented
