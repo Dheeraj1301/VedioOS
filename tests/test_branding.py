@@ -19,7 +19,10 @@ class BrandingTests(TestCase):
     def test_public_and_authentication_pages_use_brio(self):
         for path in ["/", "/register/", "/login/", "/editor/signin/"]:
             with self.subTest(path=path):
-                self.assert_brio_branding(self.client.get(path))
+                response = self.client.get(path)
+                self.assert_brio_branding(response)
+                if path != "/":
+                    self.assertContains(response, 'class="auth-page"', html=False)
 
     def test_authenticated_workspace_uses_brio(self):
         _, client_profile, _ = create_people()
@@ -28,4 +31,6 @@ class BrandingTests(TestCase):
         response = self.client.get("/client/")
 
         self.assert_brio_branding(response)
+        self.assertContains(response, 'class="workspace-page"', html=False)
         self.assertIsNotNone(finders.find("images/brio-logo.jpeg"))
+        self.assertIsNotNone(finders.find("brio-theme.css"))

@@ -1,5 +1,7 @@
 # Development pathway
 
+**2026-10-27: landing-derived application theme implemented.** Login, registration, password recovery, client, editor and administrator surfaces now share the landing page's orange environment, beige editorial surfaces, rust typography, rounded cards and restrained shadows through one centralized presentation layer. The existing control inventory, routes, forms, navigation, authorization and backend workflows are unchanged. Focused authentication/accessibility/branding coverage passes 67 tests, and the complete isolated suite passes 353 tests with 14 optional integrations skipped.
+
 **2026-10-26: immersive landing presentation implemented.** The public landing page now presents the existing admin-managed content and unchanged control inventory as reversible sticky editorial panels over the owner-selected orange silk background. Landing-only beige surfaces and rust-orange typography preserve authenticated workspace styling. Tablet spacing is reduced; mobile and reduced-motion layouts return to normal document flow. No backend, commercial, authentication, or storage behavior changed.
 
 ## How to use this pathway

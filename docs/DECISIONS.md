@@ -1,5 +1,13 @@
 # Open decisions and decision record
 
+## 2026-10-27 — Unified landing-derived application theme
+
+Status: approved and implemented
+
+Owner / source of explicit decision: Hamsa requested that every client, editor, administrator, login, registration, and supporting screen adopt the landing page's visual language without changing any workflow.
+
+Decision: shared public and authenticated shells use the landing palette of orange environmental imagery, warm beige surfaces, rust typography, rounded editorial cards and restrained depth. Authentication and workspace templates receive presentation-only body hooks; all routes, navigation labels, controls, form fields, authorization, persistence, and backend behavior remain unchanged. Semantic success, warning, error, availability and payment states retain their functional distinctions.
+
 ## 2026-10-26 — Orange silk landing palette and stacked editorial layout
 
 Status: approved and implemented

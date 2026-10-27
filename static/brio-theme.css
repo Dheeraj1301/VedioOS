@@ -1,0 +1,194 @@
+/* Shared BRIO application theme. Landing-specific styling remains in landing.css. */
+body:not(.landing-page) {
+  --ink: #6f210f;
+  --muted: #9b5439;
+  --paper: #f1dfbb;
+  --white: #faedcf;
+  --line: rgba(132, 47, 24, .22);
+  --green: #8f3018;
+  --lime: #f7e8c6;
+  --radius: 18px;
+  min-height: 100vh;
+  background:
+    linear-gradient(rgba(79, 13, 4, .25), rgba(79, 13, 4, .38)),
+    #8e210d url('/static/images/brio-orange-silk-background.png') center / cover fixed no-repeat;
+  color: var(--ink);
+}
+
+body:not(.landing-page) h1,
+body:not(.landing-page) h2,
+body:not(.landing-page) h3,
+body:not(.landing-page) .brand { color: var(--ink); }
+body:not(.landing-page) .muted,
+body:not(.landing-page) .eyebrow { color: var(--muted); }
+body:not(.landing-page) a:focus-visible,
+body:not(.landing-page) button:focus-visible,
+body:not(.landing-page) input:focus-visible,
+body:not(.landing-page) select:focus-visible,
+body:not(.landing-page) textarea:focus-visible,
+body:not(.landing-page) summary:focus-visible { outline-color: #c45d37; }
+
+body:not(.landing-page) .public-header,
+body:not(.landing-page) .public-footer {
+  width: min(92vw, 1340px);
+  margin: 14px auto;
+  padding-left: clamp(20px, 3vw, 42px);
+  padding-right: clamp(20px, 3vw, 42px);
+  border: 1px solid rgba(111, 33, 15, .22);
+  border-radius: 20px;
+  background: rgba(241, 223, 187, .94);
+  color: var(--ink);
+  box-shadow: 0 18px 55px rgba(58, 8, 2, .24);
+  backdrop-filter: blur(14px);
+}
+body:not(.landing-page) .public-footer { margin-bottom: 24px; }
+
+body:not(.landing-page) .button {
+  background: var(--green);
+  color: var(--lime);
+  border-color: var(--green);
+  box-shadow: 0 10px 28px rgba(89, 22, 7, .18);
+}
+body:not(.landing-page) .button:hover { background: #a33d20; color: #fff5dc; }
+body:not(.landing-page) .text-link,
+body:not(.landing-page) .text-button { color: var(--green); border-color: rgba(143, 48, 24, .42); }
+
+.auth-page .auth-layout {
+  width: min(92vw, 1180px);
+  min-height: calc(100vh - 220px);
+  margin: 34px auto 70px;
+  padding: clamp(24px, 5vw, 64px);
+  border: 1px solid rgba(111, 33, 15, .22);
+  border-radius: 32px;
+  background: rgba(241, 223, 187, .94);
+  box-shadow: 0 30px 90px rgba(58, 8, 2, .3);
+  backdrop-filter: blur(16px);
+}
+.auth-page .auth-intro { top: 120px; }
+.auth-page .auth-intro h1 { color: var(--ink); }
+.auth-page .auth-note { border-color: var(--line); }
+.auth-page .auth-note > span { color: #bd5734; }
+.auth-page .auth-card,
+body:not(.landing-page) .verification-card {
+  background: var(--white);
+  border: 1px solid rgba(111, 33, 15, .22);
+  box-shadow: 0 22px 55px rgba(84, 21, 7, .12);
+}
+.auth-page .auth-switch a { color: var(--green); }
+body:not(.landing-page) .auth-alert { background: #f5e8bf; border-color: #c98c57; color: var(--ink); }
+
+.workspace-page .workspace {
+  min-height: 100vh;
+  background: rgba(88, 18, 5, .16);
+}
+.workspace-page .sidebar {
+  background: rgba(241, 223, 187, .97);
+  border-color: rgba(111, 33, 15, .22);
+  box-shadow: 12px 0 45px rgba(58, 8, 2, .18);
+}
+.workspace-page .sidebar nav a { color: var(--ink); }
+.workspace-page .sidebar nav a:hover { background: rgba(164, 61, 30, .1); }
+.workspace-page .sidebar nav a.active {
+  background: var(--green);
+  color: var(--lime);
+  box-shadow: 0 8px 22px rgba(84, 21, 7, .18);
+}
+.workspace-page .sidebar-bottom { border-top: 1px solid var(--line); }
+.workspace-page .avatar { background: #e9cfa0; color: var(--ink); }
+.workspace-page .logout,
+.workspace-page .back-button { color: var(--green); }
+.workspace-page .workspace-body {
+  min-height: 100vh;
+  background: rgba(249, 231, 194, .86);
+  backdrop-filter: blur(8px);
+}
+.workspace-page .workspace-header {
+  background: rgba(250, 237, 207, .9);
+  border-color: var(--line);
+  box-shadow: 0 10px 35px rgba(74, 16, 5, .08);
+  backdrop-filter: blur(12px);
+}
+.workspace-page .privacy-label { color: var(--green); }
+.workspace-page .workspace-main { color: var(--ink); }
+
+.workspace-page .page-heading {
+  padding: clamp(24px, 3vw, 38px);
+  border: 1px solid var(--line);
+  border-radius: 24px;
+  background: rgba(241, 223, 187, .72);
+  box-shadow: 0 18px 48px rgba(87, 20, 6, .09);
+}
+.workspace-page .page-heading h1 { color: var(--ink); }
+
+.workspace-page .panel,
+.workspace-page .detail-panel,
+.workspace-page .form-panel,
+.workspace-page .upload-panel,
+.workspace-page .availability-panel,
+.workspace-page .fixed-plan-terms,
+.workspace-page .v1-draft-summary,
+.workspace-page .workspace-tip,
+.workspace-page .stats article,
+.workspace-page .notification-detail,
+.workspace-page .revision-plan-card {
+  background: var(--white);
+  border-color: var(--line);
+  box-shadow: 0 16px 42px rgba(87, 20, 6, .1);
+}
+.workspace-page .stats .stat-note,
+.workspace-page .empty-icon,
+.workspace-page .project-icon,
+.workspace-page .revision-plan-card[aria-pressed=true] { background: #ecd5a8; border-color: rgba(143, 48, 24, .3); }
+.workspace-page .panel-heading,
+.workspace-page .project-row,
+.workspace-page .file-row,
+.workspace-page .data-row,
+.workspace-page .metric-list li { border-color: var(--line); }
+.workspace-page .project-row:hover,
+.workspace-page .notification-history-row:hover { background: rgba(225, 194, 137, .28); }
+.workspace-page .badge { background: #efd9ae; border-color: rgba(143, 48, 24, .2); color: var(--ink); }
+.workspace-page .notice { background: #f6e7c2; border-color: #c7834f; color: var(--ink); }
+
+body:not(.landing-page) input:not([type=checkbox]),
+body:not(.landing-page) select,
+body:not(.landing-page) textarea {
+  background: #fff8e7;
+  color: var(--ink);
+  border-color: rgba(143, 48, 24, .3);
+}
+body:not(.landing-page) input:not([type=checkbox]):focus,
+body:not(.landing-page) select:focus,
+body:not(.landing-page) textarea:focus { border-color: var(--green); box-shadow: 0 0 0 3px rgba(143, 48, 24, .12); }
+body:not(.landing-page) input[type=checkbox] { accent-color: var(--green); }
+
+.workspace-page .commerce-filters,
+.workspace-page .filter-popover,
+.workspace-page .notification-dropdown,
+.workspace-page .notification-bell,
+.workspace-page .pricing-period-toggle,
+.workspace-page .filter-button {
+  background: var(--white);
+  border-color: var(--line);
+  color: var(--ink);
+}
+.workspace-page .commerce-filters a.active,
+.workspace-page .pricing-period-toggle input:checked + span,
+.workspace-page .availability-toggle button.active { background: var(--green); color: var(--lime); }
+.workspace-page .notification-dropdown-item:hover,
+.workspace-page .notification-dropdown-item:focus-visible,
+.workspace-page .notification-dropdown-item.unread,
+.workspace-page .notification-view-all { background: #f1dfbb; }
+
+.workspace-page table { background: var(--white); color: var(--ink); }
+.workspace-page th { background: #ecd5a8; color: var(--ink); }
+.workspace-page td,
+.workspace-page th { border-color: var(--line); }
+
+@media (max-width: 760px) {
+  body:not(.landing-page) { background-attachment: scroll; }
+  body:not(.landing-page) .public-header,
+  body:not(.landing-page) .public-footer { width: calc(100vw - 24px); }
+  .auth-page .auth-layout { width: calc(100vw - 24px); margin: 18px auto 34px; padding: 22px 16px; border-radius: 24px; }
+  .workspace-page .workspace-body { background: rgba(249, 231, 194, .92); }
+  .workspace-page .page-heading { padding: 22px 18px; border-radius: 18px; }
+}
