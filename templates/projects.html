@@ -1,1 +1,39 @@
-{% extends 'workspace.html' %}{% block workspace_content %}<div class="page-heading"><div><p class="eyebrow">Your workspace</p><h1>{{ title }}</h1></div>{% if user.role == 'client' %}<a class="button" href="/client/new-order/">Plan a new edit +</a>{% endif %}</div>{% if user.role == 'admin' %}<nav aria-label="Project queues" class="commerce-filters"><a href="/admin/projects/?queue=all">All</a><a href="/admin/projects/?queue=unassigned">Unassigned</a><a href="/admin/projects/?queue=active">Active</a><a href="/admin/projects/?queue=review">Review</a><a href="/admin/projects/?queue=revision">Revision</a><a href="/admin/projects/?queue=completed">Completed</a></nav>{% endif %}<section class="panel{% if user.role == 'client' %} client-projects-panel{% endif %}"{% if user.role == 'client' %} data-project-filter{% endif %}>{% if user.role == 'client' %}<div class="project-filter-toolbar"><label for="project-status-filter">Filter by status</label><select id="project-status-filter" data-project-status-filter>{% for value, label in project_status_filters %}<option value="{{ value }}">{{ label }}</option>{% endfor %}</select></div><p class="project-filter-summary" data-project-filter-summary role="status" aria-live="polite"></p>{% endif %}{% include 'partials/project_list.html' %}{% if user.role == 'client' %}<div class="empty-state project-filter-empty" data-project-filter-empty hidden><div class="empty-icon" aria-hidden="true">⌕</div><h3>No projects found with this status.</h3><p>Choose another status to see your other projects.</p></div>{% endif %}</section>{% endblock %}
+{% extends 'workspace.html' %}
+{% block workspace_content %}
+<div class="page-heading">
+  <div>
+    {% if user.role != 'editor' %}<p class="eyebrow">Your workspace</p>{% endif %}
+    <h1>{{ title }}</h1>
+  </div>
+  {% if user.role == 'client' %}<a class="button" href="/client/new-order/">Plan a new edit +</a>{% endif %}
+</div>
+{% if user.role == 'admin' %}
+<nav aria-label="Project queues" class="commerce-filters">
+  <a href="/admin/projects/?queue=all">All</a>
+  <a href="/admin/projects/?queue=unassigned">Unassigned</a>
+  <a href="/admin/projects/?queue=active">Active</a>
+  <a href="/admin/projects/?queue=review">Review</a>
+  <a href="/admin/projects/?queue=revision">Revision</a>
+  <a href="/admin/projects/?queue=completed">Completed</a>
+</nav>
+{% endif %}
+<section class="panel{% if user.role == 'client' %} client-projects-panel{% endif %}"{% if user.role == 'client' %} data-project-filter{% endif %}>
+  {% if user.role == 'client' %}
+  <div class="project-filter-toolbar">
+    <label for="project-status-filter">Filter by status</label>
+    <select id="project-status-filter" data-project-status-filter>
+      {% for value, label in project_status_filters %}<option value="{{ value }}">{{ label }}</option>{% endfor %}
+    </select>
+  </div>
+  <p class="project-filter-summary" data-project-filter-summary role="status" aria-live="polite"></p>
+  {% endif %}
+  {% include 'partials/project_list.html' %}
+  {% if user.role == 'client' %}
+  <div class="empty-state project-filter-empty" data-project-filter-empty hidden>
+    <div class="empty-icon" aria-hidden="true">⌕</div>
+    <h3>No projects found with this status.</h3>
+    <p>Choose another status to see your other projects.</p>
+  </div>
+  {% endif %}
+</section>
+{% endblock %}

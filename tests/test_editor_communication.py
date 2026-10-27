@@ -68,7 +68,30 @@ class EditorCommunicationTests(TestCase):
         self.assertNotContains(page, '>Calls<span', html=False)
         self.assertNotContains(page, '>Wallet<span', html=False)
         self.assertContains(page, '>Project Communication<span', html=False)
+        self.assertNotContains(page, "Private workspace")
+        self.assertNotContains(
+            page,
+            "Your assignments, deadlines, and creative briefs in one place.",
+        )
+        self.assertNotContains(page, "✅ Available")
         self.assertEqual(self.client.get("/editor/calls/").status_code, 200)
+
+    def test_editor_static_workspace_placeholders_are_removed(self):
+        projects_page = self.client.get("/editor/projects/")
+        self.assertNotContains(projects_page, "Your workspace")
+
+        self.client.force_login(self.editors[2].user)
+        communication_page = self.client.get("/editor/communication/")
+        self.assertContains(communication_page, "No ongoing assigned projects")
+        self.assertContains(communication_page, "No completed assigned projects")
+        self.assertNotContains(
+            communication_page,
+            "Paid projects currently assigned to you will appear here.",
+        )
+        self.assertNotContains(
+            communication_page,
+            "Completed conversations for projects still assigned to you will remain here as read-only history.",
+        )
 
     def test_list_contains_only_current_paid_assignments_grouped_by_status(self):
         response = self.client.get("/editor/communication/")

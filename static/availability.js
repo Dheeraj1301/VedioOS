@@ -10,7 +10,10 @@
       node.classList.toggle('is-available', state.status === 'available');
       node.classList.toggle('is-busy', state.status === 'busy');
       node.classList.toggle('is-not_available', state.status === 'not_available');
-      node.textContent = `${state.icon} ${state.summary}`;
+      const icon = state.status === 'available' && node.hasAttribute('data-hide-available-icon')
+        ? ''
+        : state.icon;
+      node.textContent = [icon, state.summary].filter(Boolean).join(' ');
     });
     document.querySelectorAll('[data-active-project-count]').forEach(node => {
       node.textContent = String(state.active_count);

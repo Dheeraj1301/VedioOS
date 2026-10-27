@@ -31,6 +31,6 @@ class BrandingTests(TestCase):
         response = self.client.get("/client/")
 
         self.assert_brio_branding(response)
-        self.assertContains(response, 'class="workspace-page"', html=False)
+        self.assertContains(response, 'class="workspace-page workspace-role-client"', html=False)
         self.assertIsNotNone(finders.find("images/brio-logo.jpeg"))
         self.assertIsNotNone(finders.find("brio-theme.css"))

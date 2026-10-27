@@ -322,7 +322,12 @@ class AssignmentTests(TestCase):
         self.client.force_login(editor.user)
         page = self.client.get("/editor/availability/")
         self.assertContains(page, "Your availability.")
-        self.assertContains(page, "✅ Available — no active projects")
+        self.assertContains(page, "Available — no active projects")
+        self.assertNotContains(page, "✅ Available")
+        self.assertNotContains(
+            page,
+            "Assigned, editing, review, and revision projects count as active.",
+        )
         self.assertContains(page, "Request Not Available")
         invalid = self.client.post(
             "/editor/availability/", {"status": "not_available", "reason": ""}

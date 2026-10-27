@@ -1,5 +1,5 @@
 {% extends 'workspace.html' %}{% load static %}
-{% block page_scripts %}<script defer src="{% static 'availability.js' %}?v=20261024-1"></script>{% endblock %}
+{% block page_scripts %}<script defer src="{% static 'availability.js' %}?v=20261027-1"></script>{% endblock %}
 {% block workspace_content %}
 <div class="page-heading">
   <div>
@@ -13,13 +13,11 @@
   <p
     class="availability-badge is-{{ availability.status }}"
     data-availability-status
+    data-hide-available-icon
     data-availability-endpoint="{% url 'editor_availability_api' %}"
     role="status"
     aria-live="polite"
-  >{{ availability.icon }} {{ availability.summary }}</p>
-  <p class="muted availability-explanation">
-    Assigned, editing, review, and revision projects count as active. Completed and cancelled projects do not.
-  </p>
+  >{% if availability.status != 'available' %}{{ availability.icon }} {% endif %}{{ availability.summary }}</p>
   <p class="availability-refresh-note">This status refreshes automatically while this page is open.</p>
 </section>
 <section class="panel availability-panel">

@@ -1,19 +1,20 @@
 {% extends 'workspace.html' %}{% load static %}
-{% block page_scripts %}<script defer src="{% static 'availability.js' %}?v=20261024-1"></script>{% endblock %}
+{% block page_scripts %}<script defer src="{% static 'availability.js' %}?v=20261027-1"></script>{% endblock %}
 {% block workspace_content %}
 <div class="page-heading">
   <div>
     <p class="eyebrow">Your editing studio</p>
     <h1>Ready for your next edit.</h1>
-    <p class="muted">Editor ID: {{ editor.login_id }} · Your assignments, deadlines, and creative briefs in one place.</p>
+    <p class="muted">Editor ID: {{ editor.login_id }}</p>
   </div>
   <span
     class="availability-badge compact is-{{ availability.status }}"
     data-availability-status
+    data-hide-available-icon
     data-availability-endpoint="{% url 'editor_availability_api' %}"
     role="status"
     aria-live="polite"
-  >{{ availability.icon }} {{ availability.summary }}</span>
+  >{% if availability.status != 'available' %}{{ availability.icon }} {% endif %}{{ availability.summary }}</span>
 </div>
 {% if not editor.approved %}
   <div class="notice"><strong>Your editor account is awaiting approval.</strong><br>Our team will review your profile and assign your proficiency level. Availability is calculated automatically from active projects.</div>
