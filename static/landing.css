@@ -101,6 +101,40 @@
 .landing-page .playhead { background: var(--landing-rust-deep); }
 .landing-page .faq details { border-color: rgba(159, 53, 24, .25); }
 
+.landing-page main > .split-section:not(#plans) {
+  grid-template-columns: minmax(330px, .9fr) minmax(0, 1.1fr);
+  gap: clamp(36px, 6vw, 88px);
+  align-items: stretch;
+}
+.landing-page main > .split-section:not(#plans) > div:first-child {
+  display: grid;
+  align-content: start;
+  min-height: 640px;
+  padding: clamp(32px, 4vw, 56px);
+  border: 6px solid var(--landing-beige-soft);
+  border-radius: 24px;
+  background:
+    linear-gradient(180deg, rgba(74, 15, 6, .5) 0%, rgba(74, 15, 6, .1) 42%, rgba(74, 15, 6, 0) 68%),
+    url('/static/images/brio-recurring-leopard.jpg') center / cover no-repeat;
+  box-shadow: 0 24px 55px rgba(81, 20, 7, .22);
+  overflow: hidden;
+}
+.landing-page main > .split-section:not(#plans) > div:first-child .eyebrow {
+  margin-bottom: 20px;
+  color: var(--landing-beige-soft);
+  text-shadow: 0 2px 18px rgba(48, 8, 2, .5);
+}
+.landing-page main > .split-section:not(#plans) > div:first-child h2 {
+  max-width: 410px;
+  color: var(--landing-beige-soft) !important;
+  font-size: clamp(2.9rem, 3.5vw, 3.3rem);
+  line-height: .98;
+  text-shadow: 0 3px 24px rgba(48, 8, 2, .48);
+}
+.landing-page main > .split-section:not(#plans) > div:last-child {
+  align-self: center;
+}
+
 .landing-page main > .closing-cta {
   display: grid;
   place-content: center;
@@ -180,6 +214,8 @@
   .landing-page .service-grid,
   .landing-page .split-section { grid-template-columns: 1fr; }
   .landing-page .public-footer { width: calc(100vw - 28px); }
+  .landing-page main > .split-section:not(#plans) { grid-template-columns: 1fr; }
+  .landing-page main > .split-section:not(#plans) > div:first-child { min-height: 720px; background-position: center 42%; }
 }
 
 @media (max-width: 760px) {
@@ -190,6 +226,8 @@
   .landing-page .public-footer { align-items: flex-start; flex-direction: column; gap: 10px; }
   .landing-page main > .closing-cta { min-height: 72vh; padding: 58px 28px; border-width: 7px; background-position: 58% center; }
   .landing-page .closing-cta h2 { font-size: clamp(3rem, 15vw, 4.7rem); }
+  .landing-page main > .split-section:not(#plans) > div:first-child { min-height: 560px; padding: 30px 24px; border-width: 4px; background-position: center 40%; }
+  .landing-page main > .split-section:not(#plans) > div:first-child h2 { font-size: clamp(2.8rem, 13vw, 4.2rem); }
 }
 
 @media (prefers-reduced-motion: reduce) {
