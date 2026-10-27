@@ -101,6 +101,60 @@
 .landing-page .playhead { background: var(--landing-rust-deep); }
 .landing-page .faq details { border-color: rgba(159, 53, 24, .25); }
 
+.landing-page main > .closing-cta {
+  display: grid;
+  place-content: center;
+  min-height: min(82vh, 820px);
+  padding: clamp(48px, 8vw, 120px);
+  text-align: left;
+  background:
+    linear-gradient(90deg, rgba(40, 10, 3, .86) 0%, rgba(63, 17, 6, .7) 42%, rgba(63, 17, 6, .2) 74%, rgba(40, 10, 3, .36) 100%),
+    url('/static/images/brio-train-cta.png') center / cover no-repeat;
+  border-color: rgba(247, 234, 208, .3);
+  box-shadow: 0 -8px 24px rgba(56, 12, 4, .18), 0 34px 85px rgba(38, 6, 2, .42);
+}
+.landing-page .closing-cta::after {
+  content: "";
+  position: absolute;
+  inset: 18px;
+  z-index: -1;
+  border: 1px solid rgba(247, 234, 208, .2);
+  border-radius: calc(clamp(22px, 2.5vw, 36px) - 8px);
+  pointer-events: none;
+}
+.landing-page .closing-cta .eyebrow {
+  width: fit-content;
+  margin-bottom: 28px;
+  padding: 9px 14px;
+  border: 1px solid rgba(247, 234, 208, .34);
+  border-radius: 999px;
+  background: rgba(62, 18, 7, .38);
+  color: var(--landing-beige-soft);
+  backdrop-filter: blur(8px);
+}
+.landing-page .closing-cta h2 {
+  max-width: 850px;
+  margin-bottom: 38px;
+  color: var(--landing-beige-soft) !important;
+  font-size: clamp(3.6rem, 8vw, 7.5rem);
+  line-height: .94;
+  text-shadow: 0 3px 28px rgba(35, 6, 1, .42);
+}
+.landing-page .closing-cta h2 em { color: var(--landing-beige); }
+.landing-page .closing-cta .button {
+  justify-self: start;
+  min-width: min(100%, 270px);
+  background: var(--landing-beige-soft);
+  color: var(--landing-rust-deep);
+  border-color: var(--landing-beige-soft);
+  box-shadow: 0 16px 38px rgba(35, 6, 1, .3);
+}
+.landing-page .closing-cta .button:hover {
+  background: transparent;
+  color: var(--landing-beige-soft);
+  border-color: var(--landing-beige-soft);
+}
+
 .landing-page .public-footer {
   position: relative;
   z-index: 10;
@@ -134,6 +188,8 @@
   .landing-page main > .hero,
   .landing-page main > .section { position: relative; top: auto; margin-bottom: 22px; border-radius: 22px; }
   .landing-page .public-footer { align-items: flex-start; flex-direction: column; gap: 10px; }
+  .landing-page main > .closing-cta { min-height: 72vh; padding: 58px 28px; background-position: 58% center; }
+  .landing-page .closing-cta h2 { font-size: clamp(3rem, 15vw, 4.7rem); }
 }
 
 @media (prefers-reduced-motion: reduce) {

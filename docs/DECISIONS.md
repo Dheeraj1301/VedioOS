@@ -6,7 +6,7 @@ Status: approved and implemented
 
 Owner / source of explicit decision: Hamsa supplied the orange abstract background and requested beige content plates with rusty-orange wording as part of the immersive stacking-parallax redesign.
 
-Decision: the public landing route alone uses the supplied orange silk visual as a fixed, cover-scaled environmental background. Existing landing sections become independently layered beige editorial plates with rust-orange typography and accents. Desktop and tablet use reversible CSS sticky stacking; mobile and reduced-motion experiences use ordinary document flow. Existing content, admin controls, navigation destinations, buttons, forms, hero-video behavior, authentication, and backend integrations remain unchanged.
+Decision: the public landing route alone uses the supplied orange silk visual as a fixed, cover-scaled environmental background. Existing landing sections become independently layered beige editorial plates with rust-orange typography and accents. The closing CTA is the intentional exception: it uses the owner-supplied moving-train image as a cinematic full-panel background with accessible live beige copy and the existing registration action. Desktop and tablet use reversible CSS sticky stacking; mobile and reduced-motion experiences use ordinary document flow. Existing admin controls, navigation destinations, buttons, forms, hero-video behavior, authentication, and backend integrations remain unchanged.
 
 Do not substitute invented production values for these decisions. Development fixtures may use clearly labeled demo settings isolated from production. Resolve only the decisions needed for the current phase; unrelated open questions should not halt useful work.
 
