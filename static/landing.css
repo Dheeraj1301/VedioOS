@@ -110,8 +110,8 @@
   background:
     linear-gradient(90deg, rgba(40, 10, 3, .86) 0%, rgba(63, 17, 6, .7) 42%, rgba(63, 17, 6, .2) 74%, rgba(40, 10, 3, .36) 100%),
     url('/static/images/brio-train-cta.png') center / cover no-repeat;
-  border-color: rgba(247, 234, 208, .3);
-  box-shadow: 0 -8px 24px rgba(56, 12, 4, .18), 0 34px 85px rgba(38, 6, 2, .42);
+  border: 12px solid var(--landing-beige);
+  box-shadow: 0 0 0 1px rgba(117, 35, 15, .3), 0 -8px 24px rgba(56, 12, 4, .18), 0 34px 85px rgba(38, 6, 2, .42);
 }
 .landing-page .closing-cta::after {
   content: "";
@@ -188,7 +188,7 @@
   .landing-page main > .hero,
   .landing-page main > .section { position: relative; top: auto; margin-bottom: 22px; border-radius: 22px; }
   .landing-page .public-footer { align-items: flex-start; flex-direction: column; gap: 10px; }
-  .landing-page main > .closing-cta { min-height: 72vh; padding: 58px 28px; background-position: 58% center; }
+  .landing-page main > .closing-cta { min-height: 72vh; padding: 58px 28px; border-width: 7px; background-position: 58% center; }
   .landing-page .closing-cta h2 { font-size: clamp(3rem, 15vw, 4.7rem); }
 }
 
