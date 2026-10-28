@@ -502,6 +502,14 @@ Owner / source of explicit decision: Hamsa requested that Remove on Edit Brief a
 
 Decision: for an owning Client's unversioned source/reference/asset on a pending unpaid project, removal deletes every storage version and delete marker for the exact private object key before changing the file metadata to the audited `removed` tombstone state. The tombstone remains for attribution and retry safety but is excluded from active project-file queries. If private storage cannot confirm deletion, the endpoint returns a specific retryable error and leaves the metadata active; paid projects, versioned deliverables, unsupported categories and non-owners remain denied.
 
+## 2026-10-28 — Remove landing How It Works links
+
+Status: approved and implemented
+
+Owner / source of explicit decision: Hamsa marked the public-header How it works link and hero See how it works link for removal.
+
+Decision: remove only those two anchors from the landing page. Preserve the underlying landing section, Admin-managed copy, Services, login and registration controls, other pages' previously approved navigation, and all backend behavior.
+
 ## 2026-10-28 — Editor sidebar section label
 
 Status: approved and implemented

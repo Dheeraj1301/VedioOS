@@ -71,7 +71,9 @@ class LandingPageTests(TestCase):
         page = self.client.get("/")
         self.assertContains(page, "A safer &lt;script&gt;alert(1)&lt;/script&gt; edit.")
         self.assertContains(page, 'href="/register/"')
-        self.assertContains(page, 'href="#how-it-works"')
+        self.assertNotContains(page, 'href="#how-it-works"')
+        self.assertNotContains(page, 'href="/#how-it-works"')
+        self.assertContains(page, 'href="/#services"')
 
     @patch("core.landing_views.storage_client")
     def test_admin_can_upload_private_looping_mp4(self, storage_client):
