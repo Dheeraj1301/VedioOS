@@ -43,3 +43,4 @@ img,video,svg{max-width:100%}img,video{height:auto}.panel,.detail-panel,.form-pa
 
 /* Keep native file inputs block-level after the compact order-card overrides. */
 .clip-upload-box>input[type=file],.inspiration-upload-box>input[type=file],.standard-inspiration-upload-box>input[type=file]{display:block}
+.order-choice-select input[type=radio],.custom-choice input[type=radio]{min-height:18px}
