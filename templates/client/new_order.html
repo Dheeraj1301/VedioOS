@@ -8,8 +8,8 @@
   <section class="order-choice-fieldset" aria-labelledby="editing-options-title"><div class="order-choice-header"><h2 id="editing-options-title">Choose one of four editing options</h2>
     <div class="pricing-period-toggle" role="radiogroup" aria-label="Plan pricing period">
       <label><input type="radio" name="pricing_period" value="per_reel" checked><span>Per Reel</span></label>
-      <button class="pricing-period-locked" type="button" aria-disabled="true" aria-describedby="pricing-period-upcoming" data-pricing-period-locked><span aria-hidden="true">&#128274;</span> Monthly <small>Upcoming</small></button>
-      <button class="pricing-period-locked" type="button" aria-disabled="true" aria-describedby="pricing-period-upcoming" data-pricing-period-locked><span aria-hidden="true">&#128274;</span> Yearly <small>Upcoming</small></button>
+      <button class="pricing-period-locked" type="button" aria-disabled="true" aria-describedby="pricing-period-upcoming" data-pricing-period-locked>Monthly <small>Upcoming</small></button>
+      <button class="pricing-period-locked" type="button" aria-disabled="true" aria-describedby="pricing-period-upcoming" data-pricing-period-locked>Yearly <small>Upcoming</small></button>
     </div>
   </div>
     <p id="pricing-period-upcoming" class="pricing-period-upcoming" role="status" aria-live="polite" hidden></p>
@@ -23,7 +23,7 @@
           <span class="eyebrow">Plan {{ slot }}</span><strong>{% if plan %}{{ plan.name }}{% else %}Coming soon{% endif %}</strong>
           {% if plan and plan.active %}<span class="plan-price" data-plan-price>{% if plan.price_minor %}{{ plan.price_minor|money:plan.currency }}{% else %}Coming soon{% endif %}</span><small class="plan-period-label" data-plan-period-label>{% if plan.price_minor %}/reel{% endif %}</small>{% else %}<span class="plan-price" data-plan-price>Coming soon</span><small class="plan-period-label" data-plan-period-label></small>{% endif %}
         </label>
-        {% if plan and plan.active and plan.features %}<details class="plan-feature-disclosure"><summary>{{ plan.features.0|default:"Plan details" }} <span aria-hidden="true">+</span></summary><div><strong>Included features</strong><ul>{% for feature in plan.features %}<li>{{ feature }}</li>{% endfor %}</ul></div></details>{% elif not plan or not plan.active %}<small class="plan-card-summary">The team has not published this plan yet.</small>{% endif %}
+        {% if plan and plan.active and plan.features %}<details class="plan-feature-disclosure"><summary><span>{{ plan.features.0|default:"Plan details" }}</span><span class="more-info">More info <svg viewBox="0 0 20 20" aria-hidden="true"><path d="m5 7.5 5 5 5-5"/></svg></span></summary><div><strong>Included features</strong><ul>{% for feature in plan.features %}<li>{{ feature }}</li>{% endfor %}</ul></div></details>{% elif not plan or not plan.active %}<small class="plan-card-summary">The team has not published this plan yet.</small>{% endif %}
       </div>
       {% endfor %}
       <label class="order-choice-card custom-choice"><input type="radio" name="order_choice" value="custom" required {% if selected_choice == 'custom' %}checked{% endif %}><span class="eyebrow">Custom</span><strong>Customize my edit</strong><small>Select the exact editing direction below. The server calculates a quote only from configured prices.</small></label>

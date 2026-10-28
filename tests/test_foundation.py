@@ -1207,6 +1207,8 @@ class FoundationTests(TestCase):
         self.assertContains(form_page, "Monthly")
         self.assertContains(form_page, "Yearly")
         self.assertContains(form_page, "Upcoming", count=2)
+        self.assertContains(form_page, "More info")
+        self.assertNotContains(form_page, "&#128274;", html=False)
         self.assertContains(form_page, 'value="per_reel" checked', html=False)
         self.assertContains(form_page, 'data-price-per-reel="₹100.00"', html=False)
         self.assertNotContains(form_page, 'value="monthly"', html=False)

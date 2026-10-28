@@ -1,5 +1,13 @@
 # Open decisions and decision record
 
+## 2026-10-27 — Minimal workspace navigation controls
+
+Status: approved and implemented
+
+Owner / source of explicit decision: Hamsa requested removal of the beige workspace-header plate while retaining its two existing actions as independent visual controls.
+
+Decision: the existing history-back action uses a compact curved-arrow SVG without a text label. The existing notification action uses an accessible yellow bell SVG with a restrained heartbeat glow and a reduced-motion fallback. No navigation destination or notification behavior changes. Plan details use a “More info” label and downward chevron within the same beige card surface, without internal border boxes.
+
 ## 2026-10-27 — Workspace background and plan-details disclosure
 
 Status: approved and implemented
