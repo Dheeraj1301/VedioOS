@@ -19,6 +19,7 @@ class RegistrationForm(UserCreationForm):
             "Use at least 8 characters with an uppercase letter, lowercase letter, "
             "number, and special character."
         )
+        self.fields["password2"].help_text = ""
 
     class Meta:
         model = User

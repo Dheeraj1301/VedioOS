@@ -80,6 +80,10 @@ class FoundationTests(TestCase):
 
     def test_registration_shows_one_concise_password_instruction(self):
         response = Browser().get("/register/")
+        self.assertContains(response, "Make room for your next idea.")
+        self.assertContains(response, "Password confirmation")
+        self.assertContains(response, 'name="password2"', html=False)
+        self.assertContains(response, 'type="submit">Create account')
         self.assertContains(
             response,
             "Use at least 8 characters with an uppercase letter, lowercase letter, "
@@ -89,6 +93,18 @@ class FoundationTests(TestCase):
         self.assertNotContains(response, "commonly used password")
         self.assertNotContains(response, "entirely numeric")
         self.assertNotContains(response, "too similar to your other personal information")
+        for removed_copy in (
+            "Your creative space",
+            "◈",
+            "Original quality.",
+            "Private by design.",
+            "Human, always.",
+            "Create your client account. Your footage stays private.",
+            "How it works",
+            "Services",
+            "Enter the same password as before, for verification.",
+        ):
+            self.assertNotContains(response, removed_copy)
 
     def test_public_auth_header_shows_only_the_alternate_action(self):
         login = Browser().get("/login/")

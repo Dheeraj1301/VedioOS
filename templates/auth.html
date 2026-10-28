@@ -4,10 +4,7 @@
 <div class="auth-layout{% if mode == 'editor_login' %} editor-auth-layout{% endif %}">
   {% if mode != 'editor_login' %}
   <section class="auth-intro">
-    {% if mode == 'register' %}<p class="eyebrow">Your creative space</p>{% endif %}
     <h1>{{ title }}</h1>
-    {% if mode == 'register' %}<p>{{ subtitle }}</p>{% endif %}
-    {% if mode == 'register' %}<div class="auth-note"><span>◈</span><p>Original quality.<br>Private by design.<br>Human, always.</p></div>{% endif %}
   </section>
   {% endif %}
   <section class="auth-card">

@@ -502,6 +502,14 @@ Owner / source of explicit decision: Hamsa requested that Remove on Edit Brief a
 
 Decision: for an owning Client's unversioned source/reference/asset on a pending unpaid project, removal deletes every storage version and delete marker for the exact private object key before changing the file metadata to the audited `removed` tombstone state. The tombstone remains for attribution and retry safety but is excluded from active project-file queries. If private storage cannot confirm deletion, the endpoint returns a specific retryable error and leaves the metadata active; paid projects, versioned deliverables, unsupported categories and non-owners remain denied.
 
+## 2026-10-28 — Client Sign-Up presentation cleanup
+
+Status: approved and implemented
+
+Owner / source of explicit decision: Hamsa requested removal of specific Sign-Up-only static copy while preserving every field, control and registration workflow.
+
+Decision: on `/register/` only, remove the creative-space eyebrow, subtitle, diamond/value proposition and How it works / Services header links. Suppress only Django's static password-confirmation helper sentence while retaining the Password confirmation label, input, visibility control, validation and errors. Preserve “Make room for your next idea.”, all four fields, Create account, the Log in link, authentication pages, registration logic, API calls and routing.
+
 ## 2026-10-28 — Landing and login decorative-copy cleanup
 
 Status: approved and implemented
