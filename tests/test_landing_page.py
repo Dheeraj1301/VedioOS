@@ -50,6 +50,12 @@ class LandingPageTests(TestCase):
         self.assertContains(response, "Does AI edit my video?")
         self.assertContains(response, "Contact Us")
         self.assertContains(response, "open Support in your workspace")
+        self.assertContains(response, 'href="/#services"')
+        self.assertNotContains(response, "Original quality preserved")
+        self.assertNotContains(response, "Your files stay private")
+        self.assertNotContains(response, "HUMAN EDITED")
+        self.assertNotContains(response, "Human craft. Every frame.")
+        self.assertNotContains(response, 'id="how-it-works"')
         self.assertNotContains(response, "landing-hero-video")
 
     def test_only_admin_can_open_landing_controls(self):

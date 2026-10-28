@@ -502,6 +502,14 @@ Owner / source of explicit decision: Hamsa requested that Remove on Edit Brief a
 
 Decision: for an owning Client's unversioned source/reference/asset on a pending unpaid project, removal deletes every storage version and delete marker for the exact private object key before changing the file metadata to the audited `removed` tombstone state. The tombstone remains for attribution and retry safety but is excluded from active project-file queries. If private storage cannot confirm deletion, the endpoint returns a specific retryable error and leaves the metadata active; paid projects, versioned deliverables, unsupported categories and non-owners remain denied.
 
+## 2026-10-28 — Landing and login decorative-copy cleanup
+
+Status: approved and implemented
+
+Owner / source of explicit decision: Hamsa requested removal of specific decorative copy from Landing and both Login pages while retaining Landing Services and all workflows.
+
+Decision: stop rendering the Landing hero's original-quality/private-files footnote and Human Edited frame label; remove the previously hidden How It Works section from the public landing template; and omit the footer tagline on Landing, Client Login and Editor Sign-In. Keep Landing Services exactly as rendered. Keep both login headers free of How it works and Services. Preserve registration, dashboard shells, authentication, routing and functional controls.
+
 ## 2026-10-28 — Client Login presentation cleanup
 
 Status: approved and implemented

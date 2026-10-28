@@ -269,10 +269,14 @@ class FoundationTests(TestCase):
             "Your creative space",
             "◈",
             "Original quality.",
+            "Original quality preserved",
+            "Your files stay private",
+            "HUMAN EDITED",
             "Private by design.",
             "Human, always.",
             "How it works",
             "Services",
+            "Human craft. Every frame.",
         ):
             self.assertNotContains(response, removed_copy)
         self.assertContains(response, 'type="submit">Editor Sign In')
@@ -286,10 +290,14 @@ class FoundationTests(TestCase):
             "Your creative space",
             "◈",
             "Original quality.",
+            "Original quality preserved",
+            "Your files stay private",
+            "HUMAN EDITED",
             "Private by design.",
             "Human, always.",
             "How it works",
             "Services",
+            "Human craft. Every frame.",
         ):
             self.assertNotContains(client_sign_in, removed_copy)
 
