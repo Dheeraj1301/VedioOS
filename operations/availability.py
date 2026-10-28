@@ -1,4 +1,4 @@
-"""Workload-derived availability plus an explicit Admin-only override."""
+"""Workload-derived availability plus a controlled Not Available override."""
 
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import transaction
@@ -95,6 +95,39 @@ def request_not_available(user, reason):
         {"request": str(request_record.pk), "requested_status": "not_available"},
     )
     return request_record
+
+
+@transaction.atomic
+def clear_own_availability_override(user):
+    """Let an editor clear, but never create, their own Not Available override."""
+
+    if not user or not user.is_active or user.role != "editor":
+        raise PermissionDenied
+    editor = Editor.objects.select_for_update().get(user=user)
+    if editor.availability_override != Editor.AvailabilityOverride.NOT_AVAILABLE:
+        raise ValidationError(
+            "You are already using automatic availability. Submit a request to Admin to become unavailable."
+        )
+    editor.availability_override = Editor.AvailabilityOverride.AUTOMATIC
+    editor.availability_override_reason = ""
+    editor.availability_override_by = None
+    editor.availability_override_at = None
+    editor.save(
+        update_fields=[
+            "availability_override",
+            "availability_override_reason",
+            "availability_override_by",
+            "availability_override_at",
+            "updated_at",
+        ]
+    )
+    audit(
+        user,
+        "editor.availability_override_cleared",
+        editor.pk,
+        {"status": "automatic"},
+    )
+    return editor
 
 
 @transaction.atomic

@@ -17,7 +17,7 @@ try {
   page.on("pageerror", (error) => errors.push(error.message));
 
   await page.goto(`${base}/editor/signin/`);
-  await page.getByLabel("Email or editor ID").fill(fixture.editor.login_id);
+  await page.getByLabel("Email").fill(fixture.editor.login_id);
   await page.locator('input[name="password"]').fill(fixture.password);
   await page.getByRole("button", { name: "Editor Sign In" }).click();
   await page.waitForURL(`${base}/editor/`);

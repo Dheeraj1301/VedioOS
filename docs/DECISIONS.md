@@ -501,3 +501,27 @@ Status: approved and implemented
 Owner / source of explicit decision: Hamsa requested that Remove on Edit Brief and Order Summary delete the uploaded file from both storage and the active project file list.
 
 Decision: for an owning Client's unversioned source/reference/asset on a pending unpaid project, removal deletes every storage version and delete marker for the exact private object key before changing the file metadata to the audited `removed` tombstone state. The tombstone remains for attribution and retry safety but is excluded from active project-file queries. If private storage cannot confirm deletion, the endpoint returns a specific retryable error and leaves the metadata active; paid projects, versioned deliverables, unsupported categories and non-owners remain denied.
+
+## 2026-10-28 — One-way Editor availability control
+
+Status: approved and implemented
+
+Owner / source of explicit decision: Hamsa requested that an Editor may move only from Not Available to Available while continuing to require Admin approval to become Not Available.
+
+Decision: an Editor may clear their own existing Admin-applied Not Available override, returning to authoritative workload-derived availability. They cannot create a Not Available override directly; the existing reason-required request and Admin decision remain the only path into that state. Clearing is transactional, role-protected and audited. If active assignments exist, removing the override correctly reveals Unavailable (Busy), rather than bypassing workload or capacity rules. Admin controls and existing assignments remain unchanged.
+
+## 2026-10-28 — Editor Sign-In presentation cleanup
+
+Status: approved and implemented
+
+Owner / source of explicit decision: Hamsa requested a UI-only cleanup isolated to Editor Sign-In and explicitly required Client Sign-In, authentication and routing to remain unchanged.
+
+Decision: on `/editor/signin/` only, label the unchanged username credential input “Email”; remove the “Welcome back” and “Your creative space” headings, the diamond symbol and its three value statements, and the “How it works” and “Services” header links. Center the remaining sign-in card to close the removed panel's space. Preserve the email/editor-ID credential behavior, password field, Editor Sign In submit action, Forgot password link, role validation, session handling and redirects. Keep `/login/` presentation unchanged.
+
+## 2026-10-28 — Editor workspace copy cleanup
+
+Status: approved and implemented
+
+Owner / source of explicit decision: Hamsa requested removal of the success message shown after submitting a Not Available request, the automatic-status explanation and the “Your editing studio” eyebrow from the Editor workspace.
+
+Decision: after an Editor submits a valid Not Available request, keep the existing redirect, persisted pending request, Admin notification and pending-request panel, but do not enqueue the redundant success flash stating that the request was sent and the current status did not change. Remove the automatic-status explanation from the Availability heading and the “Your editing studio” eyebrow from both the Editor dashboard and Availability heading. Do not change status calculation, request submission, Admin approval or any protected workflow.

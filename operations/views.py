@@ -17,7 +17,11 @@ from core.v1 import attach_v1_status
 from .analytics import operational_analytics
 from .assignment_forms import EditorAvailabilityRequestForm
 from .assignments import EDITOR_SORTS, approve_proficiency, editor_roster, open_workload
-from .availability import availability_state, request_not_available
+from .availability import (
+    availability_state,
+    clear_own_availability_override,
+    request_not_available,
+)
 from .calls import complete_call, schedule_call
 from .clients import CLIENT_STATES, client_page, client_record
 from .features import feature_controls
@@ -117,10 +121,6 @@ def editor_page(request, page):
         if request.method == "POST" and form.is_valid():
             try:
                 request_not_available(request.user, form.cleaned_data["reason"])
-                messages.success(
-                    request,
-                    "Your Not Available request was sent to Admin. Your current status has not changed.",
-                )
                 return redirect("/editor/availability/")
             except ValidationError as exc:
                 form.add_error(None, exc)
@@ -151,6 +151,17 @@ def editor_page(request, page):
 @role_required("editor")
 def editor_availability_api(request):
     return JsonResponse(availability_state(request.user.editor_profile))
+
+
+@require_POST
+@role_required("editor")
+def editor_set_available(request):
+    try:
+        clear_own_availability_override(request.user)
+        messages.success(request, "Your Not Available status was cleared.")
+    except ValidationError as exc:
+        messages.error(request, " ".join(exc.messages))
+    return redirect("/editor/availability/")
 
 
 @role_required("admin")

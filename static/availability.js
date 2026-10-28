@@ -18,6 +18,13 @@
     document.querySelectorAll('[data-active-project-count]').forEach(node => {
       node.textContent = String(state.active_count);
     });
+    document.querySelectorAll('[data-set-available-button]').forEach(button => {
+      const canSetAvailable = state.status === 'not_available';
+      button.disabled = !canSetAvailable;
+      button.textContent = canSetAvailable
+        ? 'Set to Available'
+        : state.status === 'busy' ? 'Unavailable (Busy)' : 'Available';
+    });
   };
 
   const refresh = async () => {

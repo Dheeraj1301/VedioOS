@@ -320,8 +320,15 @@ class AssignmentTests(TestCase):
     def test_availability_request_requires_reason_and_waits_for_admin(self):
         editor = self.editors[0]
         self.client.force_login(editor.user)
+        dashboard = self.client.get("/editor/")
+        self.assertNotContains(dashboard, "Your editing studio")
         page = self.client.get("/editor/availability/")
         self.assertContains(page, "Your availability.")
+        self.assertNotContains(page, "Your editing studio")
+        self.assertNotContains(
+            page,
+            "Workload status is automatic. Only an Admin can apply a Not Available override.",
+        )
         self.assertContains(page, "Available — no active projects")
         self.assertNotContains(page, "✅ Available")
         self.assertNotContains(
@@ -353,6 +360,11 @@ class AssignmentTests(TestCase):
             {"status": "not_available", "reason": "Synthetic vacation request"},
         )
         self.assertEqual(response.status_code, 302)
+        redirected_page = self.client.get(response.url)
+        self.assertNotContains(
+            redirected_page,
+            "Your Not Available request was sent to Admin. Your current status has not changed.",
+        )
         request_record = EditorAvailabilityRequest.objects.get(editor=editor)
         self.assertEqual(request_record.status, EditorAvailabilityRequest.Status.PENDING)
         editor.refresh_from_db()
@@ -390,6 +402,53 @@ class AssignmentTests(TestCase):
         editor.refresh_from_db()
         self.assertEqual(editor.availability_override, "")
         self.assertEqual(availability_state(editor)["status"], "available")
+
+    def test_editor_can_only_clear_own_not_available_override(self):
+        editor = self.editors[0]
+        set_availability_override(
+            self.admin,
+            editor.id,
+            "not_available",
+            "Synthetic approved leave",
+        )
+        self.client.force_login(editor.user)
+        page = self.client.get("/editor/availability/")
+        self.assertContains(page, "Set to Available")
+        self.assertContains(
+            page,
+            "To become unavailable, you must submit a request to the Admin.",
+        )
+
+        response = self.client.post("/editor/availability/set-available/")
+
+        self.assertRedirects(response, "/editor/availability/")
+        editor.refresh_from_db()
+        self.assertEqual(editor.availability_override, "")
+        self.assertEqual(editor.availability_override_reason, "")
+        self.assertIsNone(editor.availability_override_by)
+        self.assertIsNone(editor.availability_override_at)
+        self.assertEqual(availability_state(editor)["status"], "available")
+        self.assertTrue(
+            AuditLog.objects.filter(
+                actor=editor.user,
+                action="editor.availability_override_cleared",
+                target_id=str(editor.id),
+            ).exists()
+        )
+
+        blocked = self.client.post("/editor/availability/set-available/", follow=True)
+        self.assertContains(
+            blocked,
+            "Submit a request to Admin to become unavailable.",
+        )
+        editor.refresh_from_db()
+        self.assertEqual(editor.availability_override, "")
+
+        self.client.force_login(self.client_profile.user)
+        denied = self.client.post("/editor/availability/set-available/")
+        self.assertEqual(denied.status_code, 403)
+        editor.refresh_from_db()
+        self.assertEqual(editor.availability_override, "")
 
     def test_availability_api_remains_workload_derived_without_override(self):
         editor = self.editors[0]

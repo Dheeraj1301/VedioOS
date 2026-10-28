@@ -1,11 +1,9 @@
 {% extends 'workspace.html' %}{% load static %}
-{% block page_scripts %}<script defer src="{% static 'availability.js' %}?v=20261027-1"></script>{% endblock %}
+{% block page_scripts %}<script defer src="{% static 'availability.js' %}?v=20261028-1"></script>{% endblock %}
 {% block workspace_content %}
 <div class="page-heading">
   <div>
-    <p class="eyebrow">Your editing studio</p>
     <h1>Your availability.</h1>
-    <p class="muted">Workload status is automatic. Only an Admin can apply a Not Available override.</p>
   </div>
 </div>
 <section class="panel availability-panel">
@@ -18,6 +16,19 @@
     role="status"
     aria-live="polite"
   >{% if availability.status != 'available' %}{{ availability.icon }} {% endif %}{{ availability.summary }}</p>
+  <div class="editor-self-availability-control" data-availability-toggle>
+    <form method="post" action="{% url 'editor_set_available' %}">
+      {% csrf_token %}
+      <button
+        class="button"
+        type="submit"
+        data-set-available-button
+        aria-describedby="editor-availability-helper"
+        {% if availability.status != 'not_available' %}disabled{% endif %}
+      >{% if availability.status == 'not_available' %}Set to Available{% elif availability.status == 'busy' %}Unavailable (Busy){% else %}Available{% endif %}</button>
+    </form>
+    <p id="editor-availability-helper" class="muted">To become unavailable, you must submit a request to the Admin.</p>
+  </div>
 </section>
 <section class="panel availability-panel">
   <h2>Request Not Available</h2>

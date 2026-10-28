@@ -1,20 +1,28 @@
 {% extends 'base.html' %}
 {% block body_class %}auth-page{% endblock %}
 {% block content %}
-<div class="auth-layout">
+<div class="auth-layout{% if mode == 'editor_login' %} editor-auth-layout{% endif %}">
+  {% if mode != 'editor_login' %}
   <section class="auth-intro">
     <p class="eyebrow">Your creative space</p>
     <h1>{{ title }}</h1>
     {% if mode == 'register' %}<p>{{ subtitle }}</p>{% endif %}
     <div class="auth-note"><span>◈</span><p>Original quality.<br>Private by design.<br>Human, always.</p></div>
   </section>
+  {% endif %}
   <section class="auth-card">
-    <p class="eyebrow">{% if mode == 'register' %}Let's get started{% else %}Welcome back{% endif %}</p>
+    {% if mode != 'editor_login' %}<p class="eyebrow">{% if mode == 'register' %}Let's get started{% else %}Welcome back{% endif %}</p>{% endif %}
     <h2>{% if mode == 'editor_login' %}Editor Sign In{% elif mode == 'login' %}Log in{% else %}Create an account{% endif %}</h2>
     {% for message in messages %}<div class="auth-alert{% if message.tags %} {{ message.tags }}{% endif %}" role="status">{{ message }}</div>{% endfor %}
     <form method="post" class="form-stack">
       {% csrf_token %}
-      {{ form.as_div }}
+      {% if mode == 'editor_login' %}
+        {{ form.non_field_errors }}
+        <div>{{ form.username.errors }}<label for="{{ form.username.id_for_label }}">Email</label>{{ form.username }}</div>
+        <div>{{ form.password.errors }}<label for="{{ form.password.id_for_label }}">{{ form.password.label }}</label>{{ form.password }}</div>
+      {% else %}
+        {{ form.as_div }}
+      {% endif %}
       <button class="button" type="submit">{{ button }}</button>
     </form>
     {% if mode == 'login' %}<p class="auth-switch"><a href="{% url 'password_reset_request' %}">Forgot password?</a></p>{% elif mode == 'editor_login' %}<p class="auth-switch"><a href="{% url 'password_reset_request' %}?from=editor">Forgot password?</a></p>{% endif %}

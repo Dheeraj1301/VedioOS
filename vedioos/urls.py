@@ -104,6 +104,11 @@ urlpatterns = [
     path("api/payments/sandbox/webhook/", commerce.sandbox_webhook),
     path("editor/", ops.editor_dashboard, name="editor_dashboard"),
     path(
+        "editor/availability/set-available/",
+        ops.editor_set_available,
+        name="editor_set_available",
+    ),
+    path(
         "editor/projects/<uuid:project_id>/", views.project_detail, {"area": "editor"}, name="editor_project"
     ),
     path("editor/<str:page>/", ops.editor_page),

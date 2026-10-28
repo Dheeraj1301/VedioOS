@@ -32,12 +32,12 @@ try {
   await editorEntry.click();
   await page.waitForURL(`${base}/editor/signin/`);
 
-  await page.getByLabel("Email or editor ID").fill(fixture.editor.login_id);
+  await page.getByLabel("Email").fill(fixture.editor.login_id);
   await page.locator('input[name="password"]').fill("wrong-password");
   await page.getByRole("button", { name: "Editor Sign In" }).click();
   await page.getByText(/Please enter a correct email and password/).waitFor();
 
-  await page.getByLabel("Email or editor ID").fill(fixture.editor.login_id);
+  await page.getByLabel("Email").fill(fixture.editor.login_id);
   await page.locator('input[name="password"]').fill(fixture.password);
   await page.getByRole("button", { name: "Editor Sign In" }).click();
   await page.waitForURL(`${base}/editor/`);
@@ -51,7 +51,7 @@ try {
   const deniedPage = await deniedContext.newPage();
   deniedPage.on("pageerror", (error) => errors.push(error.message));
   await deniedPage.goto(`${base}/editor/signin/`);
-  await deniedPage.getByLabel("Email or editor ID").fill(fixture.client.email);
+  await deniedPage.getByLabel("Email").fill(fixture.client.email);
   await deniedPage.locator('input[name="password"]').fill(fixture.password);
   await deniedPage.getByRole("button", { name: "Editor Sign In" }).click();
   await deniedPage.getByText(/This sign-in is for editor accounts/).waitFor();
