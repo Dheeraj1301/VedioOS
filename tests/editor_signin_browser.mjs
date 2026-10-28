@@ -13,7 +13,7 @@ async function regularLogin(email, expectedRole) {
   const page = await context.newPage();
   page.on("pageerror", (error) => errors.push(error.message));
   await page.goto(`${base}/login/`);
-  await page.getByLabel("Email or editor ID").fill(email);
+  await page.getByLabel("Email").fill(email);
   await page.locator('input[name="password"]').fill(fixture.password);
   await page.getByRole("button", { name: "Log in" }).click();
   await page.waitForURL(`${base}/${expectedRole}/`);

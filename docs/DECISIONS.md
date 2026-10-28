@@ -502,6 +502,14 @@ Owner / source of explicit decision: Hamsa requested that Remove on Edit Brief a
 
 Decision: for an owning Client's unversioned source/reference/asset on a pending unpaid project, removal deletes every storage version and delete marker for the exact private object key before changing the file metadata to the audited `removed` tombstone state. The tombstone remains for attribution and retry safety but is excluded from active project-file queries. If private storage cannot confirm deletion, the endpoint returns a specific retryable error and leaves the metadata active; paid projects, versioned deliverables, unsupported categories and non-owners remain denied.
 
+## 2026-10-28 — Client Login presentation cleanup
+
+Status: approved and implemented
+
+Owner / source of explicit decision: Hamsa requested a UI-only cleanup isolated to Client Login and explicitly required Editor Sign-In and authentication workflows to remain unchanged.
+
+Decision: on `/login/` only, label the unchanged credential input Email; remove the “Your creative space” eyebrow, diamond/value proposition, and How it works / Services header links. Retain “Back to your next great edit.”, Welcome back, the password field, Log in action, Forgot password link and account-registration link. Preserve `/editor/signin/`, registration, authentication, session handling and redirects unchanged.
+
 ## 2026-10-28 — Remove landing How It Works links
 
 Status: approved and implemented

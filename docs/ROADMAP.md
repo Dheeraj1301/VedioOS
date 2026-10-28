@@ -1,5 +1,7 @@
 # Development pathway
 
+**2026-10-28: Client Login presentation cleanup.** Client Login retains “Back to your next great edit.” and its existing authentication controls while removing the requested credential-label suffix, creative-space eyebrow, diamond/value proposition and How it works / Services navigation. The unchanged credential input is labeled Email. Editor Sign-In, registration, authentication, session handling and routing remain unchanged. Focused rendering and login coverage records the page boundary.
+
 **2026-10-28: landing How It Works links removed.** The landing-page header no longer renders the How it works navigation link, and the landing hero no longer renders the See how it works secondary action. The underlying landing section and all other header/hero controls, destinations and workflows remain unchanged. Other pages retain their previously approved navigation. Focused rendering coverage verifies both removed destinations while retaining Services and registration actions.
 
 **2026-10-28: Editor sidebar section label.** The Editor sidebar now places a small muted EDITOR WORKSPACE label and full-width navigation-area divider in the existing gap between the unchanged BRIO brand and unchanged navigation list. Client and Admin sidebar rendering, navigation inventory, profile controls and routes remain unchanged. Focused rendering coverage records the role boundary.

@@ -8,7 +8,7 @@ const page = await browser.newPage({viewport: {width: 1280, height: 900}});
 
 try {
   await page.goto(`${fixture.base}/login/`);
-  await page.getByLabel('Email or editor ID').fill(fixture.admin_email);
+  await page.getByLabel('Email').fill(fixture.admin_email);
   await page.locator('input[name="password"]').fill(fixture.password);
   await page.getByRole('button', {name: 'Log in'}).click();
   await page.waitForURL(`${fixture.base}/admin/`);
@@ -27,7 +27,7 @@ try {
   await page.getByRole('button', {name: 'Log out'}).click();
   await page.waitForURL(`${fixture.base}/`);
   await page.goto(`${fixture.base}/login/`);
-  await page.getByLabel('Email or editor ID').fill(fixture.email);
+  await page.getByLabel('Email').fill(fixture.email);
   await page.locator('input[name="password"]').fill(fixture.password);
   await page.getByRole('button', {name: 'Log in'}).click();
   await page.waitForURL(`${fixture.base}/client/`);

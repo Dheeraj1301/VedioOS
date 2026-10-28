@@ -25,7 +25,7 @@ try {
 
   await assertBrioPage("/login/");
   await page.screenshot({ path: ".runtime/screenshots/brio-login.png", fullPage: true });
-  await page.getByLabel("Email or editor ID").fill(fixture.client.email);
+  await page.getByLabel("Email").fill(fixture.client.email);
   await page.locator('input[name="password"]').fill(fixture.password);
   await page.getByRole("button", { name: "Log in" }).click();
   await page.waitForURL(`${base}/client/`);

@@ -4,10 +4,10 @@
 <div class="auth-layout{% if mode == 'editor_login' %} editor-auth-layout{% endif %}">
   {% if mode != 'editor_login' %}
   <section class="auth-intro">
-    <p class="eyebrow">Your creative space</p>
+    {% if mode == 'register' %}<p class="eyebrow">Your creative space</p>{% endif %}
     <h1>{{ title }}</h1>
     {% if mode == 'register' %}<p>{{ subtitle }}</p>{% endif %}
-    <div class="auth-note"><span>◈</span><p>Original quality.<br>Private by design.<br>Human, always.</p></div>
+    {% if mode == 'register' %}<div class="auth-note"><span>◈</span><p>Original quality.<br>Private by design.<br>Human, always.</p></div>{% endif %}
   </section>
   {% endif %}
   <section class="auth-card">
@@ -17,6 +17,10 @@
     <form method="post" class="form-stack">
       {% csrf_token %}
       {% if mode == 'editor_login' %}
+        {{ form.non_field_errors }}
+        <div>{{ form.username.errors }}<label for="{{ form.username.id_for_label }}">Email</label>{{ form.username }}</div>
+        <div>{{ form.password.errors }}<label for="{{ form.password.id_for_label }}">{{ form.password.label }}</label>{{ form.password }}</div>
+      {% elif mode == 'login' %}
         {{ form.non_field_errors }}
         <div>{{ form.username.errors }}<label for="{{ form.username.id_for_label }}">Email</label>{{ form.username }}</div>
         <div>{{ form.password.errors }}<label for="{{ form.password.id_for_label }}">{{ form.password.label }}</label>{{ form.password }}</div>

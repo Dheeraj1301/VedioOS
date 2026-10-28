@@ -278,12 +278,20 @@ class FoundationTests(TestCase):
         self.assertContains(response, 'type="submit">Editor Sign In')
 
         client_sign_in = browser.get("/login/")
-        self.assertContains(client_sign_in, "Email or editor ID")
+        self.assertContains(client_sign_in, "Back to your next great edit.")
+        self.assertContains(client_sign_in, '<label for="id_username">Email</label>', html=True)
         self.assertContains(client_sign_in, "Welcome back")
-        self.assertContains(client_sign_in, "Your creative space")
-        self.assertContains(client_sign_in, "Original quality.")
-        self.assertContains(client_sign_in, "How it works")
-        self.assertContains(client_sign_in, "Services")
+        for removed_copy in (
+            "or editor ID",
+            "Your creative space",
+            "◈",
+            "Original quality.",
+            "Private by design.",
+            "Human, always.",
+            "How it works",
+            "Services",
+        ):
+            self.assertNotContains(client_sign_in, removed_copy)
 
         invalid = browser.post(
             "/editor/signin/",
