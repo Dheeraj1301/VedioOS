@@ -502,6 +502,14 @@ Owner / source of explicit decision: Hamsa requested that Remove on Edit Brief a
 
 Decision: for an owning Client's unversioned source/reference/asset on a pending unpaid project, removal deletes every storage version and delete marker for the exact private object key before changing the file metadata to the audited `removed` tombstone state. The tombstone remains for attribution and retry safety but is excluded from active project-file queries. If private storage cannot confirm deletion, the endpoint returns a specific retryable error and leaves the metadata active; paid projects, versioned deliverables, unsupported categories and non-owners remain denied.
 
+## 2026-10-28 — Editor sidebar section label
+
+Status: approved and implemented
+
+Owner / source of explicit decision: Hamsa requested an Editor-only workspace label, spacing and divider between the BRIO logo and navigation.
+
+Decision: render EDITOR WORKSPACE only for the Editor role using the existing workspace-label typography, with a muted full-width navigation-area divider beneath it. Preserve the logo, navigation labels/order/routes, bottom profile controls and all Client/Admin sidebar rendering.
+
 ## 2026-10-28 — One-way Editor availability control
 
 Status: approved and implemented

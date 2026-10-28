@@ -4,6 +4,7 @@
 <div class="workspace">
   <aside class="sidebar">
     <a class="brand" href="/" aria-label="BRIO home"><img class="brand-logo" src="{% static 'images/brio-logo.jpeg' %}" alt="BRIO Logo">BRIO</a>
+    {% if user.role == 'editor' %}<p class="workspace-label editor-workspace-label">EDITOR WORKSPACE</p>{% endif %}
     <nav aria-label="Workspace navigation">
       {% for item in navigation %}<a href="{{ item.url }}" {% if item.active %}class="active" aria-current="page"{% endif %}>{{ item.label }}</a>{% endfor %}
     </nav>
