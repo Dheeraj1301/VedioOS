@@ -21,7 +21,7 @@ document.querySelectorAll('input[type="password"]').forEach(input => {
 
 document.querySelectorAll('.back-button').forEach(button => {
   button.addEventListener('click', () => {
-    if (history.length > 1 && document.referrer.startsWith(location.origin)) history.back();
+    if (history.length > 1) history.back();
     else location.assign('/dashboard/');
   });
 });

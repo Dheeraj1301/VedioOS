@@ -811,3 +811,33 @@ if (notificationForm) {
     if (file) preview.src = URL.createObjectURL(file);
   });
 }
+
+const landingPage = document.body.classList.contains('landing-page');
+if (landingPage) {
+  const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+  const scrollToLandingSection = (hash, behavior = 'smooth') => {
+    if (!hash || hash === '#') {
+      window.scrollTo({top: 0, behavior});
+      return;
+    }
+    const target = document.querySelector(hash);
+    if (!target) return;
+    const header = document.querySelector('.public-header');
+    const top = target.getBoundingClientRect().top + window.scrollY - (header?.offsetHeight || 0) - 24;
+    window.scrollTo({top: Math.max(0, top), behavior});
+  };
+
+  document.querySelectorAll('.public-header a[href^="/#"]').forEach(link => {
+    link.addEventListener('click', event => {
+      const destination = new URL(link.href, window.location.href);
+      if (destination.pathname !== window.location.pathname) return;
+      event.preventDefault();
+      if (window.location.hash !== destination.hash) history.pushState(null, '', destination.hash);
+      scrollToLandingSection(destination.hash, reducedMotion.matches ? 'auto' : 'smooth');
+    });
+  });
+
+  window.addEventListener('popstate', () => {
+    scrollToLandingSection(window.location.hash, reducedMotion.matches ? 'auto' : 'smooth');
+  });
+}

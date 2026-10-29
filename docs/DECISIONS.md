@@ -1,5 +1,13 @@
 # Open decisions and decision record
 
+## 2026-10-28 — Landing glass shell, direct section navigation and transparent logo
+
+Status: approved and implemented
+
+Owner / source of explicit decision: Hamsa supplied a transparent BRIO SVG and requested a glass landing header/footer, complete panels before stacking, direct Services navigation in either scroll direction, and in-page Back behavior aligned with browser history.
+
+Decision: the shared BRIO image uses the supplied transparent SVG without changing the wordmark or control inventory. Landing header/footer surfaces use translucent rust glass with beige contrast. Sticky stacking remains for viewports tall enough to show it safely; short desktop/tablet viewports use normal document flow so the complete frame is reachable before the next section. Same-page landing links add one history entry and scroll directly to the requested section, while the existing in-page Back control delegates to the same browser history stack. No backend, authentication or commercial behavior changes. Landing video metadata and signed routing remain unchanged; a saved object that exists only in a teammate's local private store still requires that media object to be transferred through the approved private storage process.
+
 ## 2026-10-27 — Minimal workspace navigation controls
 
 Status: approved and implemented
