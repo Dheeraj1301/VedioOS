@@ -36,3 +36,22 @@ class BrandingTests(TestCase):
         self.assertContains(response, 'class="workspace-page workspace-role-client"', html=False)
         self.assertIsNotNone(finders.find("images/brio-logo-transparent.svg"))
         self.assertIsNotNone(finders.find("brio-theme.css"))
+
+    def test_client_login_uses_its_overlay_layout_only(self):
+        client_login = self.client.get("/login/")
+        registration = self.client.get("/register/")
+        editor_login = self.client.get("/editor/signin/")
+
+        self.assertContains(
+            client_login,
+            'class="auth-layout client-login-layout"',
+            html=False,
+        )
+        self.assertContains(client_login, "Back to your next great edit.")
+        self.assertNotContains(registration, "client-login-layout")
+        self.assertNotContains(editor_login, "client-login-layout")
+        self.assertContains(
+            editor_login,
+            'class="auth-layout editor-auth-layout"',
+            html=False,
+        )

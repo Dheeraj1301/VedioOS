@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% block body_class %}auth-page{% endblock %}
 {% block content %}
-<div class="auth-layout{% if mode == 'editor_login' %} editor-auth-layout{% endif %}">
+<div class="auth-layout{% if mode == 'login' %} client-login-layout{% elif mode == 'editor_login' %} editor-auth-layout{% endif %}">
   {% if mode != 'editor_login' %}
   <section class="auth-intro">
     <h1>{{ title }}</h1>

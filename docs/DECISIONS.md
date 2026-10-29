@@ -573,3 +573,11 @@ Status: approved and implemented
 Owner / source of explicit decision: Hamsa requested removal of the success message shown after submitting a Not Available request, the automatic-status explanation and the “Your editing studio” eyebrow from the Editor workspace.
 
 Decision: after an Editor submits a valid Not Available request, keep the existing redirect, persisted pending request, Admin notification and pending-request panel, but do not enqueue the redundant success flash stating that the request was sent and the current status did not change. Remove the automatic-status explanation from the Availability heading and the “Your editing studio” eyebrow from both the Editor dashboard and Availability heading. Do not change status calculation, request submission, Admin approval or any protected workflow.
+
+## 2026-10-29 — Client Login centered editorial overlay
+
+Status: approved and implemented
+
+Owner / source of explicit decision: Hamsa requested that the Client Login form be centered in the viewport with “Back to your next great edit.” rendered as an oversized editorial background headline behind it.
+
+Decision: on `/login/` only, center the existing login card horizontally and vertically inside its responsive composition and place the existing headline behind it at a lower stacking level. Use a translucent, blurred card surface so the headline remains perceptible without reducing field, error or action legibility. Preserve the existing background, header and footer controls, credential fields, password visibility control, submit action, recovery and registration links, authentication behavior and routing. Keep registration, Editor Sign-In and every workspace page unchanged.

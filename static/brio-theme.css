@@ -77,6 +77,65 @@ body:not(.landing-page) .verification-card {
 .auth-page .auth-switch a { color: var(--green); }
 body:not(.landing-page) .auth-alert { background: #f5e8bf; border-color: #c98c57; color: var(--ink); }
 
+/* Client login: editorial headline sits behind a precisely centered form. */
+.auth-page .client-login-layout {
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  grid-template-columns: minmax(0, 520px);
+  place-content: center;
+  gap: 0;
+  overflow: hidden;
+}
+.auth-page .client-login-layout .auth-intro {
+  position: absolute;
+  z-index: 0;
+  inset: 50% auto auto 50%;
+  width: min(94%, 1080px);
+  padding: 0;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  pointer-events: none;
+}
+.auth-page .client-login-layout .auth-intro h1 {
+  margin: 0;
+  font-size: clamp(4.5rem, 10vw, 9.5rem);
+  font-weight: 800;
+  line-height: .82;
+  letter-spacing: -.085em;
+  text-wrap: balance;
+  color: rgba(111, 33, 15, .8);
+}
+.auth-page .client-login-layout .auth-card {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  background: rgba(250, 237, 207, .88);
+  box-shadow: 0 26px 70px rgba(84, 21, 7, .24);
+  backdrop-filter: blur(11px);
+}
+
+@media (max-width: 760px) {
+  .auth-page .client-login-layout {
+    width: calc(100vw - 32px);
+    min-height: calc(100dvh - 200px);
+    margin: 18px auto 34px;
+    padding: 28px 16px;
+  }
+  .auth-page .client-login-layout .auth-intro {
+    display: block;
+    width: 118%;
+  }
+  .auth-page .client-login-layout .auth-intro h1 {
+    font-size: clamp(3.8rem, 19vw, 6.4rem);
+    line-height: .86;
+  }
+  .auth-page .client-login-layout .auth-card {
+    max-width: 480px;
+    background: rgba(250, 237, 207, .9);
+  }
+}
+
 .workspace-page .workspace {
   min-height: 100vh;
   background: rgba(88, 18, 5, .16);
