@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% block body_class %}auth-page{% endblock %}
+{% block body_class %}auth-page auth-history-boundary{% endblock %}
 {% block content %}
 <div class="auth-layout{% if mode == 'login' %} client-login-layout{% elif mode == 'editor_login' %} editor-auth-layout{% endif %}">
   {% if mode != 'editor_login' %}

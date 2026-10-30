@@ -24,7 +24,11 @@ class BrandingTests(TestCase):
                 response = self.client.get(path)
                 self.assert_brio_branding(response)
                 if path != "/":
-                    self.assertContains(response, 'class="auth-page"', html=False)
+                    self.assertContains(
+                        response,
+                        'class="auth-page auth-history-boundary"',
+                        html=False,
+                    )
 
     def test_authenticated_workspace_uses_brio(self):
         _, client_profile, _ = create_people()
@@ -73,3 +77,16 @@ class BrandingTests(TestCase):
 
         self.assertIn(".availability-panel{width:100%;max-width:none;padding:34px}", css)
         self.assertIn(".availability-panel .stack-form{max-width:760px}", css)
+
+    def test_authentication_shell_and_history_boundary_match_landing_chrome(self):
+        with open(finders.find("brio-theme.css"), encoding="utf-8") as stylesheet:
+            css = stylesheet.read()
+        with open(finders.find("account-controls.js"), encoding="utf-8") as script:
+            javascript = script.read()
+
+        self.assertIn(".auth-page .public-header,", css)
+        self.assertIn(".auth-page .public-footer {", css)
+        self.assertIn("background: transparent;", css)
+        self.assertIn("auth-history-boundary", javascript)
+        self.assertIn("history.pushState(guardState, '', safeUrl)", javascript)
+        self.assertNotIn("history.replaceState(null, '', '/')", javascript)
