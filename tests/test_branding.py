@@ -34,6 +34,13 @@ class BrandingTests(TestCase):
 
         self.assert_brio_branding(response)
         self.assertContains(response, 'class="workspace-page workspace-role-client"', html=False)
+        self.assertContains(response, "CLIENT WORKSPACE", count=1)
+        self.assertContains(
+            response,
+            'class="workspace-label client-workspace-label"',
+            html=False,
+        )
+        self.assertNotContains(response, "EDITOR WORKSPACE")
         self.assertIsNotNone(finders.find("images/brio-logo-transparent.svg"))
         self.assertIsNotNone(finders.find("brio-theme.css"))
 

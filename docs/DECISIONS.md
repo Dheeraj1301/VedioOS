@@ -589,3 +589,11 @@ Status: approved and implemented
 Owner / source of explicit decision: Hamsa requested that the Client Login form be centered in the viewport with “Back to your next great edit.” rendered as an oversized editorial background headline behind it.
 
 Decision: on `/login/` only, center the existing login card horizontally and vertically inside its responsive composition and place the existing headline behind it at a lower stacking level. Use a translucent, blurred card surface so the headline remains perceptible without reducing field, error or action legibility. Preserve the existing background, header and footer controls, credential fields, password visibility control, submit action, recovery and registration links, authentication behavior and routing. Keep registration, Editor Sign-In and every workspace page unchanged.
+
+## 2026-10-30 — Client sidebar workspace label
+
+Status: approved and implemented
+
+Owner / source of explicit decision: Hamsa requested a Client-only workspace label and divider between the BRIO logo and the existing navigation.
+
+Decision: render `CLIENT WORKSPACE` only for the Client role using the established Editor workspace-label typography, spacing and muted full-width divider. Preserve the logo, Client navigation labels/order/routes, profile controls, and all Editor/Admin sidebar rendering.

@@ -34,7 +34,7 @@
 .brand-logo{display:block;width:34px;height:34px;object-fit:contain;border-radius:8px;margin-right:9px;flex:0 0 auto}
 .message-number-warning{margin:0;color:#a1352d;font-size:.8rem}.message-number-invalid{border-color:#b52f2a!important;box-shadow:0 0 0 2px #b52f2a24}
 .auth-layout.editor-auth-layout{grid-template-columns:minmax(0,520px);justify-content:center;gap:0}
-.editor-workspace-label{border-bottom:1px solid var(--line);color:var(--muted);font-weight:700;margin-bottom:12px;padding-bottom:14px}
+.client-workspace-label,.editor-workspace-label{border-bottom:1px solid var(--line);color:var(--muted);font-weight:700;margin-bottom:12px;padding-bottom:14px}
 
 /* Lightweight responsive guardrails shared by current and future screens. */
 img,video,svg{max-width:100%}img,video{height:auto}.panel,.detail-panel,.form-panel,.upload-panel{min-width:0}.data-list,.notification-dropdown-list{overflow-wrap:anywhere}.workspace-header,.sidebar .brand{padding-left:max(20px,env(safe-area-inset-left));padding-right:max(20px,env(safe-area-inset-right))}.workspace-main{padding-bottom:max(30px,env(safe-area-inset-bottom))}
