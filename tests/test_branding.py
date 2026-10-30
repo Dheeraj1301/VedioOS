@@ -47,6 +47,10 @@ class BrandingTests(TestCase):
     def test_client_login_uses_its_overlay_layout_only(self):
         client_login = self.client.get("/login/")
         registration = self.client.get("/register/")
+        self.assertContains(registration, "Terms &amp; Conditions")
+        self.assertContains(registration, "No Refund policy")
+        self.assertContains(registration, "mandatory statutory rights")
+        self.assertContains(registration, 'data-auth-entry')
         editor_login = self.client.get("/editor/signin/")
 
         self.assertContains(

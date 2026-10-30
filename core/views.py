@@ -32,6 +32,7 @@ from .landing_content import landing_content, landing_faqs
 from .models import (
     AuthAttempt,
     Client,
+    CommercePolicy,
     File,
     LandingPageSettings,
     Order,
@@ -42,6 +43,7 @@ from .models import (
 )
 from .payment_history import PAYMENT_DATE_RANGES, payment_page
 from .permissions import can_upload, project_for, role_required, visible_files, visible_projects
+from .policies import policy_snapshot, record_registration_acceptance, validate_policy_version
 from .sessions import (
     active_session_exists,
     clear_pending_login,
@@ -103,12 +105,24 @@ def register(request):
             status=429,
         )
     form = RegistrationForm(request.POST or None)
+    policy = CommercePolicy.objects.filter(pk=1).first()
+    current_policy = policy_snapshot(policy or CommercePolicy())
+    if not policy:
+        current_policy["version"] = 0
+    policy_acknowledged = request.POST.get("accept_terms") == "yes"
     if request.method == "POST":
         if any(
             key in request.POST for key in ["role", "is_staff", "is_superuser", "approved", "proficiency"]
         ):
             raise PermissionDenied("Account permissions cannot be set during registration.")
-        if form.is_valid():
+        if not policy_acknowledged:
+            form.add_error(None, "Review and accept the Terms and Conditions to create an account.")
+        else:
+            try:
+                validate_policy_version(current_policy, request.POST.get("policy_version"))
+            except ValidationError as exc:
+                form.add_error(None, exc.messages[0])
+        if form.is_valid() and not form.non_field_errors():
             try:
                 with transaction.atomic():
                     user = form.save(commit=False)
@@ -116,6 +130,7 @@ def register(request):
                     user.is_active = False
                     user.save()
                     Client.objects.create(user=user)
+                    record_registration_acceptance(user, request.POST.get("policy_version"))
                     audit(user, "client.registered", user.pk)
                 request.session["verification_email"] = user.email
                 try:
@@ -137,6 +152,8 @@ def register(request):
             "subtitle": "Create your client account. Your footage stays private.",
             "button": "Create account",
             "mode": "register",
+            "policy": current_policy,
+            "policy_acknowledged": policy_acknowledged and not form.non_field_errors(),
         },
     )
 

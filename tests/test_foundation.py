@@ -18,6 +18,7 @@ from core.models import (
     File,
     Order,
     Plan,
+    PolicyAcceptance,
     Project,
     UploadPolicy,
     User,
@@ -126,6 +127,8 @@ class FoundationTests(TestCase):
                         "email": "queued-message@example.test",
                         "password1": PASSWORD,
                         "password2": PASSWORD,
+                        "accept_terms": "yes",
+                        "policy_version": "0",
                     },
                 ),
                 "/verify-email/",
@@ -148,6 +151,8 @@ class FoundationTests(TestCase):
                     "email": "NEW@example.test",
                     "password1": PASSWORD,
                     "password2": PASSWORD,
+                    "accept_terms": "yes",
+                    "policy_version": "0",
                 },
             )
         self.assertRedirects(response, "/verify-email/")
@@ -157,6 +162,11 @@ class FoundationTests(TestCase):
         self.assertFalse(user.is_active)
         self.assertIsNone(user.email_verified_at)
         self.assertTrue(Client.objects.filter(user=user).exists())
+        acceptance = PolicyAcceptance.objects.get(user=user, context="registration")
+        self.assertEqual(acceptance.policy_version, 0)
+        self.assertIsNotNone(acceptance.accepted_at)
+        self.assertIn("mandatory statutory rights", acceptance.policy_snapshot["no_refund_policy"])
+        self.assertIn("support", acceptance.policy_snapshot["support_statement"].lower())
         send_code.assert_called_once_with("new@example.test")
         blocked_login = browser.post(
             "/login/", {"username": "NEW@example.test", "password": PASSWORD}
@@ -386,6 +396,26 @@ class FoundationTests(TestCase):
             with self.subTest(password=password):
                 self.assertEqual(response.status_code, 200)
                 self.assertFalse(User.objects.filter(email=f"password-{index}@example.test").exists())
+
+    def test_client_registration_requires_current_policy_acceptance(self):
+        data = {
+            "name": "Consent Test",
+            "email": "consent@example.test",
+            "password1": PASSWORD,
+            "password2": PASSWORD,
+        }
+        missing = Browser().post("/register/", data)
+        self.assertEqual(missing.status_code, 200)
+        self.assertContains(missing, "Review and accept the Terms and Conditions")
+        self.assertFalse(User.objects.filter(email=data["email"]).exists())
+
+        stale = Browser().post(
+            "/register/",
+            {**data, "accept_terms": "yes", "policy_version": "99"},
+        )
+        self.assertEqual(stale.status_code, 200)
+        self.assertContains(stale, "Terms and Conditions changed")
+        self.assertFalse(User.objects.filter(email=data["email"]).exists())
 
     def test_music_preferences_remove_duplicate_and_offer_both(self):
         choices = dict(Project._meta.get_field("song_choice").choices)

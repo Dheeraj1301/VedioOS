@@ -1,0 +1,18 @@
+{% if policy %}
+<div class="policy-terms" data-policy-version="{{ policy.version }}">
+  <p class="eyebrow">Terms &amp; Conditions · Version {{ policy.version }}</p>
+  {% if policy.terms %}<h3>Service agreement</h3><p class="preserve-lines">{{ policy.terms }}</p>{% endif %}
+  {% if policy.delivery_terms %}<h3>Delivery</h3><p class="preserve-lines">{{ policy.delivery_terms }}</p>{% endif %}
+  <h3>No Refund policy</h3><p class="preserve-lines">{{ policy.no_refund_policy }}</p>
+  {% if policy.refund_terms %}<p class="preserve-lines">{{ policy.refund_terms }}</p>{% endif %}
+  {% if policy.tax_terms %}<h3>Taxes</h3><p class="preserve-lines">{{ policy.tax_terms }}</p>{% endif %}
+  <h3>Support</h3><p class="preserve-lines">{{ policy.support_statement }}</p>
+</div>
+{% elif legacy %}
+<div class="policy-terms policy-terms-legacy">
+  {% if legacy.terms %}<h3>Service agreement</h3><p class="preserve-lines">{{ legacy.terms }}</p>{% endif %}
+  {% if legacy.delivery_terms %}<h3>Delivery</h3><p class="preserve-lines">{{ legacy.delivery_terms }}</p>{% endif %}
+  {% if legacy.refund_terms %}<h3>Cancellation &amp; refunds</h3><p class="preserve-lines">{{ legacy.refund_terms }}</p>{% endif %}
+  {% if legacy.tax_terms %}<h3>Taxes</h3><p class="preserve-lines">{{ legacy.tax_terms }}</p>{% endif %}
+</div>
+{% endif %}

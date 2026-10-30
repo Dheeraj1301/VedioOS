@@ -22,6 +22,18 @@ document.querySelectorAll('input[type="password"]').forEach(input => {
 document.querySelectorAll('.back-button').forEach(button => {
   button.addEventListener('click', () => {
     if (history.length > 1) history.back();
-    else location.assign('/dashboard/');
+    else location.replace('/dashboard/');
   });
+});
+
+// Keep authentication boundaries out of the reusable history stack. The form action
+// remains explicit, so replacing the current entry cannot change the POST target.
+document.querySelectorAll('[data-auth-entry]').forEach(form => {
+  form.addEventListener('submit', () => history.replaceState(null, '', '/'));
+});
+document.querySelectorAll('[data-auth-exit]').forEach(form => {
+  form.addEventListener('submit', () => history.replaceState(null, '', '/'));
+});
+window.addEventListener('pageshow', event => {
+  if (event.persisted) location.reload();
 });

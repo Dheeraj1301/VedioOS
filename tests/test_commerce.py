@@ -24,6 +24,7 @@ from core.models import (
     Payment,
     PaymentEvent,
     Plan,
+    PolicyAcceptance,
     Project,
     QuotationFeature,
     User,
@@ -436,7 +437,10 @@ class CommerceTests(TestCase):
         unchanged = self.client.get(summary_url)
         self.assertContains(unchanged, format_money(12380, "INR"))
 
-        paid = self.client.post(checkout_url, {"agree": "yes"})
+        paid = self.client.post(
+            checkout_url,
+            {"agree": "yes", "policy_version": str(self.policy.policy_version)},
+        )
         self.assertRedirects(paid, f"/orders/{project.id}/")
         project.order.refresh_from_db()
         payment = project.order.payments.get()
@@ -444,6 +448,11 @@ class CommerceTests(TestCase):
         self.assertEqual(project.order.currency, "INR")
         self.assertEqual(payment.amount_minor, 12380)
         self.assertEqual(payment.currency, "INR")
+        acceptance = PolicyAcceptance.objects.get(order=project.order, context="payment")
+        self.assertEqual(acceptance.user, self.user)
+        self.assertEqual(acceptance.policy_version, self.policy.policy_version)
+        self.assertIsNotNone(acceptance.accepted_at)
+        self.assertIn("no_refund_policy", acceptance.policy_snapshot)
 
         apply_sandbox_event(*self.event(payment))
         completed = self.client.get(summary_url)
@@ -477,7 +486,10 @@ class CommerceTests(TestCase):
         page = self.client.get(f"/orders/{project.id}/")
         self.assertContains(page, "Payment is blocked")
         self.assertNotContains(page, "Make Payment")
-        self.client.post(checkout_url, {"agree": "yes"})
+        self.client.post(
+            checkout_url,
+            {"agree": "yes", "policy_version": str(self.policy.policy_version)},
+        )
         self.assertFalse(project.order.payments.exists())
 
     def test_client_can_edit_an_unpaid_quote_without_rewriting_history(self):
@@ -497,7 +509,10 @@ class CommerceTests(TestCase):
         checkout_url = f"/client/checkout/{project.id}/"
         self.assertRedirects(response, summary_url, fetch_redirect_response=False)
         old_quote = project.order.quotes.get()
-        self.client.post(checkout_url, {"agree": "yes"})
+        self.client.post(
+            checkout_url,
+            {"agree": "yes", "policy_version": str(self.policy.policy_version)},
+        )
         old_payment = project.order.payments.get()
 
         edit_url = f"/client/projects/{project.id}/edit/"
@@ -529,7 +544,10 @@ class CommerceTests(TestCase):
         self.assertContains(revised_summary, "Colour grading")
         self.assertNotContains(revised_summary, "Refresh quotation with current rates")
 
-        restarted = self.client.post(checkout_url, {"agree": "yes"})
+        restarted = self.client.post(
+            checkout_url,
+            {"agree": "yes", "policy_version": str(self.policy.policy_version)},
+        )
         self.assertRedirects(restarted, f"/orders/{project.id}/")
         self.assertEqual(project.order.payments.count(), 2)
         self.assertEqual(
@@ -592,10 +610,11 @@ class CommerceTests(TestCase):
         self.assertContains(summary, "Remove")
         self.assertContains(summary, "Make Payment")
         self.assertContains(summary, "Additional terms")
-        self.assertContains(summary, "Market-reference estimate based on the selected editing scope. Final commercial rates require administrator approval before live launch.")
-        self.assertContains(summary, "Estimated 24-hour turnaround begins after complete source files and a valid payment are received; final service-level terms require approval.")
-        self.assertContains(summary, "No live charge is collected in preview checkout. The production cancellation and refund policy requires administrator approval.")
-        self.assertContains(summary, "Taxes and invoice treatment require business approval and are not included in this preview quotation.")
+        self.assertContains(summary, "TEST service terms")
+        self.assertContains(summary, "TEST delivery terms")
+        self.assertContains(summary, "TEST refund terms")
+        self.assertContains(summary, "TEST tax terms")
+        self.assertContains(summary, "mandatory statutory rights")
         self.assertNotContains(summary, "Quotation details")
         self.assertNotContains(summary, "Price estimate")
         self.assertNotContains(summary, "<h2>Payment</h2>", html=False)
@@ -639,7 +658,10 @@ class CommerceTests(TestCase):
             "status": "created",
         }
         request.return_value = gateway_order
-        checkout = self.client.post(f"/orders/{project.id}/checkout/")
+        checkout = self.client.post(
+            f"/orders/{project.id}/checkout/",
+            {"agree": "yes", "policy_version": str(self.policy.policy_version)},
+        )
         payment = project.order.payments.get()
         self.assertRedirects(
             checkout,
@@ -821,7 +843,10 @@ class CommerceTests(TestCase):
             "status": "created",
         }
         request.return_value = gateway_order
-        response = self.client.post(f"/client/checkout/{project.id}/", {"agree": "yes"})
+        response = self.client.post(
+            f"/client/checkout/{project.id}/",
+            {"agree": "yes", "policy_version": str(self.policy.policy_version)},
+        )
         payment = project.order.payments.get()
         self.assertRedirects(
             response,
@@ -900,6 +925,9 @@ class CommerceTests(TestCase):
                 "delivery_terms": "TEST delivery terms",
                 "refund_terms": "TEST refund terms",
                 "tax_terms": "TEST tax terms",
+                "registration_terms": self.policy.registration_terms,
+                "no_refund_policy": self.policy.no_refund_policy,
+                "support_statement": self.policy.support_statement,
                 "quotes_enabled": "on",
                 "review_rule": "",
             },
@@ -920,6 +948,27 @@ class CommerceTests(TestCase):
         self.assertEqual(order.terms_snapshot["items"][0]["name"], "Synthetic plan")
         self.assertEqual(order.terms_snapshot["terms"]["terms"], "TEST service terms")
         self.assertEqual(accept_quote(self.user, self.project.id, quote.id).id, order.id)
+
+    def test_payment_rejects_stale_policy_and_deduplicates_current_acceptance(self):
+        accept_quote(self.user, self.project.id, self.quote().id)
+        self.client.force_login(self.user)
+        checkout_url = f"/orders/{self.project.id}/checkout/"
+
+        stale = self.client.post(
+            checkout_url,
+            {"agree": "yes", "policy_version": "999"},
+        )
+        self.assertRedirects(stale, f"/orders/{self.project.id}/")
+        self.assertFalse(self.order.payments.exists())
+        self.assertFalse(PolicyAcceptance.objects.filter(order=self.order).exists())
+
+        current = {"agree": "yes", "policy_version": str(self.policy.policy_version)}
+        self.client.post(checkout_url, current)
+        self.client.post(checkout_url, current)
+        self.assertEqual(
+            PolicyAcceptance.objects.filter(order=self.order, context="payment").count(),
+            1,
+        )
 
     def test_plan_period_price_is_server_calculated_and_snapshotted(self):
         Plan.objects.filter(pk=self.plan.pk).update(yearly_price_minor=None)
@@ -1256,7 +1305,10 @@ class CommerceTests(TestCase):
         self.assertContains(review, "₹115.00")
         accepted = self.client.post(response.url, {"csrfmiddlewaretoken": "test", "agree": "yes"})
         self.assertEqual(accepted.status_code, 302)
-        self.client.post(f"/orders/{self.project.id}/checkout/")
+        self.client.post(
+            f"/orders/{self.project.id}/checkout/",
+            {"agree": "yes", "policy_version": str(self.policy.policy_version)},
+        )
         payment = Payment.objects.get()
         body, signature = self.event(payment)
         response = self.client.post(

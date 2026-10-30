@@ -10,6 +10,7 @@ from django.test import Client as Browser
 from django.urls import reverse
 
 from core.models import Project, User
+from core.policies import current_policy_snapshot
 from operations.models import Admin, Editor, EditorCoins
 
 
@@ -30,6 +31,7 @@ def run_cloud_checks(write):
         with transaction.atomic():
             client = Browser()
             email = f"verification-client-{prefix}@example.test"
+            policy = current_policy_snapshot()
             response = client.post(
                 "/register/",
                 {
@@ -37,6 +39,8 @@ def run_cloud_checks(write):
                     "email": email,
                     "password1": password,
                     "password2": password,
+                    "accept_terms": "yes",
+                    "policy_version": str(policy["version"]),
                 },
             )
             require(

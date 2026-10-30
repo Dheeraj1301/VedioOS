@@ -11,8 +11,9 @@
     {% if mode != 'editor_login' %}<p class="eyebrow">{% if mode == 'register' %}Let's get started{% else %}Welcome back{% endif %}</p>{% endif %}
     <h2>{% if mode == 'editor_login' %}Editor Sign In{% elif mode == 'login' %}Log in{% else %}Create an account{% endif %}</h2>
     {% for message in messages %}<div class="auth-alert{% if message.tags %} {{ message.tags }}{% endif %}" role="status">{{ message }}</div>{% endfor %}
-    <form method="post" class="form-stack">
+    <form method="post" class="form-stack" action="{% if mode == 'editor_login' %}{% url 'editor_login' %}{% elif mode == 'login' %}{% url 'login' %}{% if request.GET.next %}?next={{ request.GET.next|urlencode }}{% endif %}{% else %}{% url 'register' %}{% endif %}" data-auth-entry{% if mode == 'register' %} id="client-registration-form"{% endif %}>
       {% csrf_token %}
+      {% if mode == 'register' and policy %}<input type="hidden" name="accept_terms" value="{% if policy_acknowledged %}yes{% endif %}" data-policy-accepted><input type="hidden" name="policy_version" value="{{ policy.version }}">{% endif %}
       {% if mode == 'editor_login' %}
         {{ form.non_field_errors }}
         <div>{{ form.username.errors }}<label for="{{ form.username.id_for_label }}">Email</label>{{ form.username }}</div>
@@ -30,4 +31,37 @@
     {% if mode == 'login' %}<p class="auth-switch">New client? <a href="{% url 'register' %}">Create an account</a></p>{% elif mode == 'register' %}<p class="auth-switch">Already registered? <a href="{% url 'login' %}">Log in</a></p>{% endif %}
   </section>
 </div>
+{% if mode == 'register' and policy and not policy_acknowledged %}
+<div class="policy-consent-overlay" role="dialog" aria-modal="true" aria-labelledby="policy-consent-title" data-policy-dialog>
+  <section class="policy-consent-card">
+    <p class="eyebrow">Terms &amp; Conditions · Version {{ policy.version }}</p>
+    <h2 id="policy-consent-title">Before you create your account</h2>
+    <div class="policy-consent-copy">
+      <h3>Client responsibilities</h3><p class="preserve-lines">{{ policy.registration_terms }}</p>
+      {% if policy.terms %}<h3>Service terms</h3><p class="preserve-lines">{{ policy.terms }}</p>{% endif %}
+      <h3>No Refund policy</h3><p class="preserve-lines">{{ policy.no_refund_policy }}</p>
+      {% if policy.refund_terms %}<p class="preserve-lines">{{ policy.refund_terms }}</p>{% endif %}
+      <h3>Support</h3><p class="preserve-lines">{{ policy.support_statement }}</p>
+    </div>
+    <label class="policy-consent-check"><input type="checkbox" data-policy-checkbox> I have read and accept these Terms &amp; Conditions.</label>
+    <button class="button" type="button" data-policy-continue disabled>Accept and continue</button>
+  </section>
+</div>
+<script>
+  (() => {
+    const dialog = document.querySelector('[data-policy-dialog]');
+    const checkbox = dialog?.querySelector('[data-policy-checkbox]');
+    const button = dialog?.querySelector('[data-policy-continue]');
+    const accepted = document.querySelector('[data-policy-accepted]');
+    if (!dialog || !checkbox || !button || !accepted) return;
+    checkbox.addEventListener('change', () => { button.disabled = !checkbox.checked; });
+    button.addEventListener('click', () => {
+      if (!checkbox.checked) return;
+      accepted.value = 'yes';
+      dialog.remove();
+      document.querySelector('#client-registration-form input:not([type=hidden])')?.focus();
+    });
+  })();
+</script>
+{% endif %}
 {% endblock %}

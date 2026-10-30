@@ -454,6 +454,31 @@ class CommercePolicy(models.Model):
         PRODUCTION = "production", "Production"
 
     id = models.PositiveSmallIntegerField(primary_key=True, default=1, editable=False)
+    policy_version = models.PositiveIntegerField(default=1, editable=False)
+    registration_terms = models.TextField(
+        max_length=12000,
+        default=(
+            "By creating a BRIO client account, you agree to use the service lawfully, "
+            "provide only content you are authorized to use, and follow the applicable "
+            "project terms shown before payment."
+        ),
+    )
+    no_refund_policy = models.TextField(
+        max_length=4000,
+        default=(
+            "No Refund policy: except where a refund or other remedy is required by "
+            "applicable consumer law, confirmed payments are non-refundable after editing "
+            "has begun or the digital service has been supplied. Any mandatory statutory "
+            "rights and exceptions continue to apply."
+        ),
+    )
+    support_statement = models.TextField(
+        max_length=2000,
+        default=(
+            "If you experience any inconvenience or issue, contact the BRIO support team "
+            "through the protected Support section so the team can assist you."
+        ),
+    )
     pricing_context = models.CharField(
         max_length=20,
         choices=PricingContext.choices,
@@ -492,6 +517,41 @@ class CommercePolicy(models.Model):
     class Meta:
         db_table = "commerce_policy"
         constraints = [models.CheckConstraint(condition=models.Q(id=1), name="one_commerce_policy")]
+
+
+class PolicyAcceptance(Record):
+    class Context(models.TextChoices):
+        REGISTRATION = "registration", "Client registration"
+        PAYMENT = "payment", "Before payment"
+
+    user = models.ForeignKey(User, on_delete=models.PROTECT, related_name="policy_acceptances")
+    order = models.ForeignKey(
+        Order,
+        null=True,
+        blank=True,
+        on_delete=models.PROTECT,
+        related_name="policy_acceptances",
+    )
+    context = models.CharField(max_length=20, choices=Context.choices)
+    policy_version = models.PositiveIntegerField()
+    policy_snapshot = models.JSONField()
+    snapshot_fingerprint = models.CharField(max_length=64)
+    accepted_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = "policy_acceptances"
+        constraints = [
+            models.UniqueConstraint(
+                fields=["user", "context", "policy_version"],
+                condition=models.Q(order__isnull=True),
+                name="unique_account_policy_acceptance",
+            ),
+            models.UniqueConstraint(
+                fields=["order", "context", "snapshot_fingerprint"],
+                condition=models.Q(order__isnull=False),
+                name="unique_order_policy_acceptance",
+            ),
+        ]
 
 
 class QuotationFeature(models.Model):

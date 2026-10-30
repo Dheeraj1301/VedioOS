@@ -316,16 +316,27 @@ class PolicyForm(MajorUnitPriceFormMixin, forms.ModelForm):
             "revision_price_one_to_two_minor",
             "revision_price_three_to_four_minor",
             "revision_price_five_plus_minor",
+            "registration_terms",
             "terms",
             "delivery_terms",
             "refund_terms",
+            "no_refund_policy",
             "tax_terms",
+            "support_statement",
             "quotes_enabled",
             "review_rule",
         ]
         widgets = {
             field: forms.Textarea(attrs={"rows": 3})
-            for field in ["terms", "delivery_terms", "refund_terms", "tax_terms"]
+            for field in [
+                "registration_terms",
+                "terms",
+                "delivery_terms",
+                "refund_terms",
+                "no_refund_policy",
+                "tax_terms",
+                "support_statement",
+            ]
         }
         help_texts = {
             "pricing_context": "Test-only pricing runs only in DEBUG with a test payment gateway. Select Production only after commercial terms are approved.",
@@ -333,6 +344,8 @@ class PolicyForm(MajorUnitPriceFormMixin, forms.ModelForm):
             "quotation_engine_enabled": "Use the seven-feature weighted model for new custom estimates. Existing saved snapshots remain unchanged.",
             "tax_terms": "Describe applicable taxes and whether the displayed total includes them.",
             "delivery_terms": "Specify clock start, milestone, working/calendar hours and pause rules.",
+            "no_refund_policy": "Use qualified wording that preserves mandatory consumer-law rights and exceptions. Obtain jurisdiction-specific legal review before production launch.",
+            "support_statement": "Tell clients how to contact the support team if they experience inconvenience or issues.",
         }
 
     def clean(self):

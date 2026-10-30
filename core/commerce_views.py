@@ -44,6 +44,7 @@ from .payments import (
     start_checkout,
 )
 from .permissions import project_for, role_required, visible_files
+from .policies import payment_policy_snapshot, record_payment_acceptance
 from .templatetags.money import money
 from .views import audit
 
@@ -75,6 +76,7 @@ def pricing(request):
 
 @role_required("admin")
 def catalog_edit(request, kind, slot=None, item_id=None, feature_code=None):
+    previous_policy = None
     if kind == "plan":
         if slot not in [1, 2, 3]:
             raise PermissionDenied
@@ -95,13 +97,28 @@ def catalog_edit(request, kind, slot=None, item_id=None, feature_code=None):
         instance = get_object_or_404(QuotationFeature, code=feature_code)
         form_class, title = QuotationFeatureForm, instance.get_code_display()
     else:
-        instance = CommercePolicy.objects.filter(pk=1).first() or CommercePolicy(pk=1)
+        previous_policy = CommercePolicy.objects.filter(pk=1).first()
+        instance = previous_policy or CommercePolicy(pk=1)
         form_class, title = PolicyForm, "Commercial terms & custom pricing"
     form = form_class(request.POST or None, instance=instance)
     if request.method == "POST" and form.is_valid():
         try:
             with transaction.atomic():
-                item = form.save()
+                item = form.save(commit=False)
+                if previous_policy and any(
+                    field in form.changed_data
+                    for field in [
+                        "registration_terms",
+                        "terms",
+                        "delivery_terms",
+                        "refund_terms",
+                        "no_refund_policy",
+                        "tax_terms",
+                        "support_statement",
+                    ]
+                ):
+                    item.policy_version = previous_policy.policy_version + 1
+                item.save()
                 if kind == "package" and item.active:
                     item.active = False
                     item.save(update_fields=["active", "updated_at"])
@@ -303,7 +320,7 @@ def custom_checkout(request, project_id):
         and isinstance(currency, str)
         and currency == quote.currency
     )
-    if set(request.POST) - {"csrfmiddlewaretoken", "agree"}:
+    if set(request.POST) - {"csrfmiddlewaretoken", "agree", "policy_version"}:
         raise PermissionDenied
     if order.payment_status == "confirmed":
         messages.info(request, "Payment has already been completed for this project.")
@@ -315,6 +332,12 @@ def custom_checkout(request, project_id):
         try:
             with transaction.atomic():
                 accept_quote(request.user, project.id, quote.id)
+                order.refresh_from_db(fields=["terms_snapshot"])
+                record_payment_acceptance(
+                    request.user,
+                    order,
+                    request.POST.get("policy_version"),
+                )
                 payment = start_checkout(request.user, project.id)
             messages.success(
                 request,
@@ -370,6 +393,7 @@ def order_summary(request, project_id):
             "sandbox": sandbox_enabled(),
             "razorpay_test": razorpay_test_enabled(),
             "payments": project.order.payments.order_by("-created_at"),
+            "payment_policy": payment_policy_snapshot(order) if snapshot else None,
         },
     )
 
@@ -378,10 +402,19 @@ def order_summary(request, project_id):
 @role_required("client")
 def checkout(request, project_id):
     project = project_for(request.user, project_id)
-    if set(request.POST) - {"csrfmiddlewaretoken"}:
+    if set(request.POST) - {"csrfmiddlewaretoken", "agree", "policy_version"}:
         raise PermissionDenied
+    if request.POST.get("agree") != "yes":
+        messages.error(request, "Accept the displayed Terms and Conditions before payment.")
+        return redirect("order_summary", project_id=project.id)
     try:
-        payment = start_checkout(request.user, project.id)
+        with transaction.atomic():
+            record_payment_acceptance(
+                request.user,
+                project.order,
+                request.POST.get("policy_version"),
+            )
+            payment = start_checkout(request.user, project.id)
         if payment.provider == "razorpay_test":
             return redirect("razorpay_checkout", payment_id=payment.id)
     except ValidationError as exc:

@@ -49,6 +49,11 @@ class Command(BaseCommand):
             "review_rule": "",
         }
         instance = CommercePolicy.objects.filter(pk=1).first() or CommercePolicy(pk=1)
+        values.update(
+            registration_terms=instance.registration_terms,
+            no_refund_policy=instance.no_refund_policy,
+            support_statement=instance.support_statement,
+        )
         form = PolicyForm(values, instance=instance, values_are_minor=True)
         if not form.is_valid():
             raise CommandError(f"Test quotation configuration is invalid: {form.errors.as_json()}")

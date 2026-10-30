@@ -13,6 +13,7 @@ from operations.models import EarningPolicy
 
 from .commerce_forms import MAX_PRICE, PlanForm, PolicyForm, ServiceForm
 from .models import CommercePolicy, CustomService, Order, OrderQuote, Plan, Project, QuotationFeature
+from .policies import policy_snapshot
 from .views import audit
 
 CUSTOM_CODE_LABELS = dict(CustomService.Code.choices)
@@ -429,6 +430,7 @@ def create_quote(
         raise ValidationError("The quote total is outside the supported range. Contact the team.")
     snapshot = {
         "version": 2,
+        "policy": policy_snapshot(policy),
         "pricing_context": pricing_context,
         "kind": kind,
         "plan_id": str(plan_id) if kind == "plan" else None,
