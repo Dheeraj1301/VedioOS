@@ -62,3 +62,10 @@ class BrandingTests(TestCase):
             'class="auth-layout editor-auth-layout"',
             html=False,
         )
+
+    def test_availability_panels_fill_the_content_width(self):
+        with open(finders.find("app.css"), encoding="utf-8") as stylesheet:
+            css = stylesheet.read()
+
+        self.assertIn(".availability-panel{width:100%;max-width:none;padding:34px}", css)
+        self.assertIn(".availability-panel .stack-form{max-width:760px}", css)

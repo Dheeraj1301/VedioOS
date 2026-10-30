@@ -605,3 +605,11 @@ Status: approved and implemented
 Owner / source of explicit decision: Hamsa requested removal of named static helper sentences from custom ordering, notifications, project communication and support, plus the displayed time-of-day from the corresponding conversation detail rows.
 
 Decision: remove only the explicitly named presentation copy. Conversation detail rows for shared Client/Admin project messages, Editor project messages and support messages no longer render their timestamp, while message persistence, ordering, authorship, audience badges, forms, permissions and routes remain unchanged. Other dates and timestamps outside those requested conversation views remain intact.
+
+## 2026-10-30 — Full-width Editor availability panels
+
+Status: approved and implemented
+
+Owner / source of explicit decision: Hamsa requested that the Current Status and Request Not Available panels fill the Editor availability content area like the page banner.
+
+Decision: remove the availability panel's desktop width cap and make both existing panels fill their parent content width. Keep the request form itself capped at a readable width inside the expanded panel. Preserve all availability controls, request workflow, routes, validation and backend behavior.
