@@ -1,5 +1,13 @@
 # Open decisions and decision record
 
+## 2026-10-30 — Transparent landing chrome and complete-panel stacking
+
+Status: approved and implemented
+
+Owner / source of explicit decision: Hamsa requested removal of the landing header/footer glass plates while retaining their content, button treatment for both footer destinations, and restoration of the folding parallax motion with the complete current panel visible before the next panel overlaps it.
+
+Decision: the landing header and footer sit directly on the orange environment with no panel background, border, blur or shadow. Their existing destinations remain unchanged and appear once; both footer links use the existing outlined-button visual language. Desktop and tablet retain sticky panel stacking with a larger scroll runway between panels. Short-height desktop/tablet views pin the current panel by its lower edge, allowing the complete panel to pass through the viewport before the next layer enters. Mobile and reduced-motion layouts remain normal document flow.
+
 ## 2026-10-28 — Landing glass shell, direct section navigation and transparent logo
 
 Status: approved and implemented
