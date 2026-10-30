@@ -1,10 +1,11 @@
-{% extends 'workspace.html' %}{% load money %}
+{% extends 'workspace.html' %}{% load static money %}
+{% block page_scripts %}{% if upload_policy %}<script defer src="{% static 'vendor/sha256.umd.min.js' %}"></script><script defer src="{% static 'hash-original.js' %}"></script>{% endif %}{% endblock %}
 {% block workspace_content %}
 <div class="page-heading"><div><p class="eyebrow">Revision options</p><h1>Choose a revision plan.</h1><p class="muted">Select one plan to compare it with your needs. Click the selected plan again to deselect it.</p></div></div>
 {% if revision_plans %}
 <section class="revision-plan-grid" aria-label="Published revision plans" data-revision-plans>
   {% for plan in revision_plans %}
-  <button class="revision-plan-card" type="button" aria-pressed="false" data-revision-plan data-revision-plan-id="{{ plan.id }}" data-revision-plan-name="{{ plan.name }}">
+  <button class="revision-plan-card" type="button" aria-pressed="false" data-revision-plan data-revision-plan-id="{{ plan.id }}" data-revision-plan-name="{{ plan.name }}" data-revision-plan-slot="{{ plan.slot }}">
     <span class="eyebrow">Revision plan {{ plan.slot }}</span>
     <strong>{{ plan.name }}</strong>
     <span class="plan-price">{{ plan.price_minor|money:plan.currency }}</span>
@@ -14,6 +15,19 @@
   {% endfor %}
 </section>
 <p class="muted revision-selection-status" role="status" aria-live="polite" data-revision-selection-status>No revision plan selected.</p>
+<section class="panel detail-panel revision-request-panel" data-revision-request-panel hidden>
+  <h2>Revision details</h2>
+  <form class="form-stack" data-revision-order-form data-create-url="{% url 'revision_order_create' %}" data-upload-enabled="{% if upload_policy %}true{% else %}false{% endif %}">
+    {% csrf_token %}
+    <input type="hidden" name="plan_id" data-revision-plan-input>
+    <div><label for="revision-project">Select Project</label><select id="revision-project" name="project_id" required><option value="">Select an ongoing project</option>{% for project in ongoing_projects %}<option value="{{ project.id }}"{% if project.status != 'awaiting_review' %} disabled{% endif %}>{{ project.title }} — {{ project.get_status_display }}</option>{% endfor %}</select></div>
+    <div><label for="revision-song">New Song Name or Link</label><input id="revision-song" name="song_reference" maxlength="500" placeholder="New song name or link (enter NA incase of no changes)" required></div>
+    <div data-revision-files hidden><label for="revision-files">Upload Additional Files</label><input id="revision-files" name="additional_files" type="file" multiple disabled><progress class="revision-upload-progress" value="0" max="100" hidden></progress><p class="revision-upload-status" role="status" aria-live="polite"></p></div>
+    <div><label for="revision-changes">Enter the Changes</label><textarea id="revision-changes" name="changes" rows="6" maxlength="5000" required></textarea></div>
+    <button class="button" type="submit">Save and Proceed</button>
+    <p class="form-submit-status" role="status" aria-live="polite"></p>
+  </form>
+</section>
 {% else %}
 <section class="panel empty-state"><h2>No revision plans are currently available.</h2></section>
 {% endif %}

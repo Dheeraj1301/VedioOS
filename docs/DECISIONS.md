@@ -630,6 +630,14 @@ Owner / source of explicit decision: Hamsa reported that Admin-published revisio
 
 Decision: retain the existing separate three-slot revision catalog and browser-only comparison semantics. Explicitly evaluate the published-plan query for the protected Client page, attach stable plan identity/name data to each accessible toggle card, and refresh the versioned CSS/JavaScript assets so current selection behavior is delivered instead of a stale cached bundle. One card may be selected at a time; clicking it again clears selection. No plan is attached to a project, order, quotation or checkout because no purchase/snapshot/fulfillment workflow has been approved. The empty state reads “No revision plans are currently available.”
 
+## 2026-10-30 — Paid revision-plan checkout and original-editor fulfillment
+
+Status: approved and implemented
+
+Owner / source of explicit decision: Hamsa explicitly expanded the revision-plan scope to a complete project-linked checkout, Razorpay payment and fulfillment workflow.
+
+Decision: a selected published revision plan may be attached only to an owning Client's paid, ongoing project with a current editor and a latest version awaiting review. Punaha 1 and 2 collect project, song reference and changes; Punaha 3 additionally accepts verified private project attachments through the existing upload protocol. Save and Proceed creates an idempotent server-priced order that snapshots the published plan and current policy. Razorpay receives only that revision plan amount and currency, and fulfillment occurs only after signature and captured-payment verification. A confirmed paid revision is an additional commercial agreement and therefore does not consume or fail against the original order's included-revision allowance. It targets the latest version and retains the project's existing assignment; no round-robin action is performed. The current original editor receives it even when Busy or explicitly Not Available. If the project is no longer awaiting review or has lost its current editor before confirmation, fulfillment fails closed for support recovery rather than assigning another editor.
+
 Connected-environment correction: investigation found that the selected Supabase project contained all three fully configured plan rows but each still had `active=False`; the screenshot was served from the separate offline SQLite database, which contained no revision-plan rows. After preserving an ignored pre-change export, the three owner-confirmed configured rows were published transactionally with attributed audit events. The protected Client render returned all three cards. The verified shared-preview launcher must be used for team-account testing; offline SQLite intentionally remains separate and empty.
 
 ## 2026-10-30 — Versioned client policy acceptance and authentication history boundary

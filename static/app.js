@@ -778,6 +778,22 @@ const revisionPlanGroup = document.querySelector('[data-revision-plans]');
 if (revisionPlanGroup) {
   const cards = [...revisionPlanGroup.querySelectorAll('[data-revision-plan]')];
   const status = document.querySelector('[data-revision-selection-status]');
+  const panel = document.querySelector('[data-revision-request-panel]');
+  const form = panel?.querySelector('[data-revision-order-form]');
+  const planInput = form?.querySelector('[data-revision-plan-input]');
+  const fileWrap = form?.querySelector('[data-revision-files]');
+  const fileInput = form?.querySelector('#revision-files');
+  const syncForm = card => {
+    const selected = Boolean(card);
+    if (panel) panel.hidden = !selected;
+    if (planInput) planInput.value = selected ? card.dataset.revisionPlanId : '';
+    const supportsFiles = selected && card.dataset.revisionPlanSlot === '3';
+    if (fileWrap) fileWrap.hidden = !supportsFiles;
+    if (fileInput) {
+      fileInput.disabled = !supportsFiles;
+      if (!supportsFiles) fileInput.value = '';
+    }
+  };
   cards.forEach(card => {
     card.addEventListener('click', () => {
       const willSelect = card.getAttribute('aria-pressed') !== 'true';
@@ -789,10 +805,54 @@ if (revisionPlanGroup) {
         card.setAttribute('aria-pressed', 'true');
         card.querySelector('[data-revision-plan-state]').textContent = 'Selected';
         status.textContent = `${card.dataset.revisionPlanName} selected.`;
+        syncForm(card);
       } else {
         status.textContent = 'No revision plan selected.';
+        syncForm(null);
+        form?.reset();
       }
     });
+  });
+  if (form) form.addEventListener('submit', async event => {
+    event.preventDefault();
+    const button = form.querySelector('[type="submit"]');
+    const submitStatus = form.querySelector('.form-submit-status');
+    const progress = form.querySelector('.revision-upload-progress');
+    const uploadStatus = form.querySelector('.revision-upload-status');
+    const projectInput = form.elements.namedItem('project_id');
+    const songInput = form.elements.namedItem('song_reference');
+    const changesInput = form.elements.namedItem('changes');
+    button.disabled = true;
+    try {
+      const fileIds = [];
+      for (const file of [...(fileInput?.files || [])]) {
+        if (form.dataset.uploadEnabled !== 'true') throw new Error('File uploads are not configured yet.');
+        announce(uploadStatus, `Checking original: ${file.name}`);
+        const sha256 = await window.hashOriginal(file);
+        const reserved = await postJSON(`/api/projects/${projectInput.value}/uploads/`, {
+          filename: file.name, size_bytes: file.size,
+          content_type: file.type || 'application/octet-stream', category: 'asset', sha256,
+        });
+        progress.hidden = false; progress.value = 0;
+        announce(uploadStatus, `Uploading ${file.name}…`);
+        await uploadOriginal(reserved.upload, file, progress);
+        await postJSON(`/api/files/${reserved.file_id}/complete/`);
+        fileIds.push(reserved.file_id);
+      }
+      announce(submitStatus, 'Saving revision checkout…');
+      const result = await postJSON(form.dataset.createUrl, {
+        plan_id: planInput.value,
+        project_id: projectInput.value,
+        song_reference: songInput.value,
+        changes: changesInput.value,
+        request_key: crypto.randomUUID(),
+        file_ids: fileIds,
+      });
+      window.location.assign(result.redirect);
+    } catch (error) {
+      announce(submitStatus, error.message, true);
+      button.disabled = false;
+    }
   });
 }
 

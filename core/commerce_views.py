@@ -34,6 +34,9 @@ from .models import (
     Plan,
     QuotationFeature,
     RevisionPlan,
+    RevisionPlanOrder,
+    RevisionPlanPayment,
+    UploadPolicy,
 )
 from .payments import (
     apply_sandbox_event,
@@ -45,6 +48,13 @@ from .payments import (
 )
 from .permissions import project_for, role_required, visible_files
 from .policies import payment_policy_snapshot, record_payment_acceptance
+from .revision_checkout import (
+    confirm_revision_payment,
+    create_revision_order,
+    ongoing_projects,
+    revision_checkout_data,
+    start_revision_checkout,
+)
 from .templatetags.money import money
 from .views import audit
 
@@ -139,8 +149,87 @@ def revision_plans(request):
         {
             "title": "Revisions",
             "revision_plans": published_plans,
+            "ongoing_projects": ongoing_projects(request.user),
+            "upload_policy": UploadPolicy.objects.filter(pk=1, enabled=True).first(),
         },
     )
+
+
+@require_POST
+@role_required("client")
+def revision_order_create(request):
+    try:
+        order = create_revision_order(request.user, json.loads(request.body))
+    except (json.JSONDecodeError, ValidationError) as exc:
+        message = exc.messages[0] if isinstance(exc, ValidationError) else "Invalid revision request."
+        return JsonResponse({"error": message}, status=400)
+    return JsonResponse({"order_id": str(order.pk), "redirect": reverse("revision_order_summary", args=[order.pk])}, status=201)
+
+
+@role_required("client")
+def revision_order_summary(request, order_id):
+    order = get_object_or_404(
+        RevisionPlanOrder.objects.select_related("project", "revision_plan"),
+        pk=order_id,
+        client__user=request.user,
+    )
+    return render(request, "commerce/revision_order.html", {
+        "title": "Revision checkout",
+        "revision_order": order,
+        "attachments": order.attachments.select_related("file"),
+        "pending_payment": order.payments.filter(status="pending").first(),
+        "razorpay_test": razorpay_test_enabled(),
+        "payment_policy": order.policy_snapshot,
+    })
+
+
+@require_POST
+@role_required("client")
+def revision_order_checkout(request, order_id):
+    if request.POST.get("agree") != "yes":
+        messages.error(request, "Accept the Terms & Conditions before payment.")
+        return redirect("revision_order_summary", order_id=order_id)
+    try:
+        payment = start_revision_checkout(request.user, order_id, request.POST.get("policy_version"))
+    except ValidationError as exc:
+        messages.error(request, " ".join(exc.messages))
+        return redirect("revision_order_summary", order_id=order_id)
+    return redirect("revision_razorpay_checkout", payment_id=payment.pk)
+
+
+@role_required("client")
+def revision_razorpay_checkout(request, payment_id):
+    payment = get_object_or_404(
+        RevisionPlanPayment.objects.select_related("order__project"),
+        pk=payment_id,
+        order__client__user=request.user,
+        provider="razorpay_test",
+    )
+    try:
+        checkout = revision_checkout_data(payment)
+    except ValidationError as exc:
+        messages.error(request, " ".join(exc.messages))
+        return redirect("revision_order_summary", order_id=payment.order_id)
+    return render(request, "commerce/revision_razorpay_checkout.html", {
+        "title": "Revision payment",
+        "payment": payment,
+        "revision_order": payment.order,
+        "checkout": checkout,
+    })
+
+
+@require_POST
+@role_required("client")
+def revision_razorpay_confirm(request, payment_id):
+    try:
+        event = confirm_revision_payment(request.user, payment_id, json.loads(request.body))
+    except (json.JSONDecodeError, ValidationError, IntegrityError):
+        return JsonResponse({"error": "The revision payment could not be verified."}, status=400)
+    return JsonResponse({
+        "confirmed": True,
+        "event_id": str(event.pk),
+        "redirect": reverse("revision_order_summary", args=[event.payment.order_id]),
+    })
 
 
 @role_required("client")

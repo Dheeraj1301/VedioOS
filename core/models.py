@@ -370,10 +370,72 @@ class RevisionRequest(Record):
     version = models.ForeignKey(ProjectVersion, on_delete=models.PROTECT)
     requested_by = models.ForeignKey(User, on_delete=models.PROTECT)
     instructions = models.TextField()
+    revision_plan_snapshot = models.JSONField(default=dict, blank=True)
+    song_reference = models.CharField(max_length=500, blank=True)
     status = models.CharField(max_length=20, default="requested")
 
     class Meta:
         db_table = "revision_requests"
+
+
+class RevisionPlanOrder(Record):
+    client = models.ForeignKey(Client, on_delete=models.PROTECT, related_name="revision_plan_orders")
+    project = models.ForeignKey(Project, on_delete=models.PROTECT, related_name="revision_plan_orders")
+    revision_plan = models.ForeignKey(RevisionPlan, on_delete=models.PROTECT)
+    plan_snapshot = models.JSONField()
+    policy_snapshot = models.JSONField(default=dict)
+    song_reference = models.CharField(max_length=500)
+    changes = models.TextField(max_length=5000)
+    amount_minor = models.PositiveBigIntegerField()
+    currency = models.CharField(max_length=3)
+    status = models.CharField(
+        max_length=20,
+        default="payment_pending",
+        choices=[("payment_pending", "Payment pending"), ("confirmed", "Confirmed")],
+    )
+    request_key = models.UUIDField(unique=True)
+    policy_accepted_at = models.DateTimeField(null=True, blank=True)
+    revision_request = models.OneToOneField(
+        RevisionRequest, null=True, blank=True, on_delete=models.PROTECT, related_name="plan_order"
+    )
+
+    class Meta:
+        db_table = "revision_plan_orders"
+
+
+class RevisionPlanAttachment(Record):
+    order = models.ForeignKey(RevisionPlanOrder, on_delete=models.PROTECT, related_name="attachments")
+    file = models.OneToOneField(File, on_delete=models.PROTECT, related_name="revision_plan_attachment")
+    revision_request = models.ForeignKey(
+        RevisionRequest, null=True, blank=True, on_delete=models.PROTECT, related_name="attachments"
+    )
+
+    class Meta:
+        db_table = "revision_plan_attachments"
+
+
+class RevisionPlanPayment(Record):
+    order = models.ForeignKey(RevisionPlanOrder, on_delete=models.PROTECT, related_name="payments")
+    provider = models.CharField(max_length=60)
+    provider_reference = models.CharField(max_length=200, unique=True)
+    amount_minor = models.PositiveBigIntegerField()
+    currency = models.CharField(max_length=3)
+    status = models.CharField(max_length=20, default="pending")
+    confirmed_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        db_table = "revision_plan_payments"
+
+
+class RevisionPlanPaymentEvent(Record):
+    payment = models.ForeignKey(RevisionPlanPayment, on_delete=models.PROTECT, related_name="events")
+    provider = models.CharField(max_length=60)
+    event_id = models.CharField(max_length=200, unique=True)
+    payload_digest = models.CharField(max_length=64)
+    outcome = models.CharField(max_length=20)
+
+    class Meta:
+        db_table = "revision_plan_payment_events"
 
 
 class InfluencerPackage(Record):

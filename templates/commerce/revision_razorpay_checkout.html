@@ -1,0 +1,12 @@
+{% extends 'workspace.html' %}{% load static money %}{% block workspace_content %}
+<div class="page-heading"><div><p class="eyebrow">Revision payment</p><h1>Secure checkout.</h1><p class="muted">{{ revision_order.project.title }} · {{ revision_order.plan_snapshot.name }}</p></div><span class="badge">PREVIEW</span></div>
+<section class="panel detail-panel">
+  <h2>Confirm payment details</h2>
+  <div class="file-row"><span>Revision plan total</span><strong>{{ payment.amount_minor|money:payment.currency }}</strong></div>
+  <form id="razorpay-test-checkout" class="form-stack" data-key="{{ checkout.key }}" data-amount="{{ checkout.amount }}" data-currency="{{ checkout.currency }}" data-order-id="{{ checkout.order_id }}" data-confirm-url="{% url 'revision_razorpay_confirm' payment.id %}" data-client-name="{{ request.user.name }}" data-client-email="{{ request.user.email }}">
+    {% csrf_token %}<button class="button" type="button">Open Secure Checkout</button><p class="form-submit-status" role="status" aria-live="polite"></p>
+  </form>
+  <p><a class="text-link" href="{% url 'revision_order_summary' revision_order.id %}">Return to revision summary</a></p>
+</section>
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script><script defer src="{% static 'razorpay-checkout.js' %}?v=20261023-3"></script>
+{% endblock %}

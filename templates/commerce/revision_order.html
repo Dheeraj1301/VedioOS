@@ -1,0 +1,20 @@
+{% extends 'workspace.html' %}{% load money %}{% block workspace_content %}
+<div class="page-heading"><div><p class="eyebrow">Revision checkout</p><h1>{{ revision_order.plan_snapshot.name }}</h1><p class="muted">{{ revision_order.project.title }}</p></div><span class="badge">{{ revision_order.get_status_display }}</span></div>
+<section class="panel detail-panel">
+  <h2>Revision summary</h2>
+  <div class="file-row"><span>Revision plan</span><strong>{{ revision_order.plan_snapshot.name }}</strong></div>
+  <div class="file-row"><span>Price</span><strong>{{ revision_order.amount_minor|money:revision_order.currency }}</strong></div>
+  <div class="file-row"><span>Project</span><strong>{{ revision_order.project.title }}</strong></div>
+  <h3>New song name or link</h3><p class="preserve-lines">{{ revision_order.song_reference }}</p>
+  <h3>Changes requested</h3><p class="preserve-lines">{{ revision_order.changes }}</p>
+  <h3>Additional files</h3>{% for attachment in attachments %}<div class="file-row"><strong>{{ attachment.file.filename }}</strong><span class="badge">Uploaded</span></div>{% empty %}<p class="muted">No additional files.</p>{% endfor %}
+</section>
+<section class="panel detail-panel">
+  <h2>Payment</h2>
+  {% if revision_order.status == 'confirmed' %}<p class="notice">Payment confirmed. This revision was sent to the original assigned editor.</p>
+  {% elif pending_payment %}<a class="button" href="{% url 'revision_razorpay_checkout' pending_payment.id %}">Make Payment</a>
+  {% elif razorpay_test %}<form class="form-stack" method="post" action="{% url 'revision_order_checkout' revision_order.id %}">{% csrf_token %}<input type="hidden" name="policy_version" value="{{ payment_policy.version }}"><label><input type="checkbox" name="agree" value="yes" required> I accept the Terms &amp; Conditions shown below.</label><button class="button" type="submit">Make Payment</button></form>
+  {% else %}<p>Revision checkout is not configured yet.</p>{% endif %}
+  <div class="fixed-plan-terms"><h2>Additional terms</h2>{% include 'commerce/policy_terms.html' with policy=payment_policy %}</div>
+</section>
+{% endblock %}

@@ -4,7 +4,7 @@ Implemented and verified on 2026-09-17 against the original brief's editor work,
 
 ## Configurable revision-plan catalog — 2026-10-23
 
-The client workspace includes a separate `/client/revisions/` comparison page backed by three administrator-managed revision-plan slots. Published title, direct-currency price and descriptive details render dynamically; unpublished slots remain private. The cards allow exclusive selection and click-again deselection. This display-only choice is deliberately separate from project revision requests and from the editing-plan quotation/payment workflow because no revision purchase, order snapshot or fulfillment policy has been approved.
+The client workspace includes a separate `/client/revisions/` purchase page backed by three administrator-managed revision-plan slots. Published title, direct-currency price and descriptive details render dynamically; unpublished slots remain private. The cards allow exclusive selection and click-again deselection. Punaha 1/2 collect an ongoing review-stage project, song reference and requested changes; Punaha 3 also accepts verified private attachments. Save and Proceed creates an immutable server-priced revision order and summary. Razorpay is given only the selected plan amount. Captured-payment verification creates the project revision against its latest version and retains the exact current editor even when availability is Busy or Not Available, without invoking round robin or consuming the original included-revision allowance.
 
 ## Workflow
 
