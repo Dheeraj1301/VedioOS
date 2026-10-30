@@ -4,7 +4,7 @@
 {% if revision_plans %}
 <section class="revision-plan-grid" aria-label="Published revision plans" data-revision-plans>
   {% for plan in revision_plans %}
-  <button class="revision-plan-card" type="button" aria-pressed="false" data-revision-plan>
+  <button class="revision-plan-card" type="button" aria-pressed="false" data-revision-plan data-revision-plan-id="{{ plan.id }}" data-revision-plan-name="{{ plan.name }}">
     <span class="eyebrow">Revision plan {{ plan.slot }}</span>
     <strong>{{ plan.name }}</strong>
     <span class="plan-price">{{ plan.price_minor|money:plan.currency }}</span>
@@ -15,6 +15,6 @@
 </section>
 <p class="muted revision-selection-status" role="status" aria-live="polite" data-revision-selection-status>No revision plan selected.</p>
 {% else %}
-<section class="panel empty-state"><h2>Revision plans are being prepared.</h2><p>The team has not published revision pricing yet. Please check again later or contact support.</p></section>
+<section class="panel empty-state"><h2>No revision plans are currently available.</h2></section>
 {% endif %}
 {% endblock %}

@@ -115,12 +115,13 @@ def catalog_edit(request, kind, slot=None, item_id=None, feature_code=None):
 
 @role_required("client")
 def revision_plans(request):
+    published_plans = list(RevisionPlan.objects.filter(active=True).order_by("slot"))
     return render(
         request,
         "client/revisions.html",
         {
             "title": "Revisions",
-            "revision_plans": RevisionPlan.objects.filter(active=True).order_by("slot"),
+            "revision_plans": published_plans,
         },
     )
 

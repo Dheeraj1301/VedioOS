@@ -788,7 +788,7 @@ if (revisionPlanGroup) {
       if (willSelect) {
         card.setAttribute('aria-pressed', 'true');
         card.querySelector('[data-revision-plan-state]').textContent = 'Selected';
-        status.textContent = `${card.querySelector('strong').textContent} selected.`;
+        status.textContent = `${card.dataset.revisionPlanName} selected.`;
       } else {
         status.textContent = 'No revision plan selected.';
       }

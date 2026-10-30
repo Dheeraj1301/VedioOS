@@ -621,3 +621,11 @@ Status: approved and implemented
 Owner / source of explicit decision: Hamsa requested that the Current Status and Request Not Available panels fill the Editor availability content area like the page banner.
 
 Decision: remove the availability panel's desktop width cap and make both existing panels fill their parent content width. Keep the request form itself capped at a readable width inside the expanded panel. Preserve all availability controls, request workflow, routes, validation and backend behavior.
+
+## 2026-10-30 — Client revision-plan delivery hardening
+
+Status: approved and implemented
+
+Owner / source of explicit decision: Hamsa reported that Admin-published revision plans were not appearing or responding on the Client Revisions page and requested published-card display with exclusive, reversible selection.
+
+Decision: retain the existing separate three-slot revision catalog and browser-only comparison semantics. Explicitly evaluate the published-plan query for the protected Client page, attach stable plan identity/name data to each accessible toggle card, and refresh the versioned CSS/JavaScript assets so current selection behavior is delivered instead of a stale cached bundle. One card may be selected at a time; clicking it again clears selection. No plan is attached to a project, order, quotation or checkout because no purchase/snapshot/fulfillment workflow has been approved. The empty state reads “No revision plans are currently available.”

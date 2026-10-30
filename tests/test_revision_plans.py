@@ -50,6 +50,8 @@ class RevisionPlanTests(TestCase):
         self.assertContains(client_page, "₹249.50")
         self.assertContains(client_page, "One focused revision pass")
         self.assertContains(client_page, 'aria-pressed="false" data-revision-plan', count=1)
+        self.assertContains(client_page, f'data-revision-plan-id="{plan.id}"', html=False)
+        self.assertContains(client_page, 'data-revision-plan-name="Focused polish"', html=False)
 
     def test_unpublished_plans_are_hidden_from_clients(self):
         RevisionPlan.objects.create(
@@ -63,7 +65,28 @@ class RevisionPlanTests(TestCase):
         self.client.force_login(self.client_profile.user)
         response = self.client.get("/client/revisions/")
         self.assertNotContains(response, "Private draft")
-        self.assertContains(response, "Revision plans are being prepared")
+        self.assertContains(response, "No revision plans are currently available.")
+
+    def test_client_renders_all_published_plans_as_toggle_cards(self):
+        for slot in range(1, 4):
+            RevisionPlan.objects.create(
+                slot=slot,
+                name=f"Revision option {slot}",
+                price_minor=slot * 10000,
+                currency="INR",
+                description=f"Published revision details {slot}.",
+                active=True,
+            )
+
+        self.client.force_login(self.client_profile.user)
+        response = self.client.get("/client/revisions/")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'data-revision-plan data-revision-plan-id=', count=3)
+        self.assertContains(response, 'aria-pressed="false"', count=3)
+        for slot in range(1, 4):
+            self.assertContains(response, f"Revision option {slot}")
+            self.assertContains(response, f"Published revision details {slot}.")
 
     def test_publishing_requires_positive_price_currency_and_description(self):
         form = RevisionPlanForm(
