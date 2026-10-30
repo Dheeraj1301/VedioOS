@@ -35,6 +35,21 @@
 
 .landing-page .public-header .brand,
 .landing-page .public-header nav { color: var(--landing-beige-soft); }
+.landing-page .public-header .brand {
+  position: relative;
+  isolation: isolate;
+  text-shadow: 0 0 12px rgba(247, 234, 208, .94), 0 0 34px rgba(241, 223, 187, .82);
+}
+.landing-page .public-header .brand::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: -22px -34px;
+  border-radius: 999px;
+  background: radial-gradient(ellipse, rgba(247, 234, 208, .58) 0%, rgba(241, 223, 187, .28) 46%, transparent 74%);
+  filter: blur(11px);
+  pointer-events: none;
+}
 .landing-page .public-header .button {
   color: var(--landing-beige-soft);
   border-color: rgba(247, 234, 208, .58);
@@ -48,6 +63,7 @@
   width: 42px;
   height: 42px;
   border-radius: 0;
+  filter: drop-shadow(0 0 9px rgba(255, 247, 226, .96)) drop-shadow(0 0 24px rgba(241, 223, 187, .78));
 }
 .landing-page main { width: min(92vw, 1420px); margin: 0 auto; padding-bottom: 10vh; }
 .landing-page #how-it-works { display: none; }

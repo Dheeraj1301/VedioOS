@@ -85,17 +85,17 @@ body:not(.landing-page) .auth-alert { background: #f5e8bf; border-color: #c98c57
   grid-template-columns: minmax(0, 520px);
   place-content: center;
   gap: 0;
-  overflow: hidden;
+  overflow: visible;
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  backdrop-filter: none;
 }
 .auth-page .client-login-layout .auth-intro {
-  position: absolute;
-  z-index: 0;
-  inset: 50% auto auto 50%;
-  width: min(94%, 1080px);
-  padding: 0;
-  transform: translate(-50%, -50%);
-  text-align: center;
-  pointer-events: none;
+  display: none;
 }
 .auth-page .client-login-layout .auth-intro h1 {
   margin: 0;
@@ -118,13 +118,12 @@ body:not(.landing-page) .auth-alert { background: #f5e8bf; border-color: #c98c57
 @media (max-width: 760px) {
   .auth-page .client-login-layout {
     width: calc(100vw - 32px);
-    min-height: calc(100dvh - 200px);
+    min-height: 0;
     margin: 18px auto 34px;
-    padding: 28px 16px;
+    padding: 0;
   }
   .auth-page .client-login-layout .auth-intro {
-    display: block;
-    width: 118%;
+    display: none;
   }
   .auth-page .client-login-layout .auth-intro h1 {
     font-size: clamp(3.8rem, 19vw, 6.4rem);

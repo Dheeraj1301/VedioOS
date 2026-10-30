@@ -831,6 +831,14 @@ class CommerceTests(TestCase):
         razorpay_page = self.client.get(f"/payments/{payment.id}/razorpay/")
         self.assertNotContains(razorpay_page, "data-auto-open")
         self.assertContains(razorpay_page, "Saved quotation total")
+        self.assertNotContains(
+            razorpay_page,
+            "Checkout preview: this payment window is for integration verification",
+        )
+        self.assertNotContains(
+            razorpay_page,
+            "Checkout session created. Continue in the secure payment window.",
+        )
         custom_summary = self.client.get(f"/orders/{project.id}/")
         self.assertNotContains(custom_summary, "Market-reference estimate based on the selected editing scope")
 

@@ -1,5 +1,13 @@
 # Open decisions and decision record
 
+## 2026-10-30 — Focused UI copy and surface cleanup
+
+Status: approved and implemented
+
+Owner / source of explicit decision: Hamsa annotated the client order, checkout, communication, support and login screens and requested a stronger landing wordmark glow.
+
+Decision: explanatory copy identified by the owner is removed without changing its underlying workflow. Plan disclosures grow only the opened card, redirect-style text links use a consistent outlined-button treatment, and the client login retains only its form card over the shared background. The landing BRIO mark gains a soft beige glow for contrast. No controls, destinations, payment behavior, permissions or stored data are changed.
+
 ## 2026-10-30 — Transparent landing chrome and complete-panel stacking
 
 Status: approved and implemented

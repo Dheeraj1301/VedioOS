@@ -3,7 +3,6 @@
 <div class="page-heading"><div><p class="eyebrow">Payment</p><h1>Secure checkout.</h1><p class="muted">{{ project.title }}</p></div><span class="badge">PREVIEW</span></div>
 <section class="panel detail-panel">
   <h2>Confirm payment details</h2>
-  <p class="notice"><strong>Checkout preview:</strong> this payment window is for integration verification and will not collect a live charge.</p>
   <div class="file-row"><span>{% if auto_open %}Fixed plan total{% else %}Saved quotation total{% endif %}</span><strong>{{ payment.amount_minor|money:payment.currency }}</strong></div>
   <div class="file-row"><span>Currency</span><strong>{{ payment.currency }}</strong></div>
   <form id="razorpay-test-checkout" class="form-stack" data-key="{{ checkout.key }}" data-amount="{{ checkout.amount }}" data-currency="{{ checkout.currency }}" data-order-id="{{ checkout.order_id }}" data-confirm-url="{% url 'razorpay_confirm' payment.id %}" data-client-name="{{ request.user.name }}" data-client-email="{{ request.user.email }}"{% if auto_open %} data-auto-open="true"{% endif %}>

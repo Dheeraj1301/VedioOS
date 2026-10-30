@@ -381,10 +381,6 @@ def checkout(request, project_id):
         raise PermissionDenied
     try:
         payment = start_checkout(request.user, project.id)
-        messages.success(
-            request,
-            "Checkout session created. Continue in the secure payment window.",
-        )
         if payment.provider == "razorpay_test":
             return redirect("razorpay_checkout", payment_id=payment.id)
     except ValidationError as exc:
