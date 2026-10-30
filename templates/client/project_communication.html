@@ -1,7 +1,7 @@
 {% extends 'workspace.html' %}
 {% block workspace_content %}
 <div class="page-heading">
-  <div><p class="eyebrow"><a href="{% url 'client_communication' %}">Project Communication</a> / {{ project.id|truncatechars:13 }}</p><h1>{{ project.title }}</h1><p class="muted">Project-scoped conversation with your current team.</p></div>
+  <div><p class="eyebrow"><a href="{% url 'client_communication' %}">Project Communication</a> / {{ project.id|truncatechars:13 }}</p><h1>{{ project.title }}</h1></div>
   <span class="badge">{{ project.get_status_display }}</span>
 </div>
 {% include 'project_messages.html' %}

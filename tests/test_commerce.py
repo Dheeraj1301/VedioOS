@@ -309,7 +309,10 @@ class CommerceTests(TestCase):
         project = Project.objects.get(title="Test-only quotation handoff")
         summary_url = f"/orders/{project.id}/"
         self.assertRedirects(response, summary_url, fetch_redirect_response=False)
-        self.assertContains(self.client.get(summary_url), "Market-reference estimate")
+        self.assertNotContains(
+            self.client.get(summary_url),
+            "Market-reference estimate: Final commercial rates remain subject to administrator approval.",
+        )
         self.assertEqual(project.order.quotes.count(), 1)
         with self.settings(DEBUG=False, PAYMENT_MODE="disabled"):
             with self.assertRaisesMessage(ValidationError, "Test-only pricing is unavailable"):

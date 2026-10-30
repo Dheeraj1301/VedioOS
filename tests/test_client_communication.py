@@ -78,6 +78,12 @@ class ClientCommunicationTests(TestCase):
         self.assertContains(reloaded, "Editor persisted reply")
         self.assertContains(reloaded, self.editors[0].user.name)
         self.assertContains(reloaded, "Client and team")
+        self.assertNotContains(
+            reloaded,
+            "Messages marked “Client and team” are visible to the client and current project team. Internal notes stay with the team.",
+        )
+        self.assertNotContains(reloaded, "Project-scoped conversation with your current team.")
+        self.assertNotContains(reloaded, "UTC")
 
     def test_phone_number_sequences_are_rejected_but_broken_sequences_are_allowed(self):
         path = f"/client/communication/{self.ongoing.id}/"

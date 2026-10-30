@@ -141,6 +141,7 @@ class EditorCommunicationTests(TestCase):
         self.assertNotContains(response, "Private operational note")
         self.assertContains(response, "Send a reply")
         self.assertContains(response, ">Send reply</button>", html=False)
+        self.assertNotContains(response, "UTC")
 
     def test_reply_persists_and_is_immediately_visible_to_editor_and_client(self):
         detail_path = f"/editor/communication/{self.ongoing.id}/"

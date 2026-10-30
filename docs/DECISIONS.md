@@ -597,3 +597,11 @@ Status: approved and implemented
 Owner / source of explicit decision: Hamsa requested a Client-only workspace label and divider between the BRIO logo and the existing navigation.
 
 Decision: render `CLIENT WORKSPACE` only for the Client role using the established Editor workspace-label typography, spacing and muted full-width divider. Preserve the logo, Client navigation labels/order/routes, profile controls, and all Editor/Admin sidebar rendering.
+
+## 2026-10-30 — Targeted helper-copy and conversation-time cleanup
+
+Status: approved and implemented
+
+Owner / source of explicit decision: Hamsa requested removal of named static helper sentences from custom ordering, notifications, project communication and support, plus the displayed time-of-day from the corresponding conversation detail rows.
+
+Decision: remove only the explicitly named presentation copy. Conversation detail rows for shared Client/Admin project messages, Editor project messages and support messages no longer render their timestamp, while message persistence, ordering, authorship, audience badges, forms, permissions and routes remain unchanged. Other dates and timestamps outside those requested conversation views remain intact.

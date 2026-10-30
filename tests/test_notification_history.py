@@ -36,6 +36,10 @@ class NotificationHistoryTests(TestCase):
         newest = self.client.get("/orders/notifications/")
         self.assertEqual(len(newest.context["notices"]), 50)
         self.assertContains(newest, "notice-54")
+        self.assertNotContains(
+            newest,
+            "Updates for projects you can currently access, plus account notices.",
+        )
         self.assertNotContains(newest, "notice-00")
         self.assertNotContains(newest, "hidden project notice")
         self.assertNotContains(newest, "other notice")

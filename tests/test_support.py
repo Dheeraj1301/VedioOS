@@ -74,6 +74,11 @@ class SupportWorkflowTests(TestCase):
 
         admin_detail = self.browser(self.admin).get(f"/support/{support_request.id}/")
         self.assertContains(admin_detail, "Please check the project status.")
+        self.assertNotContains(
+            admin_detail,
+            "Shared replies are visible to the client and support team. Internal notes stay visible only to administrators.",
+        )
+        self.assertNotContains(admin_detail, "UTC")
         self.assertContains(admin_detail, 'id="support-reply"')
         self.assertContains(admin_detail, "Reply to the client")
         self.assertContains(admin_detail, "Send reply")

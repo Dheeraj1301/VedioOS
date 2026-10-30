@@ -11,7 +11,6 @@
   {% for item in project_messages %}
   <article class="file-row"><div>
     <strong>{{ item.author.name }}</strong> <span class="badge">{{ item.author.get_role_display }}</span>
-    <p>{{ item.created_at|date:"M j, Y H:i" }} UTC</p>
     <p class="preserve-lines">{{ item.body }}</p>
   </div></article>
   {% empty %}<p>{% if is_older_message_page %}No older messages on this page.{% elif messaging_enabled %}No messages yet. Use the form below to start a conversation.{% else %}No messages were sent for this project.{% endif %}</p>{% endfor %}
