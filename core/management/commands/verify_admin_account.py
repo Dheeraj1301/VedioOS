@@ -54,8 +54,11 @@ class Command(BaseCommand):
 
         browser = Browser()
         login = browser.post("/login/", {"username": email, "password": password})
-        if login.status_code != 302 or login.url != "/dashboard/":
+        if login.status_code != 302 or login.url != "/login/verify/":
             raise CommandError("Global login did not accept the administrator credentials.")
+        verified = browser.post("/login/verify/", {"code": input("Authenticator code: ")})
+        if verified.status_code != 302 or verified.url != "/dashboard/":
+            raise CommandError("The authenticator code was not accepted. Set up MFA by signing in once first.")
         dashboard = browser.get("/dashboard/")
         if dashboard.status_code != 302 or dashboard.url != "/admin/":
             raise CommandError("The administrator was not routed to the admin dashboard.")

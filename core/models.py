@@ -73,6 +73,20 @@ class EmailVerificationChallenge(models.Model):
         db_table = "email_verification_challenges"
 
 
+class AdminMFA(models.Model):
+    """Authenticator-app secret for an administrator; confirmed once the first code matches."""
+
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="admin_mfa")
+    secret = models.CharField(max_length=64)
+    confirmed_at = models.DateTimeField(null=True, blank=True)
+    last_used_step = models.BigIntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = "admin_mfa"
+
+
 
 class Record(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)

@@ -665,3 +665,11 @@ Status: approved and implemented
 Owner / source of explicit decision: Hamsa reported that a current assigned Editor's verified edited-file upload was rejected when the accepted order did not contain a configured review rule, and explicitly required delivery and immediate Client access not to be blocked by that missing setting.
 
 Decision: configured review terms remain mandatory for Client revision requests and acceptance, but no longer gate an assigned Editor starting work or submitting a verified draft/final file on a paid project. Successful private-storage verification creates the immutable next `ProjectVersion`, attributes it to the current assignment, moves the project to `awaiting_review`, notifies the Client, and makes that submitted version visible and downloadable through the existing protected file endpoint. Payment, current assignment, approved-Editor authorization, file integrity/type, first-draft, version-order and private-download checks remain unchanged. No default commercial review policy is invented and existing order snapshots are not rewritten.
+
+## 2026-10-31 — Authenticator-app MFA for administrators
+
+Status: approved and implemented
+
+Owner / source of explicit decision: Dheeraj selected "MFA for admins" from the security audit gaps.
+
+Decision: every administrator proves a 6-digit RFC 6238 authenticator code (30-second steps, one step of clock drift) after the password and before any session exists. The first sign-in shows a one-time setup key; the account is confirmed by the first valid code. Codes cannot be reused, wrong codes count toward the existing login rate limit, and the pending step expires after ten minutes in its own session keys, so the session-replacement endpoint cannot skip it. Secrets live in the private, RLS-protected `admin_mfa` table (not separately encrypted at rest). A lost device is handled by `manage.py reset_admin_mfa --email <admin>`, which is audited and forces setup again. Clients and editors are unchanged; editor MFA remains open. No external provider or email dependency is added.

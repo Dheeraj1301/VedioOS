@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+{% block body_class %}auth-page auth-history-boundary{% endblock %}
+{% block content %}
+<div class="verification-layout">
+  <section class="verification-card" aria-labelledby="mfa-heading">
+    <h1 id="mfa-heading">{% if setup %}Set up sign-in verification{% else %}Enter your verification code{% endif %}</h1>
+    {% if setup %}
+    <p class="muted">Administrator accounts need an authenticator app (for example Google Authenticator, Microsoft Authenticator or 1Password). Add a new account in the app with this setup key, then enter the 6-digit code it shows.</p>
+    <p><strong>Setup key:</strong> <code>{{ secret }}</code></p>
+    <p class="muted"><a href="{{ setup_uri }}">Open in an authenticator app on this device</a></p>
+    {% else %}
+    <p class="muted">Open your authenticator app and enter the current 6-digit BRIO code.</p>
+    {% endif %}
+    <form class="form-stack" method="post" action="{% url 'admin_mfa' %}">{% csrf_token %}
+      <label for="mfa-code">Verification code</label>
+      <input id="mfa-code" name="code" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9 ]{6,7}" maxlength="7" required autofocus{% if error %} aria-invalid="true" aria-describedby="mfa-error"{% endif %}>
+      {% if error %}<p class="error" id="mfa-error" role="alert">{{ error }}</p>{% endif %}
+      <button class="button" type="submit">Verify and continue</button>
+    </form>
+  </section>
+</div>
+{% endblock %}

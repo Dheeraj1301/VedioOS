@@ -32,6 +32,7 @@ from operations.models import (
     EditorProficiency,
     RoundRobinState,
 )
+from tests.mfa import complete_admin_mfa
 
 PASSWORD = "Synthetic-Creator-72!Leaf"
 
@@ -370,8 +371,11 @@ class FoundationTests(TestCase):
             regular_admin.post(
                 "/login/", {"username": self.admin.email, "password": PASSWORD}
             ),
-            "/dashboard/",
+            "/login/verify/",
             fetch_redirect_response=False,
+        )
+        self.assertRedirects(
+            complete_admin_mfa(regular_admin, self.admin), "/dashboard/", fetch_redirect_response=False
         )
         self.assertRedirects(regular_admin.get("/dashboard/"), "/admin/")
 
@@ -432,8 +436,9 @@ class FoundationTests(TestCase):
         self.assertTrue(Admin.objects.filter(user=user).exists())
         browser = Browser()
         self.assertEqual(
-            browser.post("/login/", {"username": user.email, "password": PASSWORD}).status_code, 302
+            browser.post("/login/", {"username": user.email, "password": PASSWORD}).url, "/login/verify/"
         )
+        self.assertEqual(complete_admin_mfa(browser, user).status_code, 302)
         self.assertEqual(browser.get("/admin/").status_code, 200)
 
     def test_role_matrix_on_pages_and_apis(self):

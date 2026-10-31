@@ -30,6 +30,7 @@ from .email_verification import (
 from .forms import LoginForm, PasswordResetSetForm, ProjectForm, RegistrationForm
 from .landing_content import landing_content, landing_faqs
 from .models import (
+    AdminMFA,
     AuthAttempt,
     Client,
     CommercePolicy,
@@ -52,12 +53,16 @@ from .sessions import (
     remember_pending_login,
 )
 from .storage import delete_private_object_versions, download_permission, inspect_object, upload_permission
+from .totp import matching_step, new_secret, provisioning_uri
 from .v1 import v1_status
 
 FONT_REFERENCE_MAX_BYTES = 1024 * 1024
 FONT_IMAGE_EXTENSIONS = {".avif", ".bmp", ".gif", ".heic", ".heif", ".jpeg", ".jpg", ".png", ".tif", ".tiff", ".webp"}
 INSPIRATION_UPLOAD_LIMIT = 3
 PASSWORD_RESET_GRANT_MINUTES = 10
+MFA_PENDING_USER = "mfa_pending_user"
+MFA_PENDING_AT = "mfa_pending_at"
+MFA_PENDING_TTL = timedelta(minutes=10)
 
 
 def audit(user, action, target, detail=None):
@@ -491,18 +496,13 @@ def _login_view(request, *, editor_only=False):
                 None,
                 "This sign-in is for editor accounts. Use the regular sign-in page for this account.",
             )
+        elif user.role == "admin":
+            # Administrators prove an authenticator code before any session exists.
+            request.session[MFA_PENDING_USER] = str(user.pk)
+            request.session[MFA_PENDING_AT] = timezone.now().isoformat()
+            return redirect("admin_mfa")
         else:
-            if active_session_exists(user) and user.active_session_key != request.session.session_key:
-                destination = "editor_dashboard" if editor_only else "dashboard"
-                remember_pending_login(request, user, destination)
-                return render(
-                    request,
-                    "session_conflict.html",
-                    {"title": "Account already in use", "editor_only": editor_only},
-                    status=409,
-                )
-            establish_session(request, user)
-            return redirect("editor_dashboard" if editor_only else "dashboard")
+            return _finish_login(request, user, editor_only)
     return render(
         request,
         "auth.html",
@@ -517,6 +517,76 @@ def _login_view(request, *, editor_only=False):
             "button": "Editor Sign In" if editor_only else "Log in",
             "mode": "editor_login" if editor_only else "login",
         },
+    )
+
+
+def _finish_login(request, user, editor_only=False):
+    if active_session_exists(user) and user.active_session_key != request.session.session_key:
+        destination = "editor_dashboard" if editor_only else "dashboard"
+        remember_pending_login(request, user, destination)
+        return render(
+            request,
+            "session_conflict.html",
+            {"title": "Account already in use", "editor_only": editor_only},
+            status=409,
+        )
+    establish_session(request, user)
+    return redirect("editor_dashboard" if editor_only else "dashboard")
+
+
+def _mfa_pending_admin(request):
+    try:
+        issued = datetime.fromisoformat(request.session.get(MFA_PENDING_AT, ""))
+    except (TypeError, ValueError):
+        return None
+    if timezone.now() - issued > MFA_PENDING_TTL:
+        return None
+    return User.objects.filter(pk=request.session.get(MFA_PENDING_USER), role="admin", is_active=True).first()
+
+
+def admin_mfa(request):
+    if request.user.is_authenticated:
+        return redirect("dashboard")
+    user = _mfa_pending_admin(request)
+    if user is None:
+        messages.info(request, "Sign in again to continue.")
+        return redirect("login")
+    mfa, _ = AdminMFA.objects.get_or_create(user=user, defaults={"secret": new_secret()})
+    error = ""
+    if request.method == "POST":
+        if auth_rate_limited(request):
+            return render(
+                request,
+                "error.html",
+                {"message": "Too many attempts. Please try again in 15 minutes."},
+                status=429,
+            )
+        with transaction.atomic():
+            mfa = AdminMFA.objects.select_for_update().get(pk=mfa.pk)
+            step = matching_step(mfa.secret, request.POST.get("code", ""), mfa.last_used_step)
+            first_use = mfa.confirmed_at is None
+            if step is not None:
+                mfa.last_used_step = step
+                mfa.confirmed_at = mfa.confirmed_at or timezone.now()
+                mfa.save(update_fields=["last_used_step", "confirmed_at", "updated_at"])
+        if step is not None:
+            request.session.pop(MFA_PENDING_USER, None)
+            request.session.pop(MFA_PENDING_AT, None)
+            audit(user, "account.mfa_enabled" if first_use else "account.mfa_verified", user.pk)
+            return _finish_login(request, user)
+        error = "That code is not valid. Enter the current 6-digit code from your authenticator app."
+    setup = mfa.confirmed_at is None
+    return render(
+        request,
+        "admin_mfa.html",
+        {
+            "title": "Verify it's you",
+            "setup": setup,
+            "secret": " ".join(mfa.secret[i : i + 4] for i in range(0, len(mfa.secret), 4)) if setup else "",
+            "setup_uri": provisioning_uri(mfa.secret, user.email) if setup else "",
+            "error": error,
+        },
+        status=400 if error else 200,
     )
 
 

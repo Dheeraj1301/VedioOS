@@ -6,6 +6,7 @@ from django.test import TestCase, override_settings
 
 from core.models import Client, User
 from operations.models import Admin, AuditLog
+from tests.mfa import complete_admin_mfa
 
 PASSWORD = "Supabase-Test-72!Leaf"
 
@@ -186,7 +187,10 @@ class SupabasePasswordLoginTests(TestCase):
             "/login/", {"username": admin.email, "password": PASSWORD}
         )
 
-        self.assertRedirects(login, "/dashboard/", fetch_redirect_response=False)
+        self.assertRedirects(login, "/login/verify/", fetch_redirect_response=False)
+        self.assertRedirects(
+            complete_admin_mfa(self.client, admin), "/dashboard/", fetch_redirect_response=False
+        )
         admin.refresh_from_db()
         self.assertEqual(admin.role, User.Role.ADMIN)
 

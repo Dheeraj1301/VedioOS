@@ -1,6 +1,7 @@
 """Exercise current auth and project permissions in one rolled-back transaction."""
 
 import secrets
+import time
 import uuid
 from unittest.mock import patch
 
@@ -9,8 +10,9 @@ from django.db import connection, transaction
 from django.test import Client as Browser
 from django.urls import reverse
 
-from core.models import Project, User
+from core.models import AdminMFA, Project, User
 from core.policies import current_policy_snapshot
+from core.totp import STEP_SECONDS, code_at, new_secret
 from operations.models import Admin, Editor, EditorCoins
 
 
@@ -150,9 +152,16 @@ def run_cloud_checks(write):
             Admin.objects.create(user=admin_user)
             admin = Browser()
             require(
-                admin.post(
-                    "/login/", {"username": admin_user.email, "password": password}
-                ).status_code
+                admin.post("/login/", {"username": admin_user.email, "password": password}).url
+                == reverse("admin_mfa"),
+                "admin login requires an authenticator code",
+            )
+            require(admin.get("/admin/").status_code != 200, "admin dashboard locked before the code")
+            mfa_secret = new_secret()
+            AdminMFA.objects.create(user=admin_user, secret=mfa_secret)
+            current_step = int(time.time() // STEP_SECONDS)
+            require(
+                admin.post(reverse("admin_mfa"), {"code": code_at(mfa_secret, current_step)}).status_code
                 == 302,
                 "admin login",
             )
