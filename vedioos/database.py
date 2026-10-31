@@ -7,7 +7,13 @@ import certifi
 from django.core.exceptions import ImproperlyConfigured
 
 
-def postgres_database(url, schema="vedioos", sslrootcert=None, conn_max_age=0):
+def postgres_database(
+    url,
+    schema="vedioos",
+    sslrootcert=None,
+    sslmode=None,
+    conn_max_age=0,
+):
     try:
         parsed = urlsplit(url)
         port = parsed.port or 5432
@@ -25,9 +31,10 @@ def postgres_database(url, schema="vedioos", sslrootcert=None, conn_max_age=0):
     if not re.fullmatch(r"[a-z][a-z0-9_]{0,62}", schema) or schema in ["public", "auth", "storage"]:
         raise ImproperlyConfigured("DATABASE_SCHEMA must be a dedicated private application schema.")
     query = parse_qs(parsed.query)
-    if query.get("sslmode", ["verify-full"])[-1] not in ["require", "verify-ca", "verify-full"]:
+    requested_sslmode = sslmode or query.get("sslmode", ["verify-full"])[-1]
+    if requested_sslmode not in ["require", "verify-ca", "verify-full"]:
         raise ImproperlyConfigured("An encrypted PostgreSQL connection is required.")
-    return {
+    config = {
         "ENGINE": "django.db.backends.postgresql",
         "NAME": unquote(parsed.path.lstrip("/")),
         "USER": unquote(parsed.username),
@@ -42,10 +49,12 @@ def postgres_database(url, schema="vedioos", sslrootcert=None, conn_max_age=0):
         "CONN_HEALTH_CHECKS": True,
         "DISABLE_SERVER_SIDE_CURSORS": True,
         "OPTIONS": {
-            "sslmode": "verify-full",
-            "sslrootcert": sslrootcert or certifi.where(),
+            "sslmode": requested_sslmode,
             "connect_timeout": 10,
             "prepare_threshold": None,
             "options": f"-c search_path={schema} -c statement_timeout=30000",
         },
     }
+    if requested_sslmode in ["verify-ca", "verify-full"]:
+        config["OPTIONS"]["sslrootcert"] = sslrootcert or certifi.where()
+    return config

@@ -22,6 +22,14 @@ class DatabaseConfigurationTests(SimpleTestCase):
         )
         self.assertEqual(config["CONN_MAX_AGE"], 30)
 
+    def test_encrypted_preview_connection_can_skip_ca_verification_explicitly(self):
+        config = postgres_database(
+            "postgresql://app.project:synthetic@pooler.example.com:5432/postgres",
+            sslmode="require",
+        )
+        self.assertEqual(config["OPTIONS"]["sslmode"], "require")
+        self.assertNotIn("sslrootcert", config["OPTIONS"])
+
     def test_bad_url_never_leaks_credentials_in_errors(self):
         for url in [
             "postgresql://user:secret@host:secret/db",

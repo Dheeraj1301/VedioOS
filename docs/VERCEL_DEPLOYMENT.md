@@ -18,6 +18,8 @@ Vercel's system-provided `VERCEL_URL` is automatically added as an exact allowed
 
 Use `DATABASE_CONN_MAX_AGE=0` unless a deployment-safe connection pool has been explicitly sized. Do not copy the ignored development `.env` wholesale: it contains local-only URLs and test settings.
 
+Production should keep `POSTGRES_SSLMODE=verify-full` with the approved CA bundle. A protected preview may use `POSTGRES_SSLMODE=require` when the serverless runtime cannot load that CA chain; the connection remains encrypted, but hostname and CA verification are deferred until the production certificate path is configured.
+
 ## Release gate
 
 Run these checks against the intended Vercel environment before promoting or attaching the production domain:
