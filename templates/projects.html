@@ -8,12 +8,12 @@
 </div>
 {% if user.role == 'admin' %}
 <nav aria-label="Project queues" class="commerce-filters">
-  <a href="/admin/projects/?queue=all">All</a>
-  <a href="/admin/projects/?queue=unassigned">Unassigned</a>
-  <a href="/admin/projects/?queue=active">Active</a>
-  <a href="/admin/projects/?queue=review">Review</a>
-  <a href="/admin/projects/?queue=revision">Revision</a>
-  <a href="/admin/projects/?queue=completed">Completed</a>
+  <a href="/admin/orders/?payment=all">All</a>
+  <a href="/admin/orders/?payment=paid&amp;workflow=awaiting_assignment">Unassigned</a>
+  <a href="/admin/orders/?payment=paid&amp;workflow=editing">Active</a>
+  <a href="/admin/orders/?payment=paid&amp;workflow=awaiting_review">Review</a>
+  <a href="/admin/orders/?payment=paid&amp;workflow=revision_requested">Revision</a>
+  <a href="/admin/orders/?payment=all&amp;workflow=completed">Completed</a>
 </nav>
 {% endif %}
 <section class="panel{% if user.role == 'client' %} client-projects-panel{% endif %}"{% if user.role == 'client' %} data-project-filter{% endif %}>
