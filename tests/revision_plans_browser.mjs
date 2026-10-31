@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 
 import { chromium } from '@playwright/test';
+import {passCodeStep} from './mfa_browser.mjs';
 
 const fixture = JSON.parse(process.env.REVISION_PLANS_BROWSER_FIXTURE);
 const browser = await chromium.launch({headless: true, channel: 'msedge'});
@@ -11,6 +12,7 @@ try {
   await page.getByLabel('Email').fill(fixture.admin_email);
   await page.locator('input[name="password"]').fill(fixture.password);
   await page.getByRole('button', {name: 'Log in'}).click();
+  await passCodeStep(page, fixture.admin_email);
   await page.waitForURL(`${fixture.base}/admin/`);
   await page.goto(`${fixture.base}/admin/pricing/`);
   assert.equal(await page.getByRole('link', {name: /Configure revision plan/}).count(), 3);

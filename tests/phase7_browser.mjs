@@ -2,6 +2,7 @@ import { chromium } from '@playwright/test';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { mkdir, readFile } from 'node:fs/promises';
+import {passCodeStep} from './mfa_browser.mjs';
 
 const f = JSON.parse(process.env.PHASE7_BROWSER_FIXTURE);
 const browser = await chromium.launch({headless: true, channel: 'msedge'});
@@ -21,6 +22,7 @@ async function login(email) {
   assert.equal(await password.getAttribute('type'), 'password');
   await password.fill(f.password);
   await page.getByRole('button', {name: 'Log in'}).click();
+  await passCodeStep(page, email);
   await page.waitForURL(/\/(client|editor|admin)\/$/);
 }
 async function logout() {

@@ -7,7 +7,7 @@ from django.test import Client as Browser
 from django.test import TestCase
 from django.utils import timezone
 
-from core.models import AdminMFA, User
+from core.models import AccountMFA, User
 from core.totp import STEP_SECONDS, code_at, matching_step
 from operations.models import Admin, AuditLog
 
@@ -42,7 +42,7 @@ class AdminMfaTests(TestCase):
         self.assertEqual(self.browser.get("/admin/").status_code, 302)
         setup = self.browser.get("/login/verify/")
         self.assertContains(setup, "Setup key")
-        secret = AdminMFA.objects.get(user=self.admin).secret
+        secret = AccountMFA.objects.get(user=self.admin).secret
 
         wrong = self.browser.post("/login/verify/", {"code": "000000" if current_code(secret) != "000000" else "111111"})
         self.assertEqual(wrong.status_code, 400)
@@ -51,11 +51,11 @@ class AdminMfaTests(TestCase):
         done = self.browser.post("/login/verify/", {"code": current_code(secret)})
         self.assertRedirects(done, "/dashboard/", fetch_redirect_response=False)
         self.assertEqual(self.browser.get("/admin/").status_code, 200)
-        self.assertIsNotNone(AdminMFA.objects.get(user=self.admin).confirmed_at)
+        self.assertIsNotNone(AccountMFA.objects.get(user=self.admin).confirmed_at)
         self.assertTrue(AuditLog.objects.filter(actor=self.admin, action="account.mfa_enabled").exists())
 
     def test_later_sign_in_hides_setup_key_and_rejects_reused_code(self):
-        mfa = AdminMFA.objects.create(user=self.admin, secret="JBSWY3DPEHPK3PXPJBSWY3DPEHPK3PXP", confirmed_at=timezone.now())
+        mfa = AccountMFA.objects.create(user=self.admin, secret="JBSWY3DPEHPK3PXPJBSWY3DPEHPK3PXP", confirmed_at=timezone.now())
         code = current_code(mfa.secret)
         self.sign_in()
         self.assertNotContains(self.browser.get("/login/verify/"), "Setup key")
@@ -90,8 +90,35 @@ class AdminMfaTests(TestCase):
         self.assertRedirects(response, "/dashboard/", fetch_redirect_response=False)
 
     def test_reset_command_requires_setup_again(self):
-        AdminMFA.objects.create(user=self.admin, secret="JBSWY3DPEHPK3PXPJBSWY3DPEHPK3PXP", confirmed_at=timezone.now())
-        call_command("reset_admin_mfa", email=self.admin.email, stdout=StringIO())
-        self.assertFalse(AdminMFA.objects.filter(user=self.admin).exists())
+        AccountMFA.objects.create(user=self.admin, secret="JBSWY3DPEHPK3PXPJBSWY3DPEHPK3PXP", confirmed_at=timezone.now())
+        call_command("reset_mfa", email=self.admin.email, stdout=StringIO())
+        self.assertFalse(AccountMFA.objects.filter(user=self.admin).exists())
         self.sign_in()
         self.assertContains(self.browser.get("/login/verify/"), "Setup key")
+
+
+class EditorMfaTests(TestCase):
+    def setUp(self):
+        from operations.models import Editor
+
+        self.user = User.objects.create_user("mfa-editor@example.test", PASSWORD, name="MFA Editor", role="editor")
+        self.editor = Editor.objects.create(
+            user=self.user, phone="1234567890", experience="Editing", tools="Resolve",
+            portfolio="https://example.com", previous_work="Reels", expertise="Color",
+        )
+        self.mfa = AccountMFA.objects.create(
+            user=self.user, secret="JBSWY3DPEHPK3PXPJBSWY3DPEHPK3PXP", confirmed_at=timezone.now()
+        )
+
+    def test_editor_sign_in_page_requires_code_then_returns_to_editor_area(self):
+        browser = Browser()
+        response = browser.post("/editor/signin/", {"username": self.editor.login_id, "password": PASSWORD})
+        self.assertRedirects(response, "/login/verify/", fetch_redirect_response=False)
+        self.assertNotIn("_auth_user_id", browser.session)
+        self.assertEqual(browser.get("/editor/").status_code, 302)
+        done = browser.post("/login/verify/", {"code": current_code(self.mfa.secret)})
+        self.assertRedirects(done, "/editor/", fetch_redirect_response=False)
+
+    def test_reset_command_covers_editors(self):
+        call_command("reset_mfa", email=self.user.email, stdout=StringIO())
+        self.assertFalse(AccountMFA.objects.filter(user=self.user).exists())

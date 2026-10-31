@@ -32,7 +32,7 @@ from operations.models import (
     EditorProficiency,
     RoundRobinState,
 )
-from tests.mfa import complete_admin_mfa
+from tests.mfa import complete_mfa
 
 PASSWORD = "Synthetic-Creator-72!Leaf"
 
@@ -276,9 +276,10 @@ class FoundationTests(TestCase):
         self.assertEqual(user.editor_profile.assignments.count(), 0)
         self.assertRedirects(
             browser.post("/login/", {"username": "ved-test0001", "password": PASSWORD}),
-            "/dashboard/",
+            "/login/verify/",
             fetch_redirect_response=False,
         )
+        self.assertRedirects(complete_mfa(browser, user), "/dashboard/", fetch_redirect_response=False)
         self.assertContains(browser.get("/editor/"), "awaiting approval")
 
     def test_editor_sign_in_entry_flow_and_role_separation(self):
@@ -341,8 +342,10 @@ class FoundationTests(TestCase):
                 "/editor/signin/",
                 {"username": self.editor.login_id.lower(), "password": PASSWORD},
             ),
-            "/editor/",
+            "/login/verify/",
+            fetch_redirect_response=False,
         )
+        self.assertRedirects(complete_mfa(browser, self.editor_user), "/editor/")
         self.assertEqual(browser.session.get("_auth_user_id"), str(self.editor_user.pk))
 
         for user in [self.owner, self.admin]:
@@ -375,7 +378,7 @@ class FoundationTests(TestCase):
             fetch_redirect_response=False,
         )
         self.assertRedirects(
-            complete_admin_mfa(regular_admin, self.admin), "/dashboard/", fetch_redirect_response=False
+            complete_mfa(regular_admin, self.admin), "/dashboard/", fetch_redirect_response=False
         )
         self.assertRedirects(regular_admin.get("/dashboard/"), "/admin/")
 
@@ -438,7 +441,7 @@ class FoundationTests(TestCase):
         self.assertEqual(
             browser.post("/login/", {"username": user.email, "password": PASSWORD}).url, "/login/verify/"
         )
-        self.assertEqual(complete_admin_mfa(browser, user).status_code, 302)
+        self.assertEqual(complete_mfa(browser, user).status_code, 302)
         self.assertEqual(browser.get("/admin/").status_code, 200)
 
     def test_role_matrix_on_pages_and_apis(self):

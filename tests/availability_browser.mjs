@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { mkdir, readFile } from "node:fs/promises";
 
 import { chromium } from "@playwright/test";
+import {passCodeStep} from "./mfa_browser.mjs";
 
 const base = process.env.BASE_URL || "http://127.0.0.1:8000";
 const fixture = JSON.parse(await readFile(".runtime/browser-fixture.json", "utf8"));
@@ -20,6 +21,7 @@ try {
   await page.getByLabel("Email").fill(fixture.editor.login_id);
   await page.locator('input[name="password"]').fill(fixture.password);
   await page.getByRole("button", { name: "Editor Sign In" }).click();
+  await passCodeStep(page, "editor");
   await page.waitForURL(`${base}/editor/`);
 
   await page.goto(`${base}/editor/availability/`);

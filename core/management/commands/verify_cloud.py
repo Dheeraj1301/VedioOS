@@ -10,7 +10,7 @@ from django.db import connection, transaction
 from django.test import Client as Browser
 from django.urls import reverse
 
-from core.models import AdminMFA, Project, User
+from core.models import AccountMFA, Project, User
 from core.policies import current_policy_snapshot
 from core.totp import STEP_SECONDS, code_at, new_secret
 from operations.models import Admin, Editor, EditorCoins
@@ -131,8 +131,15 @@ def run_cloud_checks(write):
             EditorCoins.objects.create(editor=editor_record)
             editor = Browser()
             require(
+                editor.post("/login/", {"username": editor_record.login_id, "password": password}).url
+                == reverse("account_mfa"),
+                "editor login requires an authenticator code",
+            )
+            editor_secret = new_secret()
+            AccountMFA.objects.create(user=editor_user, secret=editor_secret)
+            require(
                 editor.post(
-                    "/login/", {"username": editor_record.login_id, "password": password}
+                    reverse("account_mfa"), {"code": code_at(editor_secret, int(time.time() // STEP_SECONDS))}
                 ).status_code
                 == 302,
                 "administrator-issued editor ID login",
@@ -153,15 +160,15 @@ def run_cloud_checks(write):
             admin = Browser()
             require(
                 admin.post("/login/", {"username": admin_user.email, "password": password}).url
-                == reverse("admin_mfa"),
+                == reverse("account_mfa"),
                 "admin login requires an authenticator code",
             )
             require(admin.get("/admin/").status_code != 200, "admin dashboard locked before the code")
             mfa_secret = new_secret()
-            AdminMFA.objects.create(user=admin_user, secret=mfa_secret)
+            AccountMFA.objects.create(user=admin_user, secret=mfa_secret)
             current_step = int(time.time() // STEP_SECONDS)
             require(
-                admin.post(reverse("admin_mfa"), {"code": code_at(mfa_secret, current_step)}).status_code
+                admin.post(reverse("account_mfa"), {"code": code_at(mfa_secret, current_step)}).status_code
                 == 302,
                 "admin login",
             )

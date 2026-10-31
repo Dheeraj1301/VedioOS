@@ -1,6 +1,7 @@
 import { chromium } from '@playwright/test';
 import { readFile } from 'node:fs/promises';
 import assert from 'node:assert/strict';
+import {passCodeStep} from './mfa_browser.mjs';
 
 // Uses an existing synthetic account transferred from the local Day 1 tests.
 // Does not create new identities or projects in the connected cloud database.
@@ -14,6 +15,7 @@ try {
   await page.getByLabel('Email').fill(admin.email);
   await page.getByLabel('Password', {exact: true}).fill(admin.password);
   await page.getByRole('button', {name: 'Log in'}).click();
+  await passCodeStep(page, admin.email);
   await page.waitForURL('**/admin/', {timeout: 60000});
   await page.getByRole('heading', {name: 'Studio overview.'}).waitFor();
   await page.goto('http://127.0.0.1:8000/admin/projects/');

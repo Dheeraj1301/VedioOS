@@ -30,7 +30,7 @@ from .email_verification import (
 from .forms import LoginForm, PasswordResetSetForm, ProjectForm, RegistrationForm
 from .landing_content import landing_content, landing_faqs
 from .models import (
-    AdminMFA,
+    AccountMFA,
     AuthAttempt,
     Client,
     CommercePolicy,
@@ -62,6 +62,7 @@ INSPIRATION_UPLOAD_LIMIT = 3
 PASSWORD_RESET_GRANT_MINUTES = 10
 MFA_PENDING_USER = "mfa_pending_user"
 MFA_PENDING_AT = "mfa_pending_at"
+MFA_PENDING_EDITOR_ONLY = "mfa_pending_editor_only"
 MFA_PENDING_TTL = timedelta(minutes=10)
 
 
@@ -496,11 +497,12 @@ def _login_view(request, *, editor_only=False):
                 None,
                 "This sign-in is for editor accounts. Use the regular sign-in page for this account.",
             )
-        elif user.role == "admin":
-            # Administrators prove an authenticator code before any session exists.
+        elif user.role in ("admin", "editor"):
+            # Administrators and editors prove an authenticator code before any session exists.
             request.session[MFA_PENDING_USER] = str(user.pk)
             request.session[MFA_PENDING_AT] = timezone.now().isoformat()
-            return redirect("admin_mfa")
+            request.session[MFA_PENDING_EDITOR_ONLY] = editor_only
+            return redirect("account_mfa")
         else:
             return _finish_login(request, user, editor_only)
     return render(
@@ -534,24 +536,26 @@ def _finish_login(request, user, editor_only=False):
     return redirect("editor_dashboard" if editor_only else "dashboard")
 
 
-def _mfa_pending_admin(request):
+def _mfa_pending_account(request):
     try:
         issued = datetime.fromisoformat(request.session.get(MFA_PENDING_AT, ""))
     except (TypeError, ValueError):
         return None
     if timezone.now() - issued > MFA_PENDING_TTL:
         return None
-    return User.objects.filter(pk=request.session.get(MFA_PENDING_USER), role="admin", is_active=True).first()
+    return User.objects.filter(
+        pk=request.session.get(MFA_PENDING_USER), role__in=["admin", "editor"], is_active=True
+    ).first()
 
 
-def admin_mfa(request):
+def account_mfa(request):
     if request.user.is_authenticated:
         return redirect("dashboard")
-    user = _mfa_pending_admin(request)
+    user = _mfa_pending_account(request)
     if user is None:
         messages.info(request, "Sign in again to continue.")
         return redirect("login")
-    mfa, _ = AdminMFA.objects.get_or_create(user=user, defaults={"secret": new_secret()})
+    mfa, _ = AccountMFA.objects.get_or_create(user=user, defaults={"secret": new_secret()})
     error = ""
     if request.method == "POST":
         if auth_rate_limited(request):
@@ -562,7 +566,7 @@ def admin_mfa(request):
                 status=429,
             )
         with transaction.atomic():
-            mfa = AdminMFA.objects.select_for_update().get(pk=mfa.pk)
+            mfa = AccountMFA.objects.select_for_update().get(pk=mfa.pk)
             step = matching_step(mfa.secret, request.POST.get("code", ""), mfa.last_used_step)
             first_use = mfa.confirmed_at is None
             if step is not None:
@@ -572,13 +576,14 @@ def admin_mfa(request):
         if step is not None:
             request.session.pop(MFA_PENDING_USER, None)
             request.session.pop(MFA_PENDING_AT, None)
+            editor_only = request.session.pop(MFA_PENDING_EDITOR_ONLY, False)
             audit(user, "account.mfa_enabled" if first_use else "account.mfa_verified", user.pk)
-            return _finish_login(request, user)
+            return _finish_login(request, user, editor_only)
         error = "That code is not valid. Enter the current 6-digit code from your authenticator app."
     setup = mfa.confirmed_at is None
     return render(
         request,
-        "admin_mfa.html",
+        "account_mfa.html",
         {
             "title": "Verify it's you",
             "setup": setup,

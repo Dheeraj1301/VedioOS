@@ -2,6 +2,7 @@ import { chromium } from '@playwright/test';
 import assert from 'node:assert/strict';
 import { readFile, mkdir } from 'node:fs/promises';
 import { createHash, randomUUID } from 'node:crypto';
+import {passCodeStep} from './mfa_browser.mjs';
 
 const base = process.env.BASE_URL || 'http://127.0.0.1:8000';
 const fixture = JSON.parse(await readFile('.runtime/browser-fixture.json', 'utf8'));
@@ -20,6 +21,7 @@ async function login(email, value) {
   await page.getByLabel('Email').fill(email);
   await page.getByLabel('Password', {exact: true}).fill(value);
   await page.getByRole('button', {name: 'Log in'}).click();
+  await passCodeStep(page, email);
   const replaceSession = page.getByRole('button', {name: 'Sign out other device'});
   if (await replaceSession.isVisible()) {
     await replaceSession.click();
