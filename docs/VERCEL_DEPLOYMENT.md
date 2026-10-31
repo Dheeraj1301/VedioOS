@@ -10,6 +10,8 @@ Configure values through Vercel Environment Variables. Never commit them or past
 - `DEBUG=false`
 - `ALLOWED_HOSTS=brio.org.in,<project>.vercel.app`
 - `CSRF_TRUSTED_ORIGINS=https://brio.org.in,https://<project>.vercel.app`
+
+Vercel's system-provided `VERCEL_URL` is automatically added as an exact allowed host and trusted HTTPS origin. This keeps generated preview URLs usable without permitting arbitrary `*.vercel.app` hosts.
 - the approved Supabase database/Auth variables documented in `.env.example`
 - an externally reachable HTTPS private S3-compatible storage endpoint and its private credentials
 - an approved production email backend and sender domain
