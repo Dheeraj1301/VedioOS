@@ -1,3 +1,5 @@
+from urllib.parse import urlsplit
+
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import logout
@@ -32,9 +34,35 @@ class SingleActiveSessionMiddleware:
         return self.get_response(request)
 
 
+def content_security_policy():
+    """Allow only this site, the private store, Google Fonts and Razorpay checkout."""
+    endpoint = urlsplit(settings.S3_ENDPOINT_URL)
+    storage = (
+        f"{endpoint.scheme}://{endpoint.netloc}"
+        if settings.PRIVATE_STORAGE_ENABLED and endpoint.netloc
+        else ""
+    )
+    directives = [
+        ("default-src", "'self'"),
+        ("script-src", "'self' https://checkout.razorpay.com"),
+        ("style-src", "'self' https://fonts.googleapis.com"),
+        ("font-src", "'self' https://fonts.gstatic.com"),
+        ("img-src", f"'self' data: blob: {storage}"),
+        ("media-src", f"'self' blob: {storage}"),
+        ("connect-src", f"'self' {storage} https://api.razorpay.com https://lumberjack.razorpay.com"),
+        ("frame-src", "https://checkout.razorpay.com https://api.razorpay.com"),
+        ("frame-ancestors", "'none'"),
+        ("form-action", "'self'"),
+        ("base-uri", "'self'"),
+        ("object-src", "'none'"),
+    ]
+    return "; ".join(f"{name} {sources}".strip() for name, sources in directives)
+
+
 class PrivateResponseMiddleware:
     def __init__(self, get_response):
         self.get_response = get_response
+        self.content_security_policy = content_security_policy()
 
     def __call__(self, request):
         response = self.get_response(request)
@@ -53,6 +81,7 @@ class PrivateResponseMiddleware:
         ):
             response["Cache-Control"] = "no-store, private"
             response["X-Robots-Tag"] = "noindex, nofollow"
+        response.setdefault("Content-Security-Policy", self.content_security_policy)
         response["X-Content-Type-Options"] = "nosniff"
         response["Referrer-Policy"] = "same-origin"
         response["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()"

@@ -13,7 +13,7 @@
   {% empty %}<div class="empty-state"><div class="empty-icon" aria-hidden="true">○</div><h3>No ongoing assigned projects</h3></div>{% endfor %}
 </section>
 
-<section class="panel communication-group" style="margin-top:28px" aria-labelledby="completed-projects-title">
+<section class="panel communication-group" aria-labelledby="completed-projects-title">
   <div class="panel-heading"><h2 id="completed-projects-title">Completed</h2><span>{{ completed_projects|length }} project{{ completed_projects|length|pluralize }}</span></div>
   {% for project in completed_projects %}
   <a class="project-row" href="{% url 'editor_project_communication' project.id %}">

@@ -19,6 +19,21 @@ document.querySelectorAll('input[type="password"]').forEach(input => {
   wrapper.appendChild(toggle);
 });
 
+(() => {
+  const dialog = document.querySelector('[data-policy-dialog]');
+  const checkbox = dialog?.querySelector('[data-policy-checkbox]');
+  const button = dialog?.querySelector('[data-policy-continue]');
+  const accepted = document.querySelector('[data-policy-accepted]');
+  if (!dialog || !checkbox || !button || !accepted) return;
+  checkbox.addEventListener('change', () => { button.disabled = !checkbox.checked; });
+  button.addEventListener('click', () => {
+    if (!checkbox.checked) return;
+    accepted.value = 'yes';
+    dialog.remove();
+    document.querySelector('#client-registration-form input:not([type=hidden])')?.focus();
+  });
+})();
+
 document.querySelectorAll('.back-button').forEach(button => {
   button.addEventListener('click', () => {
     if (history.length > 1) history.back();
