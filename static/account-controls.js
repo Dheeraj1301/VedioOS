@@ -54,18 +54,21 @@ document.querySelectorAll('[data-auth-exit]').forEach(form => {
   });
 });
 
-// After a successful sign-in, absorb the single navigation that would otherwise
-// reveal the credential page. Subsequent in-workspace history remains untouched.
-if (document.body.classList.contains('workspace-page')
-    && sessionStorage.getItem(AUTH_TRANSITION_KEY) === 'sign-in') {
-  sessionStorage.removeItem(AUTH_TRANSITION_KEY);
-  const workspaceUrl = window.location.href;
+// After a successful sign-in, the first workspace entry becomes a boundary that Back
+// never crosses, so the credential page is not revisited. The marker lives in the
+// history entry, so the boundary still holds after visiting other workspace pages.
+if (document.body.classList.contains('workspace-page')) {
   const workspaceGuard = { brioSignedInBoundary: true };
-  history.replaceState(workspaceGuard, '', workspaceUrl);
-  history.pushState(workspaceGuard, '', workspaceUrl);
-  window.addEventListener('popstate', () => {
-    history.pushState(workspaceGuard, '', workspaceUrl);
-  }, { once: true });
+  if (sessionStorage.getItem(AUTH_TRANSITION_KEY) === 'sign-in') {
+    sessionStorage.removeItem(AUTH_TRANSITION_KEY);
+    history.replaceState(workspaceGuard, '', window.location.href);
+    history.pushState(workspaceGuard, '', window.location.href);
+  }
+  if (history.state?.brioSignedInBoundary) {
+    window.addEventListener('popstate', event => {
+      if (event.state?.brioSignedInBoundary) history.pushState(workspaceGuard, '', window.location.href);
+    });
+  }
 }
 window.addEventListener('pageshow', event => {
   if (event.persisted) location.reload();

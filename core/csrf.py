@@ -2,7 +2,6 @@ from django.shortcuts import redirect, render
 
 from .sessions import clear_pending_login, pending_login
 
-
 SIGN_IN_PATHS = {"/login/", "/editor/signin/"}
 SESSION_DECISION_PATH = "/login/session/"
 
