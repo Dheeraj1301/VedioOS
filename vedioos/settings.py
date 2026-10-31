@@ -212,6 +212,8 @@ if PAYMENT_MODE not in {"disabled", "sandbox", "razorpay_test"} or (
 RAZORPAY_KEY_ID = os.getenv("RAZORPAY_KEY_ID", "")
 RAZORPAY_KEY_SECRET = os.getenv("RAZORPAY_KEY_SECRET", "")
 RAZORPAY_API_BASE = os.getenv("RAZORPAY_API_BASE", "https://api.razorpay.com/v1").rstrip("/")
+# Vercel sets VERCEL=1 at runtime and replaces X-Real-IP with the real client address.
+TRUST_VERCEL_CLIENT_IP = os.getenv("VERCEL") == "1"
 # Previews may boot before cloud storage exists; storage calls then fail as unavailable.
 PRIVATE_STORAGE_ENABLED = os.getenv("PRIVATE_STORAGE_ENABLED", "true").lower() == "true"
 if (

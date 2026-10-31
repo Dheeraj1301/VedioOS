@@ -26,7 +26,7 @@ Additional infrastructure tables hold upload policy, login throttling, and Djang
 4. `project_for` uses that scoped query before exposing a project or allowing a file operation. Unknown/unauthorized projects return 404.
 5. Public signup rejects privilege fields; only the protected admin action can approve editor proficiency. A CLI creates initial admins and refuses silent elevation of existing accounts.
 6. POST mutations require CSRF. Logout deletes the database session. Private routes return `Cache-Control: no-store` and indexing restrictions.
-7. Login/signup attempt counts are persisted per hashed direct client IP with a local 30-attempt / 15-minute limit. Proxy-aware distributed throttling, password recovery, MFA, and email verification remain production hardening work.
+7. Login/signup attempt counts are persisted per hashed client IP with a 30-attempt / 15-minute limit; on Vercel (`VERCEL=1`) the platform-overwritten `X-Real-IP` is the client IP, elsewhere only the socket address is trusted. Distributed throttling beyond login, password recovery, MFA, and email verification remain production hardening work.
 
 An unapproved editor may log in and view their derived availability. This grants no project access or assignment eligibility. Availability is calculated from current assignments on non-terminal projects and cannot be manually changed. Manual fixture assignments exist only in tests; no unpaid-work assignment endpoint is exposed.
 

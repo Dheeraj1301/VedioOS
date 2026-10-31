@@ -66,9 +66,16 @@ def audit(user, action, target, detail=None):
     AuditLog.objects.create(actor=user, action=action, target_id=str(target), detail=detail or {})
 
 
+def client_address(request):
+    """Vercel overwrites X-Real-IP with the caller's address; elsewhere only the socket is trusted."""
+    if settings.TRUST_VERCEL_CLIENT_IP and request.META.get("HTTP_X_REAL_IP"):
+        return request.META["HTTP_X_REAL_IP"]
+    return request.META.get("REMOTE_ADDR", "unknown")
+
+
 def auth_rate_limited(request):
-    """DB-backed local limiter; no proxy headers are trusted as client identity."""
-    key = hashlib.sha256(request.META.get("REMOTE_ADDR", "unknown").encode()).hexdigest()
+    """DB-backed limiter keyed by the hashed client address."""
+    key = hashlib.sha256(client_address(request).encode()).hexdigest()
     attempt, _ = AuthAttempt.objects.get_or_create(key=key, defaults={"window_started": timezone.now()})
     if attempt.window_started < timezone.now() - timedelta(minutes=15):
         AuthAttempt.objects.filter(pk=attempt.pk).update(failures=0, window_started=timezone.now())

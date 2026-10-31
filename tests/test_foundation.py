@@ -1510,3 +1510,16 @@ class FoundationTests(TestCase):
         self.assertEqual(
             browser.post("/login/", {"username": self.owner.email, "password": PASSWORD}).status_code, 429
         )
+
+    def test_auth_rate_limit_uses_vercel_client_address_only_on_vercel(self):
+        from core.models import AuthAttempt
+
+        AuthAttempt.objects.create(
+            key=hashlib.sha256(b"203.0.113.9").hexdigest(), failures=30, window_started=timezone.now()
+        )
+        credentials = {"username": self.owner.email, "password": PASSWORD}
+        with self.settings(TRUST_VERCEL_CLIENT_IP=True):
+            self.assertEqual(Browser().post("/login/", credentials, HTTP_X_REAL_IP="203.0.113.9").status_code, 429)
+            self.assertNotEqual(Browser().post("/login/", credentials, HTTP_X_REAL_IP="198.51.100.4").status_code, 429)
+        with self.settings(TRUST_VERCEL_CLIENT_IP=False):
+            self.assertNotEqual(Browser().post("/login/", credentials, HTTP_X_REAL_IP="203.0.113.9").status_code, 429)

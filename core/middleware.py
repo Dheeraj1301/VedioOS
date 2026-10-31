@@ -56,7 +56,7 @@ def content_security_policy():
         ("base-uri", "'self'"),
         ("object-src", "'none'"),
     ]
-    return "; ".join(f"{name} {sources}".strip() for name, sources in directives)
+    return "; ".join(" ".join(f"{name} {sources}".split()) for name, sources in directives)
 
 
 class PrivateResponseMiddleware:
