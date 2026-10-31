@@ -49,7 +49,7 @@ def rehearse_snapshot(payload, target_path, alias="restore_rehearsal"):
 
             cursor.execute("PRAGMA foreign_keys=OFF")
             for table in sorted(target_tables):
-                cursor.execute(f"DELETE FROM {database.ops.quote_name(table)}")
+                cursor.execute(f"DELETE FROM {database.ops.quote_name(table)}")  # nosec B608 - quoted catalog table name
             for table in sorted(snapshot_tables):
                 cursor.execute(f"PRAGMA table_info({database.ops.quote_name(table)})")
                 target_columns = {row[1] for row in cursor.fetchall()}
@@ -62,7 +62,7 @@ def rehearse_snapshot(payload, target_path, alias="restore_rehearsal"):
                     placeholders = ", ".join(["%s"] * len(columns))
                     values = [_sqlite_value(row[column]) for column in columns]
                     cursor.execute(
-                        f"INSERT INTO {database.ops.quote_name(table)} ({names}) "
+                        f"INSERT INTO {database.ops.quote_name(table)} ({names}) "  # nosec B608 - quoted catalog names
                         f"VALUES ({placeholders})",
                         values,
                     )

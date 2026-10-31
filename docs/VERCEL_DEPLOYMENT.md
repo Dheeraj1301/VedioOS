@@ -13,7 +13,9 @@ Configure values through Vercel Environment Variables. Never commit them or past
 
 Vercel's system-provided `VERCEL_URL` is automatically added as an exact allowed host and trusted HTTPS origin. This keeps generated preview URLs usable without permitting arbitrary `*.vercel.app` hosts.
 - the approved Supabase database/Auth variables documented in `.env.example`
-- an externally reachable HTTPS private S3-compatible storage endpoint and its private credentials
+- an externally reachable HTTPS private S3-compatible storage endpoint and its private credentials. Until one exists, a protected preview may set `PRIVATE_STORAGE_ENABLED=false`: the app boots, every upload/download returns the existing retryable "storage unavailable" error, and `check_release` still reports the storage blocker. Never use this in production.
+
+The Vercel project's Ignored Build Step skips production builds (`VERCEL_ENV=production`) while production deployment remains inactive; only previews build. Remove it when the release gate below passes.
 - an approved production email backend and sender domain
 
 Use `DATABASE_CONN_MAX_AGE=0` unless a deployment-safe connection pool has been explicitly sized. Do not copy the ignored development `.env` wholesale: it contains local-only URLs and test settings.

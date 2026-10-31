@@ -6,11 +6,18 @@ from urllib.parse import quote
 
 import boto3
 from botocore.config import Config
+from botocore.exceptions import BotoCoreError
 from django.conf import settings
+
+
+class PrivateStorageDisabled(BotoCoreError):
+    fmt = "Private storage is disabled until an HTTPS endpoint is configured."
 
 
 @lru_cache(maxsize=1)
 def storage_client():
+    if not settings.PRIVATE_STORAGE_ENABLED:
+        raise PrivateStorageDisabled()
     return boto3.client(
         "s3",
         endpoint_url=settings.S3_ENDPOINT_URL,

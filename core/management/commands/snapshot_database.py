@@ -29,7 +29,7 @@ class Command(BaseCommand):
             tables = [row[0] for row in cursor.fetchall()]
             for table in tables:
                 qualified = f"{connection.ops.quote_name(schema)}.{connection.ops.quote_name(table)}"
-                cursor.execute(f"SELECT row_to_json(t) FROM {qualified} t")
+                cursor.execute(f"SELECT row_to_json(t) FROM {qualified} t")  # nosec B608 - quoted catalog table name
                 snapshot[table] = [row[0] for row in cursor.fetchall()]
         directory = settings.BASE_DIR / ".runtime"
         directory.mkdir(exist_ok=True)

@@ -5,6 +5,7 @@ from django.test import TestCase
 
 from core.landing_content import FAQ_DEFAULTS, LANDING_DEFAULTS
 from core.models import LandingPageSettings, User
+from core.storage import PrivateStorageDisabled, storage_client
 
 
 class LandingPageTests(TestCase):
@@ -145,6 +146,16 @@ class LandingPageTests(TestCase):
 
     def test_video_route_is_not_present_without_published_video(self):
         self.assertEqual(self.client.get("/landing/hero-video/").status_code, 404)
+
+    def test_video_route_is_not_present_while_private_storage_is_disabled(self):
+        LandingPageSettings.objects.create(content={}, hero_video_object_key="landing/hero/current.mp4")
+        storage_client.cache_clear()
+        with self.settings(PRIVATE_STORAGE_ENABLED=False):
+            with self.assertRaises(PrivateStorageDisabled):
+                storage_client()
+            self.assertEqual(self.client.get("/landing/hero-video/").status_code, 404)
+            self.assertEqual(self.client.get("/").status_code, 200)
+        storage_client.cache_clear()
 
     def test_legacy_saved_faq_copy_is_preserved_and_contact_is_added(self):
         LandingPageSettings.objects.create(

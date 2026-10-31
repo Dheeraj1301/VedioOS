@@ -54,7 +54,7 @@ class Command(BaseCommand):
                         f"{connection.ops.quote_name('vedioos')}."
                         f"{connection.ops.quote_name(table)}"
                     )
-                    cursor.execute(f"SELECT COUNT(*) FROM {qualified}")
+                    cursor.execute(f"SELECT COUNT(*) FROM {qualified}")  # nosec B608 - quoted catalog table name
                     if cursor.fetchone()[0] != len(tables[table]):
                         raise CommandError("Snapshot and live database row counts differ.")
         suffix = " and live row counts" if options["against_database"] else ""

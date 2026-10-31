@@ -1,6 +1,7 @@
 import hashlib
 import uuid
 
+from botocore.exceptions import BotoCoreError
 from django.conf import settings
 from django.contrib import messages
 from django.db import transaction
@@ -113,8 +114,11 @@ def landing_page_control(request):
 @require_GET
 def landing_hero_video(request):
     config = LandingPageSettings.objects.filter(pk=1).first()
-    if not config or not config.hero_video_object_key:
-        from django.http import Http404
+    from django.http import Http404
 
+    if not config or not config.hero_video_object_key:
         raise Http404
-    return redirect(landing_video_permission(config))
+    try:
+        return redirect(landing_video_permission(config))
+    except BotoCoreError as exc:
+        raise Http404 from exc
