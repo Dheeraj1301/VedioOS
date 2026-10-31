@@ -26,15 +26,19 @@ from .permissions import project_for
 from .policies import current_policy_snapshot, validate_policy_version
 from .views import audit
 
-ONGOING_EXCLUDED = ["completed", "cancelled", "payment_pending"]
+REVISION_ELIGIBLE_STATUSES = [Project.Status.REVIEW]
 
 
-def ongoing_projects(user):
-    return Project.objects.filter(
+def eligible_revision_projects(user):
+    eligible_ids = Project.objects.filter(
         client__user=user,
         archived_at__isnull=True,
         payment_completed_at__isnull=False,
-    ).exclude(status__in=ONGOING_EXCLUDED).order_by("title")
+        status__in=REVISION_ELIGIBLE_STATUSES,
+        versions__isnull=False,
+        assignments__ended_at__isnull=True,
+    ).values("pk")
+    return Project.objects.filter(pk__in=eligible_ids).order_by("title")
 
 
 @transaction.atomic
@@ -46,14 +50,14 @@ def create_revision_order(user, data):
         plan_id = uuid.UUID(str(data.get("plan_id")))
         project_id = uuid.UUID(str(data.get("project_id")))
     except (TypeError, ValueError):
-        raise ValidationError("Choose a revision plan and ongoing project.") from None
+        raise ValidationError("Choose a revision plan and eligible project.") from None
     existing = RevisionPlanOrder.objects.filter(request_key=request_key, client__user=user).first()
     if existing:
         return existing
     plan = RevisionPlan.objects.select_for_update().filter(pk=plan_id, active=True).first()
-    project = ongoing_projects(user).select_for_update().filter(pk=project_id).first()
+    project = eligible_revision_projects(user).select_for_update().filter(pk=project_id).first()
     if not plan or not project:
-        raise ValidationError("Choose an available revision plan and ongoing project.")
+        raise ValidationError("Choose an available revision plan and eligible project.")
     if project.status != "awaiting_review" or not project.versions.exists():
         raise ValidationError("This project must have a submitted version awaiting review.")
     assignment = project.assignments.filter(ended_at__isnull=True).first()

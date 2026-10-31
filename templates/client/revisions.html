@@ -20,11 +20,11 @@
   <form class="form-stack" data-revision-order-form data-create-url="{% url 'revision_order_create' %}" data-upload-enabled="{% if upload_policy %}true{% else %}false{% endif %}">
     {% csrf_token %}
     <input type="hidden" name="plan_id" data-revision-plan-input>
-    <div><label for="revision-project">Select Project</label><select id="revision-project" name="project_id" required><option value="">Select an ongoing project</option>{% for project in ongoing_projects %}<option value="{{ project.id }}"{% if project.status != 'awaiting_review' %} disabled{% endif %}>{{ project.title }} — {{ project.get_status_display }}</option>{% endfor %}</select></div>
+    <div><label for="revision-project">Select Project</label><select id="revision-project" name="project_id" required{% if not eligible_projects %} disabled{% endif %}><option value="">{% if eligible_projects %}Select a project{% else %}No projects eligible for revisions.{% endif %}</option>{% for project in eligible_projects %}<option value="{{ project.id }}">{{ project.title }} — {{ project.get_status_display }}</option>{% endfor %}</select>{% if not eligible_projects %}<p class="field-help">No projects eligible for revisions.</p>{% endif %}</div>
     <div><label for="revision-song">New Song Name or Link</label><input id="revision-song" name="song_reference" maxlength="500" placeholder="New song name or link (enter NA incase of no changes)" required></div>
     <div data-revision-files hidden><label for="revision-files">Upload Additional Files</label><input id="revision-files" name="additional_files" type="file" multiple disabled><progress class="revision-upload-progress" value="0" max="100" hidden></progress><p class="revision-upload-status" role="status" aria-live="polite"></p></div>
     <div><label for="revision-changes">Enter the Changes</label><textarea id="revision-changes" name="changes" rows="6" maxlength="5000" required></textarea></div>
-    <button class="button" type="submit">Save and Proceed</button>
+    <button class="button" type="submit"{% if not eligible_projects %} disabled{% endif %}>Save and Proceed</button>
     <p class="form-submit-status" role="status" aria-live="polite"></p>
   </form>
 </section>

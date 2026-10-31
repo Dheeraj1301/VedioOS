@@ -51,7 +51,7 @@ from .policies import payment_policy_snapshot, record_payment_acceptance
 from .revision_checkout import (
     confirm_revision_payment,
     create_revision_order,
-    ongoing_projects,
+    eligible_revision_projects,
     revision_checkout_data,
     start_revision_checkout,
 )
@@ -149,7 +149,7 @@ def revision_plans(request):
         {
             "title": "Revisions",
             "revision_plans": published_plans,
-            "ongoing_projects": ongoing_projects(request.user),
+            "eligible_projects": eligible_revision_projects(request.user),
             "upload_policy": UploadPolicy.objects.filter(pk=1, enabled=True).first(),
         },
     )

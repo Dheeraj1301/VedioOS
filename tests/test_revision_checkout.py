@@ -3,6 +3,7 @@ import hmac
 import uuid
 from unittest.mock import patch
 
+from django.core.exceptions import ValidationError
 from django.test import TestCase, override_settings
 from django.utils import timezone
 
@@ -70,9 +71,9 @@ class RevisionCheckoutTests(TestCase):
             active=True,
         )
 
-    def _ready_file(self, uploader, filename, category="asset"):
+    def _ready_file(self, uploader, filename, category="asset", project=None):
         return File.objects.create(
-            project=self.project,
+            project=project or self.project,
             uploader=uploader,
             filename=filename,
             object_key=f"synthetic/{uuid.uuid4()}",
@@ -98,10 +99,27 @@ class RevisionCheckoutTests(TestCase):
             },
         )
 
-    def test_revision_page_shows_conditional_form_and_only_ongoing_projects(self):
+    def test_revision_page_lists_only_projects_awaiting_client_review(self):
+        editing = paid_project(self.client_profile, "Editing project")
+        editing.status = "editing"
+        editing.save(update_fields=["status", "updated_at"])
+        editing_assignment = EditorAssignment.objects.create(project=editing, editor=self.editors[1])
+        ProjectVersion.objects.create(
+            project=editing,
+            file=self._ready_file(self.editors[1].user, "editing.mp4", "draft", editing),
+            number=1,
+            assignment=editing_assignment,
+        )
         completed = paid_project(self.client_profile, "Completed edit")
         completed.status = "completed"
         completed.save(update_fields=["status", "updated_at"])
+        completed_assignment = EditorAssignment.objects.create(project=completed, editor=self.editors[1])
+        ProjectVersion.objects.create(
+            project=completed,
+            file=self._ready_file(self.editors[1].user, "completed.mp4", "final", completed),
+            number=1,
+            assignment=completed_assignment,
+        )
         self.client.force_login(self.client_profile.user)
 
         response = self.client.get("/client/revisions/")
@@ -110,7 +128,27 @@ class RevisionCheckoutTests(TestCase):
         self.assertContains(response, "Select Project")
         self.assertContains(response, "Upload Additional Files")
         self.assertContains(response, "Ongoing edit")
+        self.assertContains(response, "Awaiting client review")
+        self.assertNotContains(response, "Editing project")
         self.assertNotContains(response, "Completed edit")
+
+    def test_revision_page_disables_project_selection_when_none_are_eligible(self):
+        self.project.status = "editing"
+        self.project.save(update_fields=["status", "updated_at"])
+        self.client.force_login(self.client_profile.user)
+
+        response = self.client.get("/client/revisions/")
+
+        self.assertContains(response, "No projects eligible for revisions.", count=2)
+        self.assertContains(response, 'name="project_id" required disabled')
+        self.assertContains(response, 'type="submit" disabled')
+
+    def test_revision_order_rejects_ongoing_project(self):
+        self.project.status = "editing"
+        self.project.save(update_fields=["status", "updated_at"])
+
+        with self.assertRaisesMessage(ValidationError, "eligible project"):
+            self._order()
 
     def test_punaha_three_saves_private_ready_attachments(self):
         attachment = self._ready_file(self.client_profile.user, "brief.pdf")
