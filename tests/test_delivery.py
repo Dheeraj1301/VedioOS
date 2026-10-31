@@ -202,12 +202,28 @@ class DeliveryTests(TestCase):
         with self.assertRaises(ValidationError):
             transition(self.buyer.user, self.project.pk, "revise", version_id=second.pk, note="More")
 
-    def test_unconfigured_and_unpaid_blocked(self):
+    def test_unconfigured_review_terms_do_not_block_editor_delivery(self):
         order = self.project.order
         order.terms_snapshot = {}
         order.save()
-        with self.assertRaises(ValidationError):
-            transition(self.editor, self.project.pk, "start")
+        transition(self.editor, self.project.pk, "start")
+        transition(self.editor, self.project.pk, "submit", file_id=self.file.pk)
+
+        version = self.project.versions.get()
+        self.assertEqual(version.file, self.file)
+        self.project.refresh_from_db()
+        self.assertEqual(self.project.status, "awaiting_review")
+        with self.assertRaisesMessage(ValidationError, "Review terms are not configured"):
+            transition(
+                self.buyer.user,
+                self.project.pk,
+                "revise",
+                version_id=version.pk,
+                note="Trim the opening.",
+            )
+
+    def test_unpaid_delivery_is_blocked(self):
+        order = self.project.order
         order.payment_status = "pending"
         order.save()
         with self.assertRaises(Http404):
@@ -305,7 +321,10 @@ class DeliveryTests(TestCase):
         ))
 
     @patch("core.views.inspect_object")
-    def test_failed_automatic_submission_does_not_create_ready_client_entry(self, inspect):
+    @patch("core.views.download_permission", return_value="https://example.test/temporary")
+    def test_unconfigured_terms_upload_is_versioned_and_downloadable_by_client(
+        self, download, inspect
+    ):
         self.project.order.terms_snapshot = {}
         self.project.order.save(update_fields=["terms_snapshot", "updated_at"])
         pending = File.objects.create(
@@ -329,15 +348,21 @@ class DeliveryTests(TestCase):
 
         self.client.force_login(self.editor)
         response = self.client.post(f"/api/files/{pending.pk}/complete/")
-        self.assertEqual(response.status_code, 409)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["version"], 1)
+        self.assertTrue(response.json()["available_to_client"])
         pending.refresh_from_db()
-        self.assertEqual(pending.state, "pending")
-        self.assertFalse(ProjectVersion.objects.filter(file=pending).exists())
+        self.assertEqual(pending.state, "ready")
+        self.assertEqual(pending.projectversion.number, 1)
 
         self.client.force_login(self.buyer.user)
-        self.assertNotContains(
-            self.client.get(f"/client/projects/{self.project.pk}/"), "too-early.mp4"
-        )
+        page = self.client.get(f"/client/projects/{self.project.pk}/")
+        self.assertContains(page, "too-early.mp4")
+        self.assertContains(page, "Download version 1")
+        response = self.client.post(f"/api/files/{pending.pk}/download/")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["url"], "https://example.test/temporary")
+        download.assert_called_once()
 
     def test_submission_replay_and_unverified_file(self):
         version = self.submit()

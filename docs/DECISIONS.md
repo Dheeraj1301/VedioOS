@@ -657,3 +657,11 @@ Status: approved and implemented
 Owner / source of explicit decision: Hamsa requested that paid revision-plan project selection exclude ongoing work and show only projects that have reached client approval or a later stage where revisions remain possible.
 
 Decision: the protected Client Revisions selector and revision-order backend use one shared eligibility contract. A project must belong to the Client, be paid, unarchived, have a submitted version and current editor, and currently be `awaiting_review`. Assigned, editing, revision-in-progress and all other ongoing stages are excluded. Completed projects remain excluded because completion is currently a terminal accepted-delivery state; allowing a paid revision after completion would introduce an unapproved `completed` to `revision_requested` transition, contrary to the explicit instruction not to change status transitions. Each option displays the project title and current status. When no eligible project exists, the selector and Save and Proceed action are disabled and the page states “No projects eligible for revisions.” Checkout, assignment, upload fields and project lifecycle transitions are unchanged.
+
+## 2026-10-31 — Editor delivery is independent of configured client review terms
+
+Status: approved and implemented
+
+Owner / source of explicit decision: Hamsa reported that a current assigned Editor's verified edited-file upload was rejected when the accepted order did not contain a configured review rule, and explicitly required delivery and immediate Client access not to be blocked by that missing setting.
+
+Decision: configured review terms remain mandatory for Client revision requests and acceptance, but no longer gate an assigned Editor starting work or submitting a verified draft/final file on a paid project. Successful private-storage verification creates the immutable next `ProjectVersion`, attributes it to the current assignment, moves the project to `awaiting_review`, notifies the Client, and makes that submitted version visible and downloadable through the existing protected file endpoint. Payment, current assignment, approved-Editor authorization, file integrity/type, first-draft, version-order and private-download checks remain unchanged. No default commercial review policy is invented and existing order snapshots are not rewritten.

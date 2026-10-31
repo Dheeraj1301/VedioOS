@@ -59,7 +59,6 @@ def transition(
             return accepted
         raise ValidationError("A different version has already been accepted.")
     project = paid_project(project_id)
-    limit = review_terms(project)
     assignment = project.assignments.filter(ended_at__isnull=True).select_related("editor__user").first()
     if not assignment:
         raise ValidationError("An assigned editor is required.")
@@ -69,6 +68,7 @@ def transition(
     elif action in {"revise", "accept"}:
         if user.role != "client" or project.client.user_id != user.pk:
             raise PermissionDenied
+        limit = review_terms(project)
     else:
         raise ValidationError("Unknown review action.")
     latest = project.versions.order_by("-number").first()
