@@ -27,8 +27,13 @@ try {
   await page.goto(`${base}/editor/availability/`);
   await page.getByRole("heading", { name: "Your availability." }).waitFor();
   await page.getByText(/Available.*no active projects/).waitFor();
-  assert.equal(await page.locator("select").count(), 0);
-  assert.equal(await page.getByRole("button", { name: /save/i }).count(), 0);
+  // The status panel offers no direct status choice; Not Available is only reachable through
+  // the reason-required request panel (DECISIONS.md, 2026-10-28 and 2026-10-30).
+  const statusPanel = page.locator(".availability-panel").first();
+  assert.equal(await statusPanel.locator("select").count(), 0);
+  assert.equal(await statusPanel.getByRole("button", { name: /save/i }).count(), 0);
+  await page.getByRole("heading", { name: "Request Not Available" }).waitFor();
+  assert.equal(await page.getByLabel("Requested status").count(), 1);
 
   const response = await context.request.get(`${base}/api/editor/availability/`);
   assert.equal(response.status(), 200);
@@ -38,25 +43,29 @@ try {
     icon: "✅",
     active_count: 0,
     summary: "Available — no active projects",
+    pending_request: false,
+    pending_reason: "",
   });
 
   await page.route("**/api/editor/availability/", async (route) => {
     await route.fulfill({
       contentType: "application/json",
       json: {
-        status: "unavailable",
-        label: "Unavailable",
-        icon: "🔴",
+        status: "busy",
+        label: "Unavailable (Busy)",
+        icon: "🟠",
         active_count: 2,
-        summary: "Unavailable — 2 active projects",
+        summary: "Unavailable (Busy) — 2 active projects",
       },
     });
   });
+  // The page polls every 30 s and also refreshes on focus; use the focus path.
+  await page.evaluate(() => window.dispatchEvent(new Event("focus")));
   await page
     .locator("[data-availability-status]")
-    .filter({ hasText: "Unavailable — 2 active projects" })
+    .filter({ hasText: "Unavailable (Busy) — 2 active projects" })
     .waitFor({ timeout: 7000 });
-  await page.locator(".availability-badge.is-unavailable").waitFor();
+  await page.locator(".availability-badge.is-busy").waitFor();
   await page.screenshot({
     path: ".runtime/screenshots/editor-availability.png",
     fullPage: true,
