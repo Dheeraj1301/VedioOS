@@ -673,3 +673,11 @@ Status: approved and implemented
 Owner / source of explicit decision: Dheeraj selected "MFA for admins" from the security audit gaps; his security checklist requires MFA for administrators and editors.
 
 Decision: every administrator and editor proves a 6-digit RFC 6238 authenticator code (30-second steps, one step of clock drift) after the password and before any session exists. The first sign-in shows a one-time setup key; the account is confirmed by the first valid code. Codes cannot be reused, wrong codes count toward the existing login rate limit, and the pending step expires after ten minutes in its own session keys, so the session-replacement endpoint cannot skip it. Secrets live in the private, RLS-protected `account_mfa` table (not separately encrypted at rest). A lost device is handled by `manage.py reset_mfa --email <account>`, which is audited and forces setup again. Editors who start at Editor Sign In return to the editor dashboard. Clients are unchanged. No external provider or email dependency is added.
+
+## 2026-11-01 — Private media storage on AWS S3 (Sydney)
+
+Status: approved and implemented for the protected preview; D02 retention, scanning and recovery remain open
+
+Owner / source of explicit decision: Dheeraj chose AWS S3 after Supabase Storage was ruled out (no S3 versioning), named the bucket `briodata` with the `edits/` folder, and asked that the earlier `brioedits` bucket not be used.
+
+Decision: the S3-compatible adapter targets `briodata` in `ap-southeast-2` with versioning enabled, Block Public Access on, default SSE-S3 encryption and CORS limited to brio.org.in and the Vercel previews. `S3_KEY_PREFIX=edits/` places every new project file, landing video and storage probe under `edits/` and scopes the storage inventory to that folder; stored keys keep their full path, so earlier records are unaffected. The application uses a dedicated IAM user restricted to `briodata/edits/*` plus the bucket-level list and versioning reads it needs. `check_private_storage` passed against the bucket (versioned byte round-trip, anonymous denial, probe cleanup). Local development keeps the loopback store unless the `.env.aws` values are loaded. Retention periods, malware scanning and backup/recovery of media remain owner decisions (D02).

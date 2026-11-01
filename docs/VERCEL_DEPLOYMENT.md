@@ -34,6 +34,8 @@ python manage.py migrate --check
 
 The domain must not be promoted while `check_release` reports blockers. In particular, loopback media storage, sandbox/test payments, unapproved production prices, console email, or unresolved legal/recovery decisions are not production configurations. A Vercel preview may be used to validate the runtime while those features remain disabled and accurately labeled.
 
+Private storage (2026-11-01): AWS S3 bucket `briodata` in `ap-southeast-2`, every object under `edits/` (`S3_KEY_PREFIX=edits/`), versioning on, public access blocked, CORS limited to brio.org.in and the Vercel previews, and an IAM user limited to `briodata/edits/*`. Its keys are Preview-only Sensitive variables in Vercel and the git-ignored `.env.aws` locally.
+
 Current state (2026-11-01): `brio.org.in` is attached to the protected `ui_2` preview branch (not production) and `www.brio.org.in` redirects to it; both are in the Preview `ALLOWED_HOSTS`/`CSRF_TRUSTED_ORIGINS`. DNS at the registrar (GoDaddy) must point `@` and `www` to the records Vercel lists for the domain. Before public launch, move the domain to production and re-run the release gate.
 
 After a deployment is healthy, add `brio.org.in` to the Vercel project, apply the exact DNS records returned by Vercel at the domain registrar, then re-run the release and end-to-end security checks over HTTPS.
