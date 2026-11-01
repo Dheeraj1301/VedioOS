@@ -722,7 +722,7 @@ class FoundationTests(TestCase):
     def test_new_order_shows_three_plan_slots_and_custom_option(self):
         response = self.auth(self.owner).get("/client/new-order/")
         self.assertEqual(response.status_code, 200)
-        for label in ["Plan 1", "Plan 2", "Plan 3", "Customize my edit"]:
+        for label in ["Plan 1", "Plan 2", "Plan 3", "Anukula"]:
             self.assertContains(response, label)
         for label in ["Colour grading", "Quality enhancement", "Add overlays", "Beat sync"]:
             self.assertContains(response, label)
@@ -1252,7 +1252,7 @@ class FoundationTests(TestCase):
             },
         )
         self.assertEqual(rejected.status_code, 200)
-        self.assertContains(rejected, "Choose Customize my edit")
+        self.assertContains(rejected, "Choose Anukula")
         response = browser.post(
             "/client/new-order/",
             {

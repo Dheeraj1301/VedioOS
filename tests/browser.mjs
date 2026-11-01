@@ -82,7 +82,7 @@ try {
   await page.screenshot({path: '.runtime/screenshots/payment-history-mobile.png', fullPage: true});
   await page.setViewportSize({width: 1440, height: 1000});
   await page.goto(`${base}/client/new-order/`);
-  await page.getByText('Customize my edit', {exact: true}).click();
+  await page.getByText('Anukula', {exact: true}).click();
   await page.getByLabel('Reel duration').selectOption('30_50');
   await page.getByLabel('Project name').fill(`My first reel ${runId}`);
   await page.getByLabel('Describe the edit').fill('Synthetic browser test: clean cuts, captions, and warm colors.');

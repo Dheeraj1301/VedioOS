@@ -155,7 +155,7 @@ class ProjectForm(forms.ModelForm):
         self.available_plans = Plan.objects.filter(active=True).order_by("slot")
         self.fields["order_choice"].choices = [
             (f"plan:{plan.pk}", plan.name) for plan in self.available_plans
-        ] + [("custom", "Customize my edit")]
+        ] + [("custom", "Anukula")]
         if self.instance.pk and hasattr(self.instance, "order"):
             order = self.instance.order
             self.initial["order_choice"] = f"plan:{order.plan_id}" if order.plan_id else "custom"
@@ -196,7 +196,7 @@ class ProjectForm(forms.ModelForm):
                 ]
             ):
                 self.add_error(
-                    "order_choice", "Choose Customize my edit to add individual requirements."
+                    "order_choice", "Choose Anukula to add individual requirements."
                 )
         elif choice == "custom":
             data["pricing_period"] = Plan.PricingPeriod.PER_REEL

@@ -394,7 +394,7 @@ class CommerceTests(TestCase):
 
         page = self.client.get(summary_url)
         self.assertContains(page, "Quotation details")
-        self.assertContains(page, "Customize my edit")
+        self.assertContains(page, "Anukula")
         self.assertContains(page, "Colour grading")
         self.assertContains(page, "Beat sync")
         self.assertContains(page, format_money(12380, "INR"))
