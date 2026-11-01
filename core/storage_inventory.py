@@ -1,5 +1,9 @@
 """Aggregate database-to-bucket inventory without exposing private object names."""
 
+from django.conf import settings
+
+from .storage import storage_key
+
 
 def inventory_private_storage(files, client, bucket):
     references = set()
@@ -20,7 +24,7 @@ def inventory_private_storage(files, client, bucket):
     key_marker = None
     version_marker = None
     while True:
-        request = {"Bucket": bucket}
+        request = {"Bucket": bucket, "Prefix": settings.S3_KEY_PREFIX}
         if key_marker:
             request["KeyMarker"] = key_marker
         if version_marker:
@@ -32,14 +36,14 @@ def inventory_private_storage(files, client, bucket):
             if key and version_id:
                 object_keys.add(key)
                 seen_versions.add((key, version_id))
-            if key.startswith("__vedioos_checks__/"):
+            if key.startswith(storage_key("__vedioos_checks__/")):
                 probe_artifacts += 1
         for marker in page.get("DeleteMarkers", []):
             key = marker.get("Key", "")
             delete_markers += 1
             if key:
                 object_keys.add(key)
-            if key.startswith("__vedioos_checks__/"):
+            if key.startswith(storage_key("__vedioos_checks__/")):
                 probe_artifacts += 1
         if not page.get("IsTruncated"):
             break

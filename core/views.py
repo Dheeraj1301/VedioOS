@@ -52,7 +52,13 @@ from .sessions import (
     pending_login,
     remember_pending_login,
 )
-from .storage import delete_private_object_versions, download_permission, inspect_object, upload_permission
+from .storage import (
+    delete_private_object_versions,
+    download_permission,
+    inspect_object,
+    storage_key,
+    upload_permission,
+)
 from .totp import matching_step, new_secret, provisioning_uri
 from .v1 import v1_status
 
@@ -1100,7 +1106,7 @@ def request_upload(request, project_id):
                 sha256=digest,
                 content_type=content_type,
                 category=category,
-                object_key=f"projects/{project.id}/{file_id}",
+                object_key=storage_key(f"projects/{project.id}/{file_id}"),
                 expires_at=timezone.now() + timedelta(seconds=settings.UPLOAD_TTL_SECONDS),
             )
             permission = upload_permission(file)

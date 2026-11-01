@@ -8,6 +8,8 @@ from urllib.parse import quote
 
 import requests
 
+from .storage import storage_key
+
 
 class StoragePreflightError(Exception):
     pass
@@ -30,7 +32,7 @@ def check_private_storage(client, endpoint, bucket, download_ttl=60, payload=Non
     payload = payload if payload is not None else secrets.token_bytes(128 * 1024)
     digest = hashlib.sha256(payload).digest()
     checksum = base64.b64encode(digest).decode("ascii")
-    key = f"__vedioos_checks__/{uuid.uuid4()}.bin"
+    key = storage_key(f"__vedioos_checks__/{uuid.uuid4()}.bin")
     probe_created = False
     try:
         versioning = client.get_bucket_versioning(Bucket=bucket)

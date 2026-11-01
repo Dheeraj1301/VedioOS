@@ -12,7 +12,7 @@ from .landing_content import landing_content, landing_faqs
 from .landing_forms import FAQFormSet, LandingPageForm
 from .models import LandingPageSettings
 from .permissions import role_required
-from .storage import landing_video_permission, storage_client
+from .storage import landing_video_permission, storage_client, storage_key
 from .views import audit
 
 
@@ -21,7 +21,7 @@ def _upload_video(upload):
     for chunk in upload.chunks():
         digest.update(chunk)
     upload.seek(0)
-    object_key = f"landing/hero/{uuid.uuid4()}.mp4"
+    object_key = storage_key(f"landing/hero/{uuid.uuid4()}.mp4")
     result = storage_client().put_object(
         Bucket=settings.S3_BUCKET,
         Key=object_key,

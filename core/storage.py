@@ -14,6 +14,11 @@ class PrivateStorageDisabled(BotoCoreError):
     fmt = "Private storage is disabled until an HTTPS endpoint is configured."
 
 
+def storage_key(path):
+    """Object key inside the configured bucket folder (S3_KEY_PREFIX)."""
+    return f"{settings.S3_KEY_PREFIX}{path}"
+
+
 @lru_cache(maxsize=1)
 def storage_client():
     if not settings.PRIVATE_STORAGE_ENABLED:

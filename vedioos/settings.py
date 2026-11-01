@@ -199,6 +199,9 @@ S3_REGION = os.getenv("S3_REGION", "us-east-1")
 S3_ACCESS_KEY = os.getenv("S3_ACCESS_KEY", "")
 S3_SECRET_KEY = os.getenv("S3_SECRET_KEY", "")
 S3_BUCKET = os.getenv("S3_BUCKET", "vedioos-private")
+# Optional folder inside the bucket for every object the app writes, for example "edits/".
+S3_KEY_PREFIX = os.getenv("S3_KEY_PREFIX", "").strip("/")
+S3_KEY_PREFIX = f"{S3_KEY_PREFIX}/" if S3_KEY_PREFIX else ""
 UPLOAD_TTL_SECONDS = int(os.getenv("UPLOAD_TTL_SECONDS", "900"))
 DOWNLOAD_TTL_SECONDS = int(os.getenv("DOWNLOAD_TTL_SECONDS", "60"))
 PAYMENT_MODE = os.getenv("PAYMENT_MODE", "disabled")
