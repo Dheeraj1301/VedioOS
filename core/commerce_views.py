@@ -25,6 +25,7 @@ from .commerce_forms import (
     RevisionPlanForm,
     ServiceForm,
 )
+from .middleware import content_security_policy
 from .models import (
     CommercePolicy,
     CustomService,
@@ -210,12 +211,14 @@ def revision_razorpay_checkout(request, payment_id):
     except ValidationError as exc:
         messages.error(request, " ".join(exc.messages))
         return redirect("revision_order_summary", order_id=payment.order_id)
-    return render(request, "commerce/revision_razorpay_checkout.html", {
+    response = render(request, "commerce/revision_razorpay_checkout.html", {
         "title": "Revision payment",
         "payment": payment,
         "revision_order": payment.order,
         "checkout": checkout,
     })
+    response["Content-Security-Policy"] = content_security_policy(payment_checkout=True)
+    return response
 
 
 @require_POST
@@ -524,7 +527,7 @@ def razorpay_checkout(request, payment_id):
     except ValidationError as exc:
         messages.error(request, " ".join(exc.messages))
         return redirect("order_summary", project_id=payment.order.project_id)
-    return render(
+    response = render(
         request,
         "commerce/razorpay_checkout.html",
         {
@@ -535,6 +538,8 @@ def razorpay_checkout(request, payment_id):
             "auto_open": payment.order.kind == "plan",
         },
     )
+    response["Content-Security-Policy"] = content_security_policy(payment_checkout=True)
+    return response
 
 
 @require_POST

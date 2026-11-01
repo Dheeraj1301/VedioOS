@@ -60,5 +60,15 @@ for (let press = 1; press <= 2; press += 1) {
   assert.deepEqual(redirects, [], `Back #${press} after returning does not redirect`);
 }
 
+// After logging out, Back stays on the landing page instead of requesting the earlier
+// signed-in page and being redirected to /login/?next=...
+await settle(() => page.getByRole('button', { name: 'Log out' }).filter({ visible: true }).first().click());
+assert.equal(path(), '/');
+for (let press = 1; press <= 2; press += 1) {
+  await back();
+  assert.equal(path(), '/', `Back #${press} after logout stays on the landing page`);
+  assert.deepEqual(redirects, [], `Back #${press} after logout does not redirect`);
+}
+
 await browser.close();
 console.log('History navigation checks passed.');

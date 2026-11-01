@@ -18,8 +18,9 @@ try {
   await passCodeStep(page, admin.email);
   await page.waitForURL('**/admin/', {timeout: 60000});
   await page.getByRole('heading', {name: 'Studio overview.'}).waitFor();
-  await page.goto('http://127.0.0.1:8000/admin/projects/');
-  assert.ok(await page.locator('.project-row').count() >= 2);
+  // Admins reach projects through Orders since the standalone roster was removed (DECISIONS.md, 2026-10-04).
+  await page.goto('http://127.0.0.1:8000/admin/orders/?payment=all');
+  assert.ok(await page.locator('.data-list > li').count() >= 2);
   await page.screenshot({path: '.runtime/screenshots/supabase-admin.png', fullPage: true});
   await page.goto('http://127.0.0.1:8000/admin/pricing/');
   await page.getByRole('heading', {name: 'Plans & pricing.'}).waitFor();

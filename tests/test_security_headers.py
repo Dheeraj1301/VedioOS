@@ -34,3 +34,13 @@ class ContentSecurityPolicyTests(TestCase):
             self.assertIsNone(re.search(r"<script(?![^>]*\bsrc=)[^>]*>", source), template)
             self.assertNotIn('style="', source, template)
             self.assertIsNone(re.search(r"\son[a-z]+=\"", source), template)
+
+    def test_payment_checkout_policy_only_adds_razorpay_needs(self):
+        strict = dict(part.split(" ", 1) for part in content_security_policy().split("; "))
+        checkout = dict(part.split(" ", 1) for part in content_security_policy(payment_checkout=True).split("; "))
+        self.assertEqual(checkout["script-src"], strict["script-src"] + " https://cdn.razorpay.com")
+        self.assertEqual(checkout["style-src"], strict["style-src"] + " 'unsafe-inline'")
+        self.assertEqual({k: v for k, v in checkout.items() if k not in {"script-src", "style-src"}},
+                         {k: v for k, v in strict.items() if k not in {"script-src", "style-src"}})
+        source = Path(settings.BASE_DIR, "core", "commerce_views.py").read_text(encoding="utf-8")
+        self.assertEqual(source.count("content_security_policy(payment_checkout=True)"), 2)

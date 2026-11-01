@@ -34,7 +34,7 @@ class SingleActiveSessionMiddleware:
         return self.get_response(request)
 
 
-def content_security_policy():
+def content_security_policy(payment_checkout=False):
     """Allow only this site, the private store, Google Fonts and Razorpay checkout."""
     endpoint = urlsplit(settings.S3_ENDPOINT_URL)
     storage = (
@@ -42,10 +42,14 @@ def content_security_policy():
         if settings.PRIVATE_STORAGE_ENABLED and endpoint.netloc
         else ""
     )
+    # Razorpay's checkout script injects inline styles and loads its risk-detection bundle,
+    # so only the two payment pages relax those two directives.
+    checkout_scripts = "https://cdn.razorpay.com" if payment_checkout else ""
+    checkout_styles = "'unsafe-inline'" if payment_checkout else ""
     directives = [
         ("default-src", "'self'"),
-        ("script-src", "'self' https://checkout.razorpay.com"),
-        ("style-src", "'self' https://fonts.googleapis.com"),
+        ("script-src", f"'self' https://checkout.razorpay.com {checkout_scripts}"),
+        ("style-src", f"'self' https://fonts.googleapis.com {checkout_styles}"),
         ("font-src", "'self' https://fonts.gstatic.com"),
         ("img-src", f"'self' data: blob: {storage}"),
         ("media-src", f"'self' blob: {storage}"),

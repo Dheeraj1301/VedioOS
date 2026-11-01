@@ -69,21 +69,27 @@ document.querySelectorAll('[data-auth-exit]').forEach(form => {
   });
 });
 
-// After a successful sign-in, the first workspace entry becomes a boundary that Back
-// never crosses, so the credential page is not revisited. The marker lives in the
-// history entry, so the boundary still holds after visiting other workspace pages.
-if (document.body.classList.contains('workspace-page')) {
-  const workspaceGuard = { brioSignedInBoundary: true };
-  if (sessionStorage.getItem(AUTH_TRANSITION_KEY) === 'sign-in') {
+// The first page after signing in or out becomes a boundary that Back never crosses, so
+// neither the credential page nor an earlier signed-in page (which would only redirect
+// to login) is revisited. The marker lives in the history entry, so the boundary still
+// holds after visiting other pages and coming back.
+const keepHistoryBoundary = (marker, transition) => {
+  const guard = { [marker]: true };
+  if (sessionStorage.getItem(AUTH_TRANSITION_KEY) === transition) {
     sessionStorage.removeItem(AUTH_TRANSITION_KEY);
-    history.replaceState(workspaceGuard, '', window.location.href);
-    history.pushState(workspaceGuard, '', window.location.href);
+    history.replaceState(guard, '', window.location.href);
+    history.pushState(guard, '', window.location.href);
   }
-  if (history.state?.brioSignedInBoundary) {
+  if (history.state?.[marker]) {
     window.addEventListener('popstate', event => {
-      if (event.state?.brioSignedInBoundary) history.pushState(workspaceGuard, '', window.location.href);
+      if (event.state?.[marker]) history.pushState(guard, '', window.location.href);
     });
   }
+};
+if (document.body.classList.contains('workspace-page')) {
+  keepHistoryBoundary('brioSignedInBoundary', 'sign-in');
+} else {
+  keepHistoryBoundary('brioSignedOutBoundary', 'sign-out');
 }
 window.addEventListener('pageshow', event => {
   if (event.persisted) location.reload();
