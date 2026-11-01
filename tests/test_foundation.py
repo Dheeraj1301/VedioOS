@@ -481,6 +481,7 @@ class FoundationTests(TestCase):
                 ("Payouts", "/admin/payouts/"),
                 ("Support", "/admin/support/"),
                 ("Analytics", "/admin/analytics/"),
+                ("Storage costs", "/admin/storage-costs/"),
             ],
         )
         browser = self.auth(self.admin)

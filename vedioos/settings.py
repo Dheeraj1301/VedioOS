@@ -1,4 +1,5 @@
 import os
+from decimal import Decimal
 from pathlib import Path
 from urllib.parse import urlparse
 
@@ -202,6 +203,12 @@ S3_BUCKET = os.getenv("S3_BUCKET", "vedioos-private")
 # Optional folder inside the bucket for every object the app writes, for example "edits/".
 S3_KEY_PREFIX = os.getenv("S3_KEY_PREFIX", "").strip("/")
 S3_KEY_PREFIX = f"{S3_KEY_PREFIX}/" if S3_KEY_PREFIX else ""
+# Rates for the admin storage-cost estimate (USD, S3 Standard in ap-southeast-2); override when AWS prices change.
+AWS_S3_STORAGE_USD_PER_GB_MONTH = Decimal(os.getenv("AWS_S3_STORAGE_USD_PER_GB_MONTH", "0.025"))
+AWS_S3_EGRESS_USD_PER_GB = Decimal(os.getenv("AWS_S3_EGRESS_USD_PER_GB", "0.114"))
+AWS_S3_PUT_USD_PER_1000 = Decimal(os.getenv("AWS_S3_PUT_USD_PER_1000", "0.0055"))
+AWS_S3_GET_USD_PER_1000 = Decimal(os.getenv("AWS_S3_GET_USD_PER_1000", "0.00044"))
+AWS_CREDITS_USD = Decimal(os.getenv("AWS_CREDITS_USD", "0"))
 UPLOAD_TTL_SECONDS = int(os.getenv("UPLOAD_TTL_SECONDS", "900"))
 DOWNLOAD_TTL_SECONDS = int(os.getenv("DOWNLOAD_TTL_SECONDS", "60"))
 PAYMENT_MODE = os.getenv("PAYMENT_MODE", "disabled")

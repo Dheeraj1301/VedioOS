@@ -162,7 +162,7 @@ class SupabaseIdentityCleanupTests(TestCase):
         self.assertEqual(response["Retry-After"], "30")
         self.assertContains(response, "temporarily unavailable", status_code=503)
 
-    @patch("core.management.commands.cleanup_archived_project_storage.delete_private_object_versions")
+    @patch("core.project_storage.delete_private_object_versions")
     def test_storage_cleanup_removes_versions_then_closes_job(self, remove_versions):
         user = User.objects.create_user("storage-client@example.test", PASSWORD, name="Storage")
         client = Client.objects.create(user=user)

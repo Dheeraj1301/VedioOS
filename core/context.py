@@ -28,6 +28,7 @@ NAV = {
         ("Payouts", "/admin/payouts/"),
         ("Support", "/admin/support/"),
         ("Analytics", "/admin/analytics/"),
+        ("Storage costs", "/admin/storage-costs/"),
     ],
 }
 

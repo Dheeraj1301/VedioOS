@@ -52,3 +52,5 @@ img,video,svg{max-width:100%}img,video{height:auto}.panel,.detail-panel,.form-pa
 .order-choice-select input[type=radio],.custom-choice input[type=radio]{min-height:18px}
 
 .communication-group[aria-labelledby="completed-projects-title"] { margin-top: 28px; }
+
+.table-scroll{overflow-x:auto}.cost-table{width:100%;border-collapse:collapse;font-size:.875rem}.cost-table th,.cost-table td{text-align:left;vertical-align:top;padding:14px 18px;border-bottom:1px solid var(--line)}.cost-table thead th{font-weight:700;color:var(--muted)}.cost-table tbody th{font-weight:600}.cost-delete-form{display:grid;gap:8px;justify-items:start}.cost-delete-form label{display:flex;gap:6px;align-items:center;font-size:.8125rem}

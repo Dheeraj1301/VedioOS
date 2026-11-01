@@ -1,0 +1,44 @@
+{% extends 'workspace.html' %}{% block workspace_content %}
+<div class="page-heading"><div><h1>Storage costs</h1><p class="muted">Estimated AWS S3 cost of each project's files, as of {{ generated_at|date:"M j, Y H:i" }} UTC. Delete finished projects to stop their storage cost.</p></div></div>
+<div class="stats">
+  <article><p>Estimated spend so far</p><strong>${{ totals.total|default:"0.00" }}</strong></article>
+  <article><p>Stored now</p><strong>{{ totals.stored_mb|default:"0"|floatformat:0 }} MB</strong></article>
+  <article><p>Downloads (data out)</p><strong>${{ totals.egress|default:"0.00" }}</strong></article>
+  {% if credits %}<article><p>Credits left (estimate)</p><strong>${{ credits_left }}</strong></article>{% endif %}
+</div>
+<section class="panel">
+  <div class="panel-heading"><h2>Projects</h2></div>
+  {% if rows %}
+  <div class="table-scroll">
+    <table class="cost-table">
+      <thead><tr><th scope="col">Project</th><th scope="col">Status</th><th scope="col">Completed</th><th scope="col">Files</th><th scope="col">Stored now</th><th scope="col">Downloads</th><th scope="col">Estimated cost</th><th scope="col"><span class="visually-hidden">Action</span></th></tr></thead>
+      <tbody>
+      {% for row in rows %}
+        <tr>
+          <th scope="row">{{ row.project.title }}<br><small class="muted">{{ row.client }}</small></th>
+          <td>{% if row.deleted %}Deleted{% if row.cleanup_state == "retry" %}, file removal retrying{% endif %}{% else %}{{ row.status }}{% endif %}</td>
+          <td>{% if row.completed_days is not None %}{{ row.completed_days }} day{{ row.completed_days|pluralize }} ago{% else %}<span class="muted">Not yet</span>{% endif %}</td>
+          <td>{{ row.files }}</td>
+          <td>{{ row.stored_mb|floatformat:1 }} MB</td>
+          <td>{{ row.downloads }} ({{ row.downloaded_mb|floatformat:1 }} MB)</td>
+          <td>${{ row.total_usd|floatformat:4 }}<br><small class="muted">storage ${{ row.storage_usd|floatformat:4 }}, downloads ${{ row.egress_usd|floatformat:4 }}</small></td>
+          <td>{% if row.deletable %}
+            <form method="post" action="{% url 'delete_project_storage' row.project.pk %}" class="cost-delete-form">{% csrf_token %}
+              <label><input type="checkbox" name="confirm" value="yes" required> Permanently delete files</label>
+              <button class="button small" type="submit">Delete project files</button>
+            </form>
+          {% endif %}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="empty-state"><h3>No project files yet</h3><p>Costs appear here once clients upload files.</p></div>
+  {% endif %}
+</section>
+<section class="panel detail-panel">
+  <h2>How this is estimated</h2>
+  <p class="muted">From the app's own records: file sizes, how long each file has been stored, and authorised downloads (each counted as a full download). Rates: storage ${{ rates.storage }} per GB-month, data out ${{ rates.egress }} per GB, uploads ${{ rates.put }} and downloads ${{ rates.get }} per 1,000 requests. AWS bills the whole account, not each folder, and the first 100 GB of data out each month is free, so your real bill can be lower. Check AWS Billing for the exact figure. Deleting a project hides it everywhere, keeps its payment and audit history, and permanently removes every stored version of its files.</p>
+</section>
+{% endblock %}

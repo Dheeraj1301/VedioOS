@@ -13,7 +13,7 @@ from core.message_views import (
     message_post,
 )
 from operations import assignment_views as assignments
-from operations import audit_views, earning_views, notification_views, support_views
+from operations import audit_views, earning_views, notification_views, storage_cost_views, support_views
 from operations import views as ops
 
 urlpatterns = [
@@ -124,6 +124,12 @@ urlpatterns = [
     path("admin/notifications/<uuid:campaign_id>/edit/", notification_views.admin_notification_form, name="admin_notification_edit"),
     path("admin/notifications/<uuid:campaign_id>/action/", notification_views.admin_notification_action, name="admin_notification_action"),
     path("admin/audit/", audit_views.audit_timeline, name="audit_timeline"),
+    path("admin/storage-costs/", storage_cost_views.storage_costs, name="storage_costs"),
+    path(
+        "admin/storage-costs/projects/<uuid:project_id>/delete/",
+        storage_cost_views.delete_project_storage,
+        name="delete_project_storage",
+    ),
     path("admin/support/", support_views.admin_support, name="admin_support"),
     path("support/<uuid:request_id>/", support_views.support_detail, name="support_detail"),
     path(
