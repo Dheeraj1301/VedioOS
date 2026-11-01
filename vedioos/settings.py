@@ -47,11 +47,14 @@ ALLOWED_HOSTS = [
 CSRF_TRUSTED_ORIGINS = [
     origin.strip() for origin in os.getenv("CSRF_TRUSTED_ORIGINS", "").split(",") if origin.strip()
 ]
-VERCEL_URL = os.getenv("VERCEL_URL", "").strip().lower()
-if VERCEL_URL:
-    if VERCEL_URL not in ALLOWED_HOSTS:
-        ALLOWED_HOSTS.append(VERCEL_URL)
-    vercel_origin = f"https://{VERCEL_URL}"
+# Vercel sets the exact deployment address and, for previews, the stable branch address.
+for vercel_host in (os.getenv("VERCEL_URL", ""), os.getenv("VERCEL_BRANCH_URL", "")):
+    vercel_host = vercel_host.strip().lower()
+    if not vercel_host:
+        continue
+    if vercel_host not in ALLOWED_HOSTS:
+        ALLOWED_HOSTS.append(vercel_host)
+    vercel_origin = f"https://{vercel_host}"
     if vercel_origin not in CSRF_TRUSTED_ORIGINS:
         CSRF_TRUSTED_ORIGINS.append(vercel_origin)
 INSTALLED_APPS = [

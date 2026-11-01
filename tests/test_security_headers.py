@@ -44,3 +44,26 @@ class ContentSecurityPolicyTests(TestCase):
                          {k: v for k, v in strict.items() if k not in {"script-src", "style-src"}})
         source = Path(settings.BASE_DIR, "core", "commerce_views.py").read_text(encoding="utf-8")
         self.assertEqual(source.count("content_security_policy(payment_checkout=True)"), 2)
+
+
+class VercelHostTests(TestCase):
+    def test_deployment_and_branch_addresses_are_allowed(self):
+        import json
+        import os
+        import subprocess
+        import sys
+
+        env = {
+            **os.environ,
+            "DJANGO_SETTINGS_MODULE": "vedioos.settings",
+            "VERCEL_URL": "vedioos-abc123-team.vercel.app",
+            "VERCEL_BRANCH_URL": "vedioos-git-ui2-team.vercel.app",
+        }
+        script = "import json, vedioos.settings as s; print(json.dumps([s.ALLOWED_HOSTS, s.CSRF_TRUSTED_ORIGINS]))"
+        output = subprocess.run(
+            [sys.executable, "-c", script], env=env, cwd=settings.BASE_DIR, capture_output=True, text=True, check=True
+        ).stdout
+        hosts, origins = json.loads(output.strip().splitlines()[-1])
+        for host in ["vedioos-abc123-team.vercel.app", "vedioos-git-ui2-team.vercel.app"]:
+            self.assertIn(host, hosts)
+            self.assertIn(f"https://{host}", origins)
