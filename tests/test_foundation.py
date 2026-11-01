@@ -1134,8 +1134,9 @@ class FoundationTests(TestCase):
         file.refresh_from_db()
         self.assertEqual(file.state, "ready")
 
+    @patch("core.views.delete_private_object_versions")
     @patch("core.views.upload_permission", return_value={"method": "PUT", "url": "private", "headers": {}})
-    def test_removed_reference_frees_one_of_three_server_enforced_slots(self, _permission):
+    def test_removed_reference_frees_one_of_three_server_enforced_slots(self, _permission, _remove_versions):
         browser = self.auth(self.owner)
         files = []
         for number in range(3):
