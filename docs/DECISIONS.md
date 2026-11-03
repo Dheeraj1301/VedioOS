@@ -689,3 +689,11 @@ Status: approved and implemented
 Owner / source of explicit decision: Dheeraj set a storage-cost strategy: each project's files stay in their own folder, projects are finished about three days after completion, and an administrator then deletes them manually from the admin dashboard so their S3 storage is freed; he also asked for a per-project view of AWS spend.
 
 Decision: **Admin → Storage costs** lists each project's files, stored size, authorised downloads and an estimated S3 cost (storage time, data out and requests at configurable USD rates, `AWS_S3_*` and `AWS_CREDITS_USD`). Completed or cancelled projects show **Delete project files**, which requires a confirmation tick, archives the project (hidden everywhere; payments, messages and audit history kept), permanently removes every stored version of its files through the existing cleanup job, audits the action, and queues a retry when storage is unreachable. In-progress projects cannot be deleted there. Deletion stays manual. Strategy, AWS lifecycle settings and further savings are in `docs/STORAGE_COST_STRATEGY.md`. Figures are estimates from application records, not AWS invoices.
+
+## 2026-11-03 — Plan 1 per-reel price changed to ₹499
+
+Status: approved and applied
+
+Owner / source of explicit decision: Hamsa requested that the Basic / Plan 1 price change from ₹399 to ₹499 and that the server and Razorpay checkout remain synchronized.
+
+Decision: publish Plan slot 1 at INR 49,900 minor units for newly saved agreements. The administrator-managed Supabase catalog row remains the single source of truth; the server snapshots that value into each new fixed-plan quotation and order, and Razorpay receives only the immutable server-owned order amount. Existing quotations, orders, payments and accepted terms retain their original ₹399 snapshot and are not rewritten. No schema migration, client-supplied amount, Razorpay product object or permanent payment link is introduced.
