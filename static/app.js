@@ -875,6 +875,49 @@ if (notificationForm) {
 const landingPage = document.body.classList.contains('landing-page');
 if (landingPage) {
   const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+  const mobileLanding = window.matchMedia('(max-width: 760px)');
+  const landingPanels = [...document.querySelectorAll('main > .hero, main > .section')];
+  const heroArt = document.querySelector('.hero-art');
+  let mobileParallaxFrame = 0;
+
+  const updateMobileParallax = () => {
+    mobileParallaxFrame = 0;
+    if (!mobileLanding.matches || reducedMotion.matches) {
+      landingPanels.forEach(panel => {
+        panel.style.removeProperty('--mobile-parallax-y');
+        panel.style.removeProperty('--mobile-parallax-scale');
+      });
+      heroArt?.style.removeProperty('--mobile-parallax-art-y');
+      return;
+    }
+
+    const viewportHeight = window.innerHeight || document.documentElement.clientHeight;
+    landingPanels.forEach(panel => {
+      const rect = panel.getBoundingClientRect();
+      const distance = (rect.top + rect.height / 2 - viewportHeight / 2) / viewportHeight;
+      const progress = Math.max(-1, Math.min(1, distance));
+      panel.style.setProperty('--mobile-parallax-y', `${(-progress * 12).toFixed(2)}px`);
+      panel.style.setProperty('--mobile-parallax-scale', (1 - Math.abs(progress) * 0.008).toFixed(4));
+    });
+
+    if (heroArt) {
+      const rect = heroArt.getBoundingClientRect();
+      const progress = Math.max(-1, Math.min(1, (rect.top - viewportHeight / 2) / viewportHeight));
+      heroArt.style.setProperty('--mobile-parallax-art-y', `${(-progress * 10).toFixed(2)}px`);
+    }
+  };
+
+  const queueMobileParallax = () => {
+    if (mobileParallaxFrame) return;
+    mobileParallaxFrame = window.requestAnimationFrame(updateMobileParallax);
+  };
+
+  window.addEventListener('scroll', queueMobileParallax, {passive: true});
+  window.addEventListener('resize', queueMobileParallax, {passive: true});
+  mobileLanding.addEventListener?.('change', queueMobileParallax);
+  reducedMotion.addEventListener?.('change', queueMobileParallax);
+  queueMobileParallax();
+
   const scrollToLandingSection = (hash, behavior = 'smooth') => {
     if (!hash || hash === '#') {
       window.scrollTo({top: 0, behavior});

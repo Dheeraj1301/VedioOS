@@ -1,5 +1,13 @@
 # Open decisions and decision record
 
+## 2026-11-04 — Lightweight mobile landing parallax
+
+Status: approved and implemented
+
+Owner / source of explicit decision: Hamsa requested that the desktop landing page's light parallax motion also be available on mobile without harming mobile compatibility.
+
+Decision: mobile landing panels remain in normal document flow so every panel and control stays fully reachable, while a bounded scroll-linked translation and subtle depth scale reproduce the desktop sense of layered movement. The hero artwork receives a smaller independent drift. Motion uses one animation-frame update, passive scroll handling and compositor transforms; it is completely disabled when the visitor requests reduced motion. Desktop/tablet stacking, content, controls, destinations and backend behavior are unchanged.
+
 ## 2026-10-30 — Focused UI copy and surface cleanup
 
 Status: approved and implemented
