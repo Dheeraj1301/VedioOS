@@ -1,5 +1,13 @@
 # Open decisions and decision record
 
+## 2026-11-06 — Lossless-source landing asset optimization
+
+Status: approved and implemented
+
+Owner / source of explicit decision: Hamsa approved Phase 1 of the production performance audit with the requirement that existing appearance and functionality remain unchanged.
+
+Decision: retain every original landing image unchanged and add separately named, optimized WebP derivatives for the silk background, closing train artwork and displayed BRIO mark. Use a dedicated small PNG favicon instead of loading the embedded full-resolution logo asset. Preserve rendered dimensions, layout, colors, controls, destinations, motion and backend behavior. Original assets remain available for immediate rollback.
+
 ## 2026-11-04 — Lightweight mobile landing parallax
 
 Status: approved and implemented
