@@ -1,5 +1,13 @@
 # Open decisions and decision record
 
+## 2026-11-07 — Direct web-font discovery
+
+Status: approved and implemented locally; deployment deferred until all five performance phases are complete
+
+Owner / source of explicit decision: Hamsa approved Phase 3 of the production performance audit with the requirement that the existing application remain safe and unchanged in appearance and behavior.
+
+Decision: preserve the existing DM Sans and Manrope families and every currently requested weight, but load the Google Fonts stylesheet directly from the document head with preconnections to the stylesheet and font origins. Remove only the stylesheet-level Google Fonts `@import`, eliminating that request-discovery chain. Keep typography, layout, controls, destinations, application behavior and backend integrations unchanged. Version the edited application stylesheet so the immutable static-cache policy cannot serve the prior file after a later deployment.
+
 ## 2026-11-07 — Versioned static asset caching
 
 Status: approved and implemented locally; deployment deferred until all five performance phases are complete
