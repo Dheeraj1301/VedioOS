@@ -7,6 +7,7 @@ payment verification before enabling real checkout. Never trust a browser return
 import hashlib
 import hmac
 import json
+import logging
 import time
 import uuid
 
@@ -22,6 +23,9 @@ from operations.calls import create_paid_calls, notify, notify_admins
 from .commerce import check_policy
 from .models import CommercePolicy, Order, Payment, PaymentEvent
 from .views import audit
+
+
+logger = logging.getLogger(__name__)
 
 
 def sandbox_enabled():
@@ -56,7 +60,23 @@ def _razorpay_request(method, path, **kwargs):
         if not isinstance(data, dict):
             raise ValueError
         return data
-    except (RequestException, ValueError):
+    except RequestException as exc:
+        response = getattr(exc, "response", None)
+        error_code = "unknown"
+        if response is not None:
+            try:
+                error_code = response.json().get("error", {}).get("code", "unknown")
+            except (TypeError, ValueError, AttributeError):
+                pass
+        logger.warning(
+            "Razorpay request failed path=%s status=%s code=%s",
+            path,
+            getattr(response, "status_code", None),
+            error_code,
+        )
+        raise ValidationError("Payment checkout is unavailable. Please try again.") from None
+    except ValueError:
+        logger.warning("Razorpay returned a non-object response path=%s", path)
         raise ValidationError("Payment checkout is unavailable. Please try again.") from None
 
 
