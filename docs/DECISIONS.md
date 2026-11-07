@@ -330,6 +330,8 @@ Verification required: server-owned order amount, secret exclusion from HTML/log
 
 Owner / source of explicit decision: Hamsa requested a six-hour check for AWS misuse, provider/API abuse and security findings, with normal state in the Admin header and persistent notification for an intrusion.
 
+Operational constraint: Vercel Hobby rejects schedules that run more than once daily. Use the no-cost daily schedule until the owner explicitly approves a Pro upgrade or an external scheduler for six-hour execution.
+
 Decision: add an authenticated Vercel Cron entrypoint that records sanitized application audit evidence and reads S3 security posture. GuardDuty findings and Cost Explorer budget checks are optional integrations, disabled until their AWS permissions, cost implications and owner budget threshold are approved. Critical results create deduplicated Admin notifications; normal runs do not. The monitor does not claim to detect copied API code, does not inspect private media, does not expose provider identifiers, and does not mutate AWS configuration. Razorpay remains the existing test-only Standard Checkout adapter; live payments remain blocked by the production safety gate.
 
 Verification required: invalid cron authorization fails closed, disabled monitoring returns unavailable, healthy checks write audit evidence without notification, repeated critical findings notify once, summaries omit provider finding identifiers, payment totals remain server-owned, and no secret reaches HTML, logs or Git.
