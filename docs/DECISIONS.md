@@ -1,5 +1,13 @@
 # Open decisions and decision record
 
+## 2026-11-07 — Versioned static asset caching
+
+Status: approved and implemented locally; deployment deferred until all five performance phases are complete
+
+Owner / source of explicit decision: Hamsa approved Phase 2 of the production performance audit with the requirement that no major backend or frontend behavior change and that deployment wait until the five-phase review is complete.
+
+Decision: Vercel may cache files under `/static/` for one year with `immutable` because every actively referenced stylesheet and script uses an explicit version query and the optimized landing images use separately named derivative files. HTML, authentication pages, private responses, signed media routes and application data keep their existing cache behavior. The hero-video storage and playback implementation is unchanged.
+
 ## 2026-11-06 — Lossless-source landing asset optimization
 
 Status: approved and implemented
