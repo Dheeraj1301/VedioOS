@@ -26,14 +26,23 @@ async function logout() {
 }
 async function save() {
   await page.getByRole('button', {name: 'Save configuration'}).click();
-  await page.waitForURL(`${base}/admin/pricing/`);
+  try {
+    await page.waitForURL(`${base}/admin/pricing/`, {timeout: 5000});
+  } catch (error) {
+    const formErrors = await page.locator('.errorlist').allTextContents();
+    throw new Error(
+      `Catalog form did not save at ${page.url()}: ${formErrors.join(' | ')}`,
+      {cause: error},
+    );
+  }
 }
 try {
   await mkdir('.runtime/screenshots', {recursive: true});
   await login('browser-admin@example.test');
   await page.goto(`${base}/admin/pricing/`);
-  assert.equal(await page.locator('.catalog-grid article').count(), 3);
+  assert.equal(await page.locator('.catalog-grid article').count(), 6);
   await page.getByRole('link', {name: 'Edit commercial terms'}).click();
+  await page.locator('#id_pricing_context').selectOption('test');
   await page.locator('#id_currency').selectOption('INR');
   assert.equal(await page.locator('label[for="id_custom_base_minor"]').innerText(), 'Custom base price (₹)');
   assert.equal(await page.locator('#id_custom_base_minor').getAttribute('step'), '0.01');
@@ -80,7 +89,8 @@ try {
   await page.getByLabel('I accept this price').check();
   await page.getByRole('button', {name:'Accept quote'}).click();
   await page.getByRole('heading', {name:'Order summary.'}).waitFor();
-  await page.getByRole('button', {name:'Start / retry sandbox payment'}).click();
+  await page.getByLabel('I accept this quotation and the Terms & Conditions shown below.').check();
+  await page.getByRole('button', {name:'Make Payment'}).click();
   await page.locator('[data-payment-reference]').first().waitFor();
   // The trusted test gateway signs the event outside the browser. No client-side success flag.
   const gateway = await fetch(`${base}/__test_gateway_fixture__/`);
