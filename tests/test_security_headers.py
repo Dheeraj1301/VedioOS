@@ -12,11 +12,22 @@ class ContentSecurityPolicyTests(TestCase):
         for path in ["/", "/login/", "/register/", "/api/areas/client/"]:
             policy = self.client.get(path)["Content-Security-Policy"]
             directives = dict(part.split(" ", 1) for part in policy.split("; "))
-            self.assertEqual(directives["script-src"], "'self' https://checkout.razorpay.com")
+            self.assertEqual(
+                directives["script-src"],
+                "'self' 'wasm-unsafe-eval' https://checkout.razorpay.com",
+            )
             self.assertEqual(directives["object-src"], "'none'")
             self.assertEqual(directives["frame-ancestors"], "'none'")
             self.assertNotIn("unsafe-inline", policy)
-            self.assertNotIn("unsafe-eval", policy)
+            self.assertNotIn("'unsafe-eval'", directives["script-src"].split())
+
+    def test_wasm_hashing_does_not_enable_javascript_eval(self):
+        directives = dict(
+            part.split(" ", 1) for part in content_security_policy().split("; ")
+        )
+        script_sources = directives["script-src"].split()
+        self.assertIn("'wasm-unsafe-eval'", script_sources)
+        self.assertNotIn("'unsafe-eval'", script_sources)
 
     @override_settings(S3_ENDPOINT_URL="https://s3.ap-southeast-2.amazonaws.com", PRIVATE_STORAGE_ENABLED=True)
     def test_private_storage_origin_is_allowed_for_uploads_and_media(self):

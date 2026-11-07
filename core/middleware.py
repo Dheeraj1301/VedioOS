@@ -48,7 +48,10 @@ def content_security_policy(payment_checkout=False):
     checkout_styles = "'unsafe-inline'" if payment_checkout else ""
     directives = [
         ("default-src", "'self'"),
-        ("script-src", f"'self' https://checkout.razorpay.com {checkout_scripts}"),
+        # Client-side SHA-256 hashing uses a bundled WebAssembly module so originals can be
+        # integrity-checked before upload. `wasm-unsafe-eval` permits only WebAssembly
+        # compilation; it does not permit JavaScript eval(), unlike `unsafe-eval`.
+        ("script-src", f"'self' 'wasm-unsafe-eval' https://checkout.razorpay.com {checkout_scripts}"),
         ("style-src", f"'self' https://fonts.googleapis.com {checkout_styles}"),
         ("font-src", "'self' https://fonts.gstatic.com"),
         ("img-src", f"'self' data: blob: {storage}"),
