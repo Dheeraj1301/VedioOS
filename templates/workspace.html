@@ -19,6 +19,7 @@
     <header class="workspace-header">
       <button class="back-button" type="button" aria-label="Go back to the previous page"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 7 4 12l5 5M5 12h8a6 6 0 0 1 6 6"/></svg></button>
       <div class="workspace-header-actions">
+        {% if user.role == 'admin' %}<span class="security-monitor-status">Security: {{ security_monitor_status }}</span>{% endif %}
         <div class="notification-menu" data-notification-menu>
           <button class="notification-bell" type="button" aria-label="Notifications" aria-haspopup="true" aria-expanded="false" data-notification-toggle>
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/></svg>

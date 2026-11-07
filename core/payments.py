@@ -70,6 +70,8 @@ def start_checkout(user, project_id):
     check_policy(CommercePolicy.objects.filter(pk=1).first())
     if not order.terms_snapshot.get("quote_id") or not order.total_minor:
         raise ValidationError("Review and accept a quote before starting checkout.")
+    if order.total_minor < 100:
+        raise ValidationError("Payment amount must be at least INR 1.00.")
     if order.payment_status == "confirmed" or order.project.status != "payment_pending":
         raise ValidationError("This order is not awaiting payment.")
     existing = order.payments.filter(status="pending").first()

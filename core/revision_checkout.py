@@ -120,6 +120,8 @@ def start_revision_checkout(user, order_id, policy_version):
     order = RevisionPlanOrder.objects.select_for_update().filter(pk=order_id, client__user=user).first()
     if not order or order.status != "payment_pending":
         raise ValidationError("This revision order is not awaiting payment.")
+    if order.amount_minor < 100:
+        raise ValidationError("Payment amount must be at least INR 1.00.")
     validate_policy_version(order.policy_snapshot, policy_version)
     if not razorpay_test_enabled():
         raise ValidationError("Revision checkout is not configured.")

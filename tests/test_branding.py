@@ -11,11 +11,9 @@ class BrandingTests(TestCase):
         self.assertIn("BRIO", content)
         self.assertNotIn("vedioos", content.lower())
         self.assertContains(response, 'class="brand-logo"', html=False)
-        self.assertContains(response, 'src="/static/images/brio-logo-transparent.svg"', html=False)
+        self.assertContains(response, 'src="/static/images/brio-logo-transparent.webp"', html=False)
         self.assertContains(response, 'alt="BRIO Logo"', html=False)
-        self.assertContains(
-            response, 'rel="icon" href="/static/images/brio-logo-transparent.svg"', html=False
-        )
+        self.assertContains(response, 'rel="icon" href="/static/images/brio-favicon.png"', html=False)
         self.assertNotContains(response, 'class="brand-mark"', html=False)
 
     def test_public_and_authentication_pages_use_brio(self):

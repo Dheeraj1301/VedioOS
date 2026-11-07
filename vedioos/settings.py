@@ -209,6 +209,14 @@ AWS_S3_EGRESS_USD_PER_GB = Decimal(os.getenv("AWS_S3_EGRESS_USD_PER_GB", "0.114"
 AWS_S3_PUT_USD_PER_1000 = Decimal(os.getenv("AWS_S3_PUT_USD_PER_1000", "0.0055"))
 AWS_S3_GET_USD_PER_1000 = Decimal(os.getenv("AWS_S3_GET_USD_PER_1000", "0.00044"))
 AWS_CREDITS_USD = Decimal(os.getenv("AWS_CREDITS_USD", "0"))
+SECURITY_MONITOR_ENABLED = os.getenv("SECURITY_MONITOR_ENABLED", "false").lower() == "true"
+AWS_GUARDDUTY_MONITOR_ENABLED = (
+    os.getenv("AWS_GUARDDUTY_MONITOR_ENABLED", "false").lower() == "true"
+)
+AWS_SECURITY_MONTHLY_BUDGET_USD = Decimal(
+    os.getenv("AWS_SECURITY_MONTHLY_BUDGET_USD", "0")
+)
+CRON_SECRET = os.getenv("CRON_SECRET", "")
 UPLOAD_TTL_SECONDS = int(os.getenv("UPLOAD_TTL_SECONDS", "900"))
 DOWNLOAD_TTL_SECONDS = int(os.getenv("DOWNLOAD_TTL_SECONDS", "60"))
 PAYMENT_MODE = os.getenv("PAYMENT_MODE", "disabled")

@@ -326,6 +326,14 @@ Research references: [Reelkraft Media 2026 India pricing guide](https://www.reel
 
 Verification required: server-owned order amount, secret exclusion from HTML/logs/Git, cross-client denial, signature rejection, captured-payment matching, retry idempotency, test labeling, production-mode refusal, and an owner-network test transaction before production work continues.
 
+## 2026-11-07 — Six-hour security monitor remains read-only and opt-in
+
+Owner / source of explicit decision: Hamsa requested a six-hour check for AWS misuse, provider/API abuse and security findings, with normal state in the Admin header and persistent notification for an intrusion.
+
+Decision: add an authenticated Vercel Cron entrypoint that records sanitized application audit evidence and reads S3 security posture. GuardDuty findings and Cost Explorer budget checks are optional integrations, disabled until their AWS permissions, cost implications and owner budget threshold are approved. Critical results create deduplicated Admin notifications; normal runs do not. The monitor does not claim to detect copied API code, does not inspect private media, does not expose provider identifiers, and does not mutate AWS configuration. Razorpay remains the existing test-only Standard Checkout adapter; live payments remain blocked by the production safety gate.
+
+Verification required: invalid cron authorization fails closed, disabled monitoring returns unavailable, healthy checks write audit evidence without notification, repeated critical findings notify once, summaries omit provider finding identifiers, payment totals remain server-owned, and no secret reaches HTML, logs or Git.
+
 ## 2026-09-17 — Earnings implementation (D10 remains open)
 
 Technical choice: use prospective fixed whole-coin awards as an optional admin-configured development rule. Snapshot them on new quotes, append a pending entry at client acceptance, and allow an administrator to release it once. Redemption reserves coins under a wallet lock and can be exercised only with an explicitly enabled DEBUG payout sandbox. The selected Supabase project retains a disabled policy with no configured amounts. No monetary conversion or real payout provider has been chosen; see [Phase 6](PHASE_6.md).

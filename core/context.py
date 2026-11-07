@@ -57,7 +57,7 @@ def notification_menu(request):
         return {}
     from django.db.models import Q
 
-    from operations.models import Notification, NotificationCampaign
+    from operations.models import AuditLog, Notification, NotificationCampaign
 
     from .permissions import visible_projects
 
@@ -69,7 +69,11 @@ def notification_menu(request):
         .order_by("-created_at", "-id")
     )
     menu_items = [] if request.path == "/orders/notifications/" else notices[:10]
-    return {
+    context = {
         "notification_menu_items": menu_items,
         "notification_unread_count": notices.filter(read_at__isnull=True).count(),
     }
+    if request.user.role == "admin":
+        latest = AuditLog.objects.filter(action="security.monitor.completed").first()
+        context["security_monitor_status"] = latest.detail.get("status") if latest else "not run"
+    return context
