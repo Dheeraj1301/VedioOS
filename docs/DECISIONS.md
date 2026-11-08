@@ -739,3 +739,11 @@ Status: approved and applied
 Owner / source of explicit decision: Hamsa requested that the Basic / Plan 1 price change from ₹399 to ₹499 and that the server and Razorpay checkout remain synchronized.
 
 Decision: publish Plan slot 1 at INR 49,900 minor units for newly saved agreements. The administrator-managed Supabase catalog row remains the single source of truth; the server snapshots that value into each new fixed-plan quotation and order, and Razorpay receives only the immutable server-owned order amount. Existing quotations, orders, payments and accepted terms retain their original ₹399 snapshot and are not rewritten. No schema migration, client-supplied amount, Razorpay product object or permanent payment link is introduced.
+
+## 2026-11-08 — Razorpay Live Mode prepared behind production gates
+
+Status: approved and implemented in code; production promotion remains gated
+
+Owner / source of explicit decision: Hamsa supplied an approved Razorpay Live key file and explicitly requested secure Production configuration, complete verification and deployment without exposing credentials.
+
+Decision: keep Razorpay Test and Live as separate provider modes and records. Live checkout is allowed only with `DEBUG=False`, an `rzp_live_` browser key, a server-only secret and the official Razorpay API origin. The backend remains authoritative: it creates orders from immutable integer-minor-unit snapshots, verifies the returned HMAC, fetches the provider payment, and requires captured status plus exact order, amount and currency before changing payment or project state. Credentials remain outside Git and were installed as Vercel Production Config/Secret values. A staged production deployment is built without domain promotion. Promotion remains blocked until the production commerce policy and terms are confirmed and `brio.org.in` can be attached without changing the separately owned `foryou.brio.org.in` site. No live charge was made as part of configuration.
