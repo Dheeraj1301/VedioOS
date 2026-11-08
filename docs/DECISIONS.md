@@ -1,5 +1,19 @@
 # Open decisions and decision record
 
+## 2026-11-08 — Activate the approved commerce policy in Production
+
+Status: approved and applied to the shared database
+
+Owner / source of explicit decision: Hamsa confirmed that the current commercial terms and
+pricing are approved for Production and requested that checkout remain closed otherwise.
+
+Decision: the existing persisted INR pricing and current registration, payment, delivery,
+refund/no-refund, tax and support wording are the Production policy. Change only the policy
+context from Test to Production after validating that every required text and pricing field is
+present. Preserve the policy version because no wording changed, keep existing order snapshots
+immutable, and record the activation in the protected audit history. Google booking configuration
+belongs to the separate Foryou site and is not a requirement for the main BRIO deployment.
+
 ## 2026-11-07 — Direct web-font discovery
 
 Status: approved and implemented locally; deployment deferred until all five performance phases are complete

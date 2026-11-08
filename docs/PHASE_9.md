@@ -200,8 +200,29 @@ The runs reported no browser page errors or horizontal overflow. Screenshots rem
 
 ## Verification
 
+### Production storage and checkout audit — 2026-11-08
+
+The live upload-removal failure was traced to a PostgreSQL locking query that joined the
+nullable order relation while using `SELECT FOR UPDATE`. The removal transaction now locks
+the file/project and its order in separate queries, retaining ownership, pending-payment and
+version guards without relying on an unsupported outer-join lock. The commerce regression
+suite covers the removal workflow.
+
+The connected shared policy was backed up and changed from its guarded test context to
+Production only after confirming that quotes are enabled and the stored INR pricing,
+registration terms, payment terms, delivery terms, refund/no-refund wording, tax wording and
+support statement are present. The existing policy text and version were not rewritten, and
+the activation was recorded in the protected audit log.
+
+The public landing page renders the saved hero-video record and its private playback route,
+but the deployed S3 credential is not recognized by AWS. Project uploads and landing playback
+therefore remain blocked until the connected AWS account supplies a valid private-bucket
+runtime identity and the saved hero object is present in that bucket. No Google booking
+configuration is required for the main BRIO site; the unrelated booking variables were removed
+from its Vercel production environment.
+
 - Unit checks cover a secure disabled-feature release scope, insecure settings, policy/provider inconsistencies, and secret-free JSON output.
-- The full isolated suite passes 202 tests with 10 opt-in integration tests skipped.
+- The full isolated suite passes 405 tests with 14 opt-in integration tests skipped.
 - All five opt-in Edge lifecycle suites pass with real local private-storage integrity where applicable.
 - Django system and migration checks and Ruff pass.
 - Supabase is synchronized through `core.0008` and `operations.0013`; all 47 tables retain RLS and private browser-role isolation.
