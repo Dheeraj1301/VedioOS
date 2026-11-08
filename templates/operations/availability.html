@@ -1,5 +1,5 @@
 {% extends 'workspace.html' %}{% load static %}
-{% block page_scripts %}<script defer src="{% static 'availability.js' %}?v=20261028-1"></script>{% endblock %}
+{% block page_scripts %}<script defer src="{% static 'availability.js' %}?v=20261109-1"></script>{% endblock %}
 {% block workspace_content %}
 <div class="page-heading">
   <div>
@@ -15,7 +15,7 @@
     data-availability-endpoint="{% url 'editor_availability_api' %}"
     role="status"
     aria-live="polite"
-  >{% if availability.status != 'available' %}{{ availability.icon }} {% endif %}{{ availability.summary }}</p>
+  >{{ availability.summary }}</p>
   <div class="editor-self-availability-control" data-availability-toggle>
     <form method="post" action="{% url 'editor_set_available' %}">
       {% csrf_token %}

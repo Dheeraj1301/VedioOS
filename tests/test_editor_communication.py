@@ -65,7 +65,7 @@ class EditorCommunicationTests(TestCase):
             ],
         )
         page = self.client.get("/editor/")
-        self.assertContains(page, "EDITOR WORKSPACE", count=1)
+        self.assertContains(page, "Editor workspace", count=1)
         self.assertContains(page, 'class="workspace-label editor-workspace-label"')
         self.assertNotContains(page, '>Calls<span', html=False)
         self.assertNotContains(page, '>Wallet<span', html=False)
@@ -77,9 +77,9 @@ class EditorCommunicationTests(TestCase):
         )
         self.assertNotContains(page, "✅ Available")
         self.client.force_login(self.client_profile.user)
-        self.assertNotContains(self.client.get("/client/"), "EDITOR WORKSPACE")
+        self.assertNotContains(self.client.get("/client/"), "Editor workspace")
         self.client.force_login(self.admin)
-        self.assertNotContains(self.client.get("/admin/"), "EDITOR WORKSPACE")
+        self.assertNotContains(self.client.get("/admin/"), "Editor workspace")
         self.client.force_login(self.editor.user)
         self.assertEqual(self.client.get("/editor/calls/").status_code, 200)
 

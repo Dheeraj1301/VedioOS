@@ -4,8 +4,8 @@
 <div class="workspace">
   <aside class="sidebar">
     <a class="brand" href="/" aria-label="BRIO home"><img class="brand-logo" src="{% static 'images/brio-logo-transparent.webp' %}" alt="BRIO Logo" width="34" height="34">BRIO</a>
-    {% if user.role == 'client' %}<p class="workspace-label client-workspace-label">CLIENT WORKSPACE</p>{% endif %}
-    {% if user.role == 'editor' %}<p class="workspace-label editor-workspace-label">EDITOR WORKSPACE</p>{% endif %}
+    {% if user.role == 'client' %}<p class="workspace-label client-workspace-label">Client workspace</p>{% endif %}
+    {% if user.role == 'editor' %}<p class="workspace-label editor-workspace-label">Editor workspace</p>{% endif %}
     <nav aria-label="Workspace navigation">
       {% for item in navigation %}<a href="{{ item.url }}" {% if item.active %}class="active" aria-current="page"{% endif %}>{{ item.label }}</a>{% endfor %}
     </nav>

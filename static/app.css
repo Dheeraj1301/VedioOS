@@ -62,3 +62,12 @@ img,video,svg{max-width:100%}img,video{height:auto}.panel,.detail-panel,.form-pa
 .workspace-page .pricing-period-toggle,.workspace-page .availability-toggle{border-radius:10px!important}
 .workspace-page .pricing-period-toggle label>span,.workspace-page .availability-toggle button{border-radius:7px!important}
 .workspace-page input[type=checkbox]{border-radius:3px!important}.workspace-page input[type=radio]{border-radius:50%!important}
+/* Workspace refinements (UI4, signed-in pages only): sentence-case untracked labels, legible surfaces over the silk background. */
+.workspace-page .eyebrow,.workspace-page .workspace-label,.workspace-page .security-monitor-status,.workspace-page .pricing-period-locked small{text-transform:none;letter-spacing:0}
+.workspace-page .eyebrow{font-size:.85rem;font-weight:600;margin-bottom:10px}
+.workspace-page .dashboard-welcome .eyebrow{letter-spacing:-.02em;font-size:clamp(1.25rem,2.2vw,1.7rem)}
+.workspace-page .workspace-label{font-size:.78rem;font-weight:700;color:var(--muted)}
+.workspace-page .security-monitor-status{font-size:.8rem;color:var(--lime)}
+.workspace-page .page-heading{background:var(--paper)}
+.workspace-page .workspace-main > p:not([class]){color:var(--lime)}
+.workspace-page .stats{grid-template-columns:repeat(auto-fit,minmax(200px,1fr))}
