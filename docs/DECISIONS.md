@@ -769,3 +769,11 @@ Status: approved by the owner, implemented on `ui_2`, awaiting production redepl
 Owner / source of explicit decision: Dheeraj requested automatic removal of unpaid drafts, a pre-expiry client email from brio4edits@gmail.com, a creation-page warning, and admin-only editor assignment.
 
 Decision: a project still `payment_pending` 30 hours after creation gets one reminder email (title, created time, amount due, payment-pending status, order link); it is recorded in the audit log even if delivery is disabled or fails. At 36 hours, and never sooner than 6 hours after that reminder, the project is cancelled, archived and its stored objects (every S3 version) removed through the existing cleanup job; client accounts and audit records are kept. A checkout started within the last hour defers expiry. The sweep runs from a daily Vercel cron (`/internal/expire-unpaid-projects/`, Bearer `CRON_SECRET`; Hobby allows daily only) and on every admin dashboard load. Automatic rotation is disabled by policy; an administrator may pick any approved, active editor not marked Not Available, with level and workload shown but not enforced, and the note is optional. Real email delivery requires Gmail SMTP settings with an App Password in Vercel Production; until then reminders are recorded as undelivered. No schema migration.
+
+## 2026-11-08 — Transactional email through a dedicated Gmail API app
+
+Status: approved by the owner; code on `ui_2`, awaiting Google authorisation and Vercel secrets
+
+Owner / source of explicit decision: Dheeraj chose a new Google OAuth app (separate from the foryou "BRIO Booking" app) over an SMTP App Password.
+
+Decision: `core.gmail_backend.GmailAPIBackend` is a drop-in Django email backend that exchanges a refresh token (scope `gmail.send` only) for an access token and sends through the Gmail API as brio4edits@gmail.com. It is selected with `EMAIL_BACKEND` and reads `GMAIL_CLIENT_ID`, `GMAIL_CLIENT_SECRET` and `GMAIL_REFRESH_TOKEN` from the environment; failures raise so existing retry and audit paths still apply. `scripts/get_gmail_refresh_token.py` performs the one-time loopback consent locally and writes the values to git-ignored `.env.gmail`. The OAuth consent screen must be published to Production so the refresh token does not expire after seven days.
