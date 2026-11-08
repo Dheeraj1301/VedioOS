@@ -31,3 +31,13 @@ class GmailAPIBackendTests(SimpleTestCase):
         post.return_value = Mock(raise_for_status=Mock(side_effect=RuntimeError("401")))
         with self.assertRaises(RuntimeError):
             EmailMessage("Hello", "Body", "a@example.com", ["b@example.com"]).send()
+
+
+class PrivacyPageTests(SimpleTestCase):
+    databases = "__all__"
+
+    def test_privacy_page_is_public(self):
+        page = self.client.get("/privacy/")
+        self.assertEqual(page.status_code, 200)
+        self.assertContains(page, "Privacy policy")
+        self.assertContains(page, "brio4edits@gmail.com")

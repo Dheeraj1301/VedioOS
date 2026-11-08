@@ -1,4 +1,5 @@
 from django.urls import path
+from django.views.generic import TemplateView
 
 from core import commerce_views as commerce
 from core import landing_views, views
@@ -35,6 +36,7 @@ urlpatterns = [
     path("orders/<uuid:project_id>/delivery/", delivery_action, name="delivery_action"),
     path("orders/<uuid:project_id>/messages/", message_post, name="message_post"),
     path("", views.landing, name="landing"),
+    path("privacy/", TemplateView.as_view(template_name="privacy.html"), name="privacy"),
     path("landing/hero-video/", landing_views.landing_hero_video, name="landing_hero_video"),
     path("register/", views.register, name="register"),
     path("verify-email/", views.verification_pending, name="verification_pending"),
