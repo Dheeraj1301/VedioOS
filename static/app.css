@@ -60,3 +60,5 @@ img,video,svg{max-width:100%}img,video{height:auto}.panel,.detail-panel,.form-pa
 @media(max-width:760px){.workspace-page .sidebar .brand,.workspace-page .workspace-header,.workspace-page .workspace-label,.workspace-page .sidebar nav{background:var(--paper)}.workspace-page .workspace-label{margin:0;padding:12px 26px 8px;color:var(--muted)}.workspace-page .sidebar nav{padding-top:4px;box-shadow:0 10px 24px rgba(58,8,2,.18);-webkit-overflow-scrolling:touch}.workspace-page .workspace-header .security-monitor-status{color:var(--ink)}.workspace-page .workspace-header .logout{color:var(--green)}}
 @media(max-width:760px){.workspace-page .workspace-header .back-button{color:var(--green);background:var(--white)}.workspace-page .workspace-header .notification-bell{color:var(--green)}}
 .workspace-page .panel .project-filter-summary,.workspace-page .project-filter-panel .project-filter-summary{color:var(--muted);text-shadow:none}
+/* Phone browser chrome (status bar, toolbar and overscroll areas) shows black; page backgrounds are unchanged. */
+@media(max-width:760px){html{background:#000}body{min-height:100vh}}
