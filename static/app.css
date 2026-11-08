@@ -56,3 +56,9 @@ img,video,svg{max-width:100%}img,video{height:auto}.panel,.detail-panel,.form-pa
 .security-monitor-status{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
 
 .notice-warning{display:flex;gap:12px;align-items:flex-start;margin-top:12px}.notice-warning p{margin:0}.notice-icon{flex:0 0 22px;width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;margin-top:1px}
+/* Sharp-edge theme (UI branch): only buttons, toggles and other operable controls keep rounded corners. */
+*,*::before,*::after{border-radius:0!important}
+button,.button,[role=button],input[type=submit],input[type=button],input[type=reset],.filter-button,.back-button,.text-button,.upload-retry-button,.password-toggle,.faq-toggle,.auth-switch a,.auth-switch button{border-radius:9px!important}
+.pricing-period-toggle,.availability-toggle{border-radius:10px!important}
+.pricing-period-toggle label>span,.availability-toggle button{border-radius:7px!important}
+input[type=checkbox]{border-radius:3px!important}input[type=radio]{border-radius:50%!important}
