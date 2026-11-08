@@ -1,6 +1,6 @@
 {% if policy %}
 <div class="policy-terms" data-policy-version="{{ policy.version }}">
-  <p class="eyebrow">Terms &amp; Conditions · Version {{ policy.version }}</p>
+  <p class="eyebrow">Terms &amp; Conditions</p>
   {% if policy.terms %}<h3>Service agreement</h3><p class="preserve-lines">{{ policy.terms }}</p>{% endif %}
   {% if policy.delivery_terms %}<h3>Delivery</h3><p class="preserve-lines">{{ policy.delivery_terms }}</p>{% endif %}
   <h3>No Refund policy</h3><p class="preserve-lines">{{ policy.no_refund_policy }}</p>

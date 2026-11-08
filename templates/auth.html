@@ -34,7 +34,7 @@
 {% if mode == 'register' and policy and not policy_acknowledged %}
 <div class="policy-consent-overlay" role="dialog" aria-modal="true" aria-labelledby="policy-consent-title" data-policy-dialog>
   <section class="policy-consent-card">
-    <p class="eyebrow">Terms &amp; Conditions · Version {{ policy.version }}</p>
+    <p class="eyebrow">Terms &amp; Conditions</p>
     <h2 id="policy-consent-title">Before you create your account</h2>
     <div class="policy-consent-copy">
       <h3>Client responsibilities</h3><p class="preserve-lines">{{ policy.registration_terms }}</p>
