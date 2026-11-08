@@ -3,6 +3,7 @@
 {% block workspace_content %}
 <div class="page-heading"><div><p class="eyebrow">Plan an edit / 01</p><h1>{% if project %}Edit your creative brief.{% else %}Tell us about your edit.{% endif %}</h1><p class="muted">Choose a configured plan or shape a custom brief, then add your private files.</p></div>{% if project %}<a class="button" href="{% url 'new_order' %}?new=1">Create New <span>+</span></a>{% endif %}</div>
 <div class="notice" role="note"><strong>Before you upload:</strong> Share only footage, music, fonts, and references you have permission to use. Do not include passwords or unrelated personal documents.</div>
+<div class="notice notice-warning" role="note"><svg class="notice-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 3 2 21h20L12 3Z"/><path d="M12 10v5"/><path d="M12 18h.01"/></svg><p><strong>Complete payment within 36 hours.</strong> Unpaid projects are deleted 36 hours after they are created, together with every file uploaded to them.</p></div>
 <form method="post" class="form-stack new-order-form" data-new-order-form data-selected-choice="{{ selected_choice }}" data-upload-enabled="{% if upload_policy %}true{% else %}false{% endif %}">{% csrf_token %}
   {% if form.non_field_errors %}{{ form.non_field_errors }}{% endif %}
   <section class="order-choice-fieldset" aria-labelledby="editing-options-title"><div class="order-choice-header"><h2 id="editing-options-title">Choose one of four editing options</h2>

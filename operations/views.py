@@ -12,6 +12,7 @@ from django.views.decorators.http import require_GET, require_POST
 from core.models import Order
 from core.payment_history import PAYMENT_STATUSES, payment_page
 from core.permissions import role_required, visible_projects
+from core.project_storage import expire_unpaid_projects
 from core.v1 import attach_v1_status
 
 from .analytics import operational_analytics
@@ -166,6 +167,8 @@ def editor_set_available(request):
 
 @role_required("admin")
 def admin_dashboard(request):
+    # Between the daily cron runs, opening the dashboard also clears projects left unpaid for 36 hours.
+    expire_unpaid_projects()
     projects = visible_projects(request.user)
     paid = projects.filter(order__payment_status="confirmed")
     unassigned = (

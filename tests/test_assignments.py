@@ -171,8 +171,8 @@ class AssignmentTests(TestCase):
         self.assertIsNone(assign_next(project.id))
         self.assertEqual(RoundRobinState.objects.get(proficiency_id="advanced").sequence, 0)
         self.assertEqual(RoundRobinState.objects.get(proficiency_id="beginner").sequence, 0)
-        with self.assertRaises(ValidationError):
-            manual_assign(self.admin, project.id, self.editors[0].id, "Wrong level")
+        # Automatic rotation never crosses levels, but an administrator may choose any approved editor.
+        manual_assign(self.admin, project.id, self.editors[0].id, "Admin choice")
 
     def test_reassignment_revokes_old_access_preserves_deadline_and_history(self):
         project = self.queue()
@@ -228,8 +228,8 @@ class AssignmentTests(TestCase):
                 capacity=1,
                 reason="Revoke",
             )
-        with self.assertRaises(ValidationError):
-            manual_assign(self.admin, self.queue().id, self.editors[0].id, "Overbook")
+        # An administrator's explicit choice may exceed capacity; automatic rotation may not.
+        manual_assign(self.admin, self.queue().id, self.editors[0].id, "Overbook")
 
     def test_review_and_revision_work_hold_capacity(self):
         project = self.queue()
@@ -237,8 +237,8 @@ class AssignmentTests(TestCase):
         for status in ["awaiting_review", "revision_requested", "revision_in_progress"]:
             project.status = status
             project.save()
-            with self.assertRaises(ValidationError):
-                manual_assign(self.admin, self.queue().id, assignment.editor_id, "Overbook")
+            automatic = assign_next(self.queue().id)
+            self.assertTrue(automatic is None or automatic.editor_id != assignment.editor_id)
 
     def test_stale_complexity_and_nonadmin_denied(self):
         project = self.queue()

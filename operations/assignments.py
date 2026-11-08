@@ -119,6 +119,15 @@ def eligibility(editor, proficiency):
     return ""
 
 
+def admin_choice_problem(editor):
+    """An admin may pick any approved, active editor; level and workload are shown, not enforced."""
+    if not editor.approved or not editor.user.is_active:
+        return "Editor is not approved or the account is inactive."
+    if editor.availability_override == Editor.AvailabilityOverride.NOT_AVAILABLE:
+        return "Editor is marked Not Available by an administrator."
+    return ""
+
+
 @transaction.atomic
 def save_policy(user, data):
     admin_only(user)
@@ -295,12 +304,11 @@ def manual_assign(user, project_id, editor_id, reason, expected_assignment=None)
         return current
     if str(current.id if current else "") != str(expected_assignment or ""):
         raise ValidationError("The assignment changed. Reload and review before reassigning.")
-    if not reason.strip():
-        raise ValidationError("Explain the assignment or reassignment.")
     editor = Editor.objects.select_for_update().get(pk=editor_id)
-    problem = eligibility(editor, complexity.proficiency_id)
+    problem = admin_choice_problem(editor)
     if problem:
         raise ValidationError(problem)
+    reason = reason.strip() or "Assigned by an administrator."
     return write_assignment(user, project, editor, policy, reason, current)
 
 

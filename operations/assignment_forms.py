@@ -81,9 +81,19 @@ class ComplexityForm(forms.Form):
     expected_revision = forms.IntegerField(min_value=0, widget=forms.HiddenInput)
 
 
+def editor_choice_label(editor):
+    from .assignments import open_workload
+
+    active = open_workload(editor)
+    workload = "Free" if not active else f"Busy, {active} active project{'s' if active != 1 else ''}"
+    return f"{editor.user.name} — {editor.proficiency_id or 'no level'} — {workload}"
+
+
 class ManualAssignmentForm(forms.Form):
     editor = forms.ModelChoiceField(queryset=Editor.objects.none())
-    reason = forms.CharField(max_length=1000, widget=forms.Textarea(attrs={"rows": 2}))
+    reason = forms.CharField(
+        max_length=1000, required=False, label="Note (optional)", widget=forms.Textarea(attrs={"rows": 2})
+    )
     expected_assignment = forms.UUIDField(required=False, widget=forms.HiddenInput)
 
     def __init__(self, *args, **kwargs):
@@ -93,4 +103,4 @@ class ManualAssignmentForm(forms.Form):
             user__is_active=True,
             availability_override=Editor.AvailabilityOverride.AUTOMATIC,
         ).select_related("user", "proficiency")
-        self.fields["editor"].label_from_instance = lambda item: f"{item.user.name} — {item.proficiency_id}"
+        self.fields["editor"].label_from_instance = editor_choice_label

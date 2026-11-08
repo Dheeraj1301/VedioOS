@@ -1,11 +1,17 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": "django",
-  "regions": ["icn1"],
+  "regions": [
+    "icn1"
+  ],
   "crons": [
     {
       "path": "/internal/security-monitor/",
       "schedule": "0 0 * * *"
+    },
+    {
+      "path": "/internal/expire-unpaid-projects/",
+      "schedule": "30 0 * * *"
     }
   ],
   "headers": [

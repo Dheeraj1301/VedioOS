@@ -193,6 +193,8 @@ EMAIL_TIMEOUT = int(os.getenv("EMAIL_TIMEOUT", "10"))
 if EMAIL_USE_TLS and EMAIL_USE_SSL:
     raise ImproperlyConfigured("EMAIL_USE_TLS and EMAIL_USE_SSL cannot both be enabled.")
 NOTIFICATION_EMAIL_ENABLED = os.getenv("NOTIFICATION_EMAIL_ENABLED", "false").lower() == "true"
+# Public address used in links inside emails.
+PUBLIC_SITE_URL = os.getenv("PUBLIC_SITE_URL", "https://brio.org.in").rstrip("/")
 NOTIFICATION_DELIVERY_MAX_ATTEMPTS = int(os.getenv("NOTIFICATION_DELIVERY_MAX_ATTEMPTS", "5"))
 DATA_UPLOAD_MAX_MEMORY_SIZE = 262144
 S3_ENDPOINT_URL = os.getenv("S3_ENDPOINT_URL", "http://127.0.0.1:9000")

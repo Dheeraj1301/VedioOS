@@ -12,7 +12,7 @@ from core.message_views import (
     editor_project_communication,
     message_post,
 )
-from core.security_views import scheduled_security_monitor
+from core.security_views import scheduled_security_monitor, scheduled_unpaid_cleanup
 from operations import assignment_views as assignments
 from operations import audit_views, earning_views, notification_views, storage_cost_views, support_views
 from operations import views as ops
@@ -21,6 +21,7 @@ urlpatterns = [
     path("health/live/", liveness, name="health_live"),
     path("health/ready/", readiness, name="health_ready"),
     path("internal/security-monitor/", scheduled_security_monitor, name="scheduled_security_monitor"),
+    path("internal/expire-unpaid-projects/", scheduled_unpaid_cleanup, name="scheduled_unpaid_cleanup"),
     path("editor/wallet/", earning_views.wallet, name="wallet"),
     path("editor/wallet/redeem/", earning_views.redeem, name="redeem"),
     path("admin/earnings/", earning_views.earning_settings, name="earning_settings"),

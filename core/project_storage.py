@@ -1,12 +1,21 @@
 """Remove an archived project's private objects, every stored version included."""
 
+from datetime import timedelta
+
+from django.conf import settings
+from django.core.mail import EmailMessage
 from django.db import transaction
+from django.urls import reverse
 from django.utils import timezone
 
-from .models import File, Project, ProjectStorageCleanup
+from .models import File, Payment, Project, ProjectStorageCleanup
 from .storage import delete_private_object_versions
 
 DELETABLE_STATUSES = {Project.Status.COMPLETED, Project.Status.CANCELLED}
+UNPAID_PROJECT_LIFETIME = timedelta(hours=36)
+REMINDER_BEFORE_EXPIRY = timedelta(hours=6)
+# A checkout started this recently may still be completing, so its project is left alone.
+PAYMENT_IN_PROGRESS_GRACE = timedelta(hours=1)
 
 
 def process_cleanup_job(job_pk):
@@ -52,3 +61,104 @@ def delete_project_files(project_id):
             project.save(update_fields=["archived_at", "updated_at"])
         ProjectStorageCleanup.objects.get_or_create(project=project)
     return process_cleanup_job(project.pk)
+
+
+def _unpaid_projects(now, older_than):
+    recent_checkout = Payment.objects.filter(
+        order__project_id__isnull=False, created_at__gte=now - PAYMENT_IN_PROGRESS_GRACE
+    ).values("order__project_id")
+    return (
+        Project.objects.filter(
+            status=Project.Status.PENDING,
+            archived_at__isnull=True,
+            created_at__lte=now - older_than,
+        )
+        .exclude(order__payment_status="confirmed")
+        .exclude(pk__in=recent_checkout)
+    )
+
+
+def _reminders_sent():
+    from operations.models import AuditLog
+
+    return dict(
+        AuditLog.objects.filter(action="project.expiry_reminder_sent").values_list("target_id", "created_at")
+    )
+
+
+def _send_expiry_reminder(project):
+    user = project.client.user
+    order = getattr(project, "order", None)
+    amount = f"{order.total_minor / 100:,.2f} {order.currency}" if order and order.total_minor else "Not quoted yet"
+    link = settings.PUBLIC_SITE_URL + reverse("order_summary", args=[project.pk])
+    body = (
+        f"Hello {user.name or 'there'},\n\n"
+        "Your BRIO project is still waiting for payment and will be deleted in about 6 hours, "
+        "together with every file you uploaded to it.\n\n"
+        f"Project: {project.title}\n"
+        f"Created: {timezone.localtime(project.created_at):%d %b %Y, %H:%M}\n"
+        f"Amount due: {amount}\n"
+        "Status: Payment pending\n\n"
+        f"Complete your payment to keep it: {link}\n\n"
+        "If you no longer need this project, you can ignore this email.\n\nTeam BRIO"
+    )
+    EmailMessage(
+        f"Your BRIO project \"{project.title}\" expires in 6 hours",
+        body,
+        settings.DEFAULT_FROM_EMAIL,
+        [user.email],
+    ).send(fail_silently=False)
+
+
+def send_expiry_reminders(now=None):
+    """Email clients whose projects are 30 hours unpaid, once per project."""
+    from .views import audit
+
+    now = now or timezone.now()
+    reminded = _reminders_sent()
+    sent = 0
+    for project in _unpaid_projects(now, UNPAID_PROJECT_LIFETIME - REMINDER_BEFORE_EXPIRY).select_related(
+        "client__user", "order"
+    ):
+        if str(project.pk) in reminded:
+            continue
+        delivered = False
+        if settings.NOTIFICATION_EMAIL_ENABLED and project.client.user.email:
+            try:
+                _send_expiry_reminder(project)
+                delivered = True
+            except Exception:
+                delivered = False
+        # Recorded even when email is off or fails, so expiry still follows six hours later.
+        audit(None, "project.expiry_reminder_sent", project.pk, {"delivered": delivered})
+        sent += delivered
+    return sent
+
+
+def expire_unpaid_projects(now=None):
+    """Cancel, hide and remove the files of projects left unpaid 36 hours after creation.
+
+    A project expires only once its reminder was recorded at least six hours earlier.
+    """
+    from .views import audit
+
+    now = now or timezone.now()
+    send_expiry_reminders(now)
+    reminded = _reminders_sent()
+    candidates = [
+        project_id
+        for project_id in _unpaid_projects(now, UNPAID_PROJECT_LIFETIME).values_list("pk", flat=True)
+        if str(project_id) in reminded and reminded[str(project_id)] <= now - REMINDER_BEFORE_EXPIRY
+    ]
+    expired = 0
+    for project_id in candidates:
+        with transaction.atomic():
+            cancelled = Project.objects.filter(
+                pk=project_id, status=Project.Status.PENDING, archived_at__isnull=True
+            ).update(status=Project.Status.CANCELLED, updated_at=now)
+        if not cancelled:
+            continue
+        cleaned = delete_project_files(project_id)
+        audit(None, "project.expired_unpaid", project_id, {"storage_cleared": cleaned})
+        expired += 1
+    return expired

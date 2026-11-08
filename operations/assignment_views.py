@@ -16,11 +16,11 @@ from .assignment_forms import (
 )
 from .assignments import (
     TERMINAL,
+    admin_choice_problem,
     assign_next,
     classify,
     configure_editor,
     editor_roster,
-    eligibility,
     manual_assign,
     open_workload,
     process_queue,
@@ -250,20 +250,10 @@ def assignment_detail(request, project_id):
                 messages.error(request, "Choose a valid operation.")
         except ValidationError as exc:
             messages.error(request, " ".join(exc.messages))
-    candidates = []
-    if complexity and complexity.proficiency_id:
-        for editor in (
-            editor_roster()
-            .filter(proficiency_id=complexity.proficiency_id)
-            .select_related("user")
-        ):
-            candidates.append(
-                {
-                    "editor": editor,
-                    "count": open_workload(editor),
-                    "problem": eligibility(editor, complexity.proficiency_id),
-                }
-            )
+    candidates = [
+        {"editor": editor, "count": open_workload(editor), "problem": admin_choice_problem(editor)}
+        for editor in editor_roster().filter(approved=True).select_related("user")
+    ]
     return render(
         request,
         "assignments/detail.html",
