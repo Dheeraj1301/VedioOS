@@ -262,7 +262,7 @@
   .landing-page { background-attachment: scroll; }
   .landing-page .public-header { position: relative; top: auto; height: auto; min-height: 76px; }
   .landing-page main > .hero,
-  .landing-page main > .section { position: relative; top: auto; margin-bottom: 22px; border-radius: 22px; }
+  .landing-page main > .section { position: sticky; top: var(--sheet-top, auto); margin-bottom: 14vh; border-radius: 22px; }
   .landing-page .public-footer { align-items: flex-start; flex-direction: column; gap: 10px; }
   .landing-page main > .closing-cta { min-height: 72vh; padding: 58px 28px; border-width: 7px; background-position: 58% center; }
   .landing-page .closing-cta h2 { font-size: clamp(3rem, 15vw, 4.7rem); }

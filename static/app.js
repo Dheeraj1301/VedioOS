@@ -886,6 +886,11 @@ if (landingPage) {
       landingPanels.forEach(panel => {
         panel.style.removeProperty('--mobile-parallax-y');
         panel.style.removeProperty('--mobile-parallax-scale');
+        if (mobileLanding.matches) {
+          panel.style.setProperty('--sheet-top', `${Math.min(12, (window.innerHeight || document.documentElement.clientHeight) - panel.offsetHeight - 12)}px`);
+        } else {
+          panel.style.removeProperty('--sheet-top');
+        }
       });
       heroArt?.style.removeProperty('--mobile-parallax-art-y');
       return;
@@ -898,6 +903,8 @@ if (landingPage) {
       const progress = Math.max(-1, Math.min(1, distance));
       panel.style.setProperty('--mobile-parallax-y', `${(-progress * 12).toFixed(2)}px`);
       panel.style.setProperty('--mobile-parallax-scale', (1 - Math.abs(progress) * 0.008).toFixed(4));
+      // Tall sheets pin by their bottom edge so all of their content scrolls past before the next sheet overlaps.
+      panel.style.setProperty('--sheet-top', `${Math.min(12, viewportHeight - panel.offsetHeight - 12)}px`);
     });
 
     if (heroArt) {
