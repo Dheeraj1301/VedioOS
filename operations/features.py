@@ -125,11 +125,13 @@ def feature_controls():
             "state": (
                 "Razorpay Test Mode"
                 if settings.DEBUG and settings.PAYMENT_MODE == "razorpay_test"
+                else "Razorpay Live Mode"
+                if not settings.DEBUG and settings.PAYMENT_MODE == "razorpay_live"
                 else "Development sandbox"
                 if settings.DEBUG and settings.PAYMENT_MODE == "sandbox"
                 else "Disabled"
             ),
-            "detail": "Environment-controlled; test payments never represent real revenue.",
+            "detail": "Environment-controlled; live payments require server verification before activation.",
             "url": None,
         },
         {

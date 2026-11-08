@@ -773,6 +773,64 @@ class CommerceTests(TestCase):
         self.assertContains(self.client.get(f"/payments/{payment.id}/receipt/"), "PREVIEW RECEIPT")
 
     @override_settings(
+        DEBUG=False,
+        PAYMENT_MODE="razorpay_live",
+        RAZORPAY_KEY_ID="rzp_live_synthetic",
+        RAZORPAY_KEY_SECRET=RAZORPAY_SECRET,
+        RAZORPAY_API_BASE="https://api.razorpay.com/v1",
+    )
+    @patch("core.payments.requests.request")
+    def test_razorpay_live_checkout_uses_live_provider_without_preview_label(self, request):
+        quote = self.quote()
+        accept_quote(self.user, self.project.id, quote.id)
+        gateway_order = Mock()
+        gateway_order.raise_for_status.return_value = None
+        gateway_order.json.return_value = {
+            "id": "order_live_synthetic",
+            "amount": quote.total_minor,
+            "currency": quote.currency,
+            "status": "created",
+        }
+        gateway_payment = Mock()
+        gateway_payment.raise_for_status.return_value = None
+        gateway_payment.json.return_value = {
+            "id": "pay_live_synthetic",
+            "order_id": "order_live_synthetic",
+            "amount": quote.total_minor,
+            "currency": quote.currency,
+            "status": "captured",
+            "captured": True,
+        }
+        request.side_effect = [gateway_order, gateway_payment]
+
+        payment = start_checkout(self.user, self.project.id)
+        self.assertEqual(payment.provider, "razorpay_live")
+        self.client.force_login(self.user)
+        page = self.client.get(f"/payments/{payment.id}/razorpay/")
+        self.assertEqual(page.status_code, 200)
+        self.assertContains(page, "rzp_live_synthetic")
+        self.assertNotContains(page, RAZORPAY_SECRET)
+        receipt = self.client.get(f"/orders/{self.project.id}/")
+        self.assertNotContains(receipt, "no live charge will be collected")
+        signature = hmac.new(
+            RAZORPAY_SECRET.encode(),
+            b"order_live_synthetic|pay_live_synthetic",
+            hashlib.sha256,
+        ).hexdigest()
+        event = confirm_razorpay_test_payment(
+            self.user,
+            payment.id,
+            {
+                "razorpay_payment_id": "pay_live_synthetic",
+                "razorpay_order_id": "order_live_synthetic",
+                "razorpay_signature": signature,
+            },
+        )
+        self.assertEqual(event.provider, "razorpay_live")
+        payment.refresh_from_db()
+        self.assertEqual(payment.status, "confirmed")
+
+    @override_settings(
         PAYMENT_MODE="razorpay_test",
         RAZORPAY_KEY_ID="rzp_test_synthetic",
         RAZORPAY_KEY_SECRET=RAZORPAY_SECRET,

@@ -1,8 +1,4 @@
-"""Payment boundary. Only a signed development gateway is implemented so far.
-
-Implement a provider-specific adapter with its official signature and server-side
-payment verification before enabling real checkout. Never trust a browser return.
-"""
+"""Payment boundary with server-verified sandbox and Razorpay checkout adapters."""
 
 import hashlib
 import hmac
@@ -24,7 +20,6 @@ from .commerce import check_policy
 from .models import CommercePolicy, Order, Payment, PaymentEvent
 from .views import audit
 
-
 logger = logging.getLogger(__name__)
 
 
@@ -44,8 +39,30 @@ def razorpay_test_enabled():
     )
 
 
+def razorpay_live_enabled():
+    return (
+        not settings.DEBUG
+        and settings.PAYMENT_MODE == "razorpay_live"
+        and settings.RAZORPAY_KEY_ID.startswith("rzp_live_")
+        and len(settings.RAZORPAY_KEY_SECRET) >= 16
+        and settings.RAZORPAY_API_BASE == "https://api.razorpay.com/v1"
+    )
+
+
+def razorpay_enabled():
+    return razorpay_test_enabled() or razorpay_live_enabled()
+
+
+def razorpay_provider():
+    if razorpay_test_enabled():
+        return "razorpay_test"
+    if razorpay_live_enabled():
+        return "razorpay_live"
+    return None
+
+
 def _razorpay_request(method, path, **kwargs):
-    if not razorpay_test_enabled():
+    if not razorpay_enabled():
         raise ValidationError("Payment checkout is not configured.")
     try:
         response = requests.request(
@@ -82,7 +99,7 @@ def _razorpay_request(method, path, **kwargs):
 
 @transaction.atomic
 def start_checkout(user, project_id):
-    if not sandbox_enabled() and not razorpay_test_enabled():
+    if not sandbox_enabled() and not razorpay_enabled():
         raise ValidationError(
             "Checkout is not open yet. The team is configuring payment and commercial terms."
         )
@@ -97,7 +114,7 @@ def start_checkout(user, project_id):
     existing = order.payments.filter(status="pending").first()
     if existing:
         return existing
-    if razorpay_test_enabled():
+    if razorpay_enabled():
         gateway_order = _razorpay_request(
             "POST",
             "orders",
@@ -117,7 +134,7 @@ def start_checkout(user, project_id):
             or gateway_order.get("status") != "created"
         ):
             raise ValidationError("The payment provider returned an invalid order.")
-        provider = "razorpay_test"
+        provider = razorpay_provider()
     else:
         provider = "sandbox"
         reference = f"sandbox_{uuid.uuid4().hex}"
@@ -133,7 +150,7 @@ def start_checkout(user, project_id):
 
 
 def razorpay_checkout_data(payment):
-    if not razorpay_test_enabled() or payment.provider != "razorpay_test":
+    if not razorpay_enabled() or payment.provider != razorpay_provider():
         raise ValidationError("Payment checkout is unavailable.")
     if payment.status != "pending" or payment.order.payment_status == "confirmed":
         raise ValidationError("This payment is not awaiting checkout.")
@@ -148,7 +165,8 @@ def razorpay_checkout_data(payment):
 
 @transaction.atomic
 def confirm_razorpay_test_payment(user, payment_id, payload):
-    if not razorpay_test_enabled() or not isinstance(payload, dict) or set(payload) != {
+    provider = razorpay_provider()
+    if not provider or not isinstance(payload, dict) or set(payload) != {
         "razorpay_payment_id",
         "razorpay_order_id",
         "razorpay_signature",
@@ -157,7 +175,7 @@ def confirm_razorpay_test_payment(user, payment_id, payload):
     payment = (
         Payment.objects.select_for_update()
         .select_related("order__project__client__user")
-        .filter(pk=payment_id, order__project__client__user=user, provider="razorpay_test")
+        .filter(pk=payment_id, order__project__client__user=user, provider=provider)
         .first()
     )
     if not payment:
@@ -180,7 +198,7 @@ def confirm_razorpay_test_payment(user, payment_id, payload):
     canonical = json.dumps(payload, sort_keys=True, separators=(",", ":")).encode()
     digest = hashlib.sha256(canonical).hexdigest()
     previous = PaymentEvent.objects.filter(
-        provider="razorpay_test", event_id=gateway_payment_id
+        provider=provider, event_id=gateway_payment_id
     ).first()
     if previous:
         if previous.payload_digest != digest or previous.payment_id != payment.id:
@@ -213,14 +231,22 @@ def confirm_razorpay_test_payment(user, payment_id, payload):
             project.client.user,
             project,
             f"payment:{payment.pk}:client",
-            "Razorpay test payment confirmed. Your project remains in test-payment mode.",
+            (
+                "Razorpay test payment confirmed. Your project remains in test-payment mode."
+                if provider == "razorpay_test"
+                else "Payment confirmed. Your project is ready for assignment."
+            ),
             reference_type="order",
             reference_id=order.pk,
         )
         notify_admins(
             project,
             f"payment:{payment.pk}",
-            "A Razorpay test payment was confirmed. It is not production revenue.",
+            (
+                "A Razorpay test payment was confirmed. It is not production revenue."
+                if provider == "razorpay_test"
+                else "A Razorpay payment was confirmed and is ready for assignment."
+            ),
             reference_type="order",
             reference_id=order.pk,
         )
@@ -228,12 +254,12 @@ def confirm_razorpay_test_payment(user, payment_id, payload):
             None,
             "payment.confirmed",
             payment.id,
-            {"provider": "razorpay_test", "project": str(project.id)},
+            {"provider": provider, "project": str(project.id)},
         )
     payment.save(update_fields=["status", "confirmed_at", "updated_at"])
     order.save(update_fields=["payment_status", "updated_at"])
     return PaymentEvent.objects.create(
-        provider="razorpay_test",
+        provider=provider,
         event_id=gateway_payment_id,
         payment=payment,
         payload_digest=digest,

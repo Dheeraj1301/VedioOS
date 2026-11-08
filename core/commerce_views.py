@@ -43,6 +43,8 @@ from .payments import (
     apply_sandbox_event,
     confirm_razorpay_test_payment,
     razorpay_checkout_data,
+    razorpay_enabled,
+    razorpay_provider,
     razorpay_test_enabled,
     sandbox_enabled,
     start_checkout,
@@ -179,6 +181,7 @@ def revision_order_summary(request, order_id):
         "revision_order": order,
         "attachments": order.attachments.select_related("file"),
         "pending_payment": order.payments.filter(status="pending").first(),
+        "razorpay": razorpay_enabled(),
         "razorpay_test": razorpay_test_enabled(),
         "payment_policy": order.policy_snapshot,
     })
@@ -204,7 +207,7 @@ def revision_razorpay_checkout(request, payment_id):
         RevisionPlanPayment.objects.select_related("order__project"),
         pk=payment_id,
         order__client__user=request.user,
-        provider="razorpay_test",
+        provider=razorpay_provider(),
     )
     try:
         checkout = revision_checkout_data(payment)
@@ -435,7 +438,7 @@ def custom_checkout(request, project_id):
                 request,
                 "Payment was started using the saved quotation amount and currency.",
             )
-            if payment.provider == "razorpay_test":
+            if payment.provider in {"razorpay_test", "razorpay_live"}:
                 return redirect("razorpay_checkout", payment_id=payment.id)
         except ValidationError as exc:
             messages.error(request, " ".join(exc.messages))
@@ -483,6 +486,7 @@ def order_summary(request, project_id):
             "valid_custom_total": valid_custom_total,
             "files": visible_files(request.user, project),
             "sandbox": sandbox_enabled(),
+            "razorpay": razorpay_enabled(),
             "razorpay_test": razorpay_test_enabled(),
             "payments": project.order.payments.order_by("-created_at"),
             "payment_policy": payment_policy_snapshot(order) if snapshot else None,
@@ -507,7 +511,7 @@ def checkout(request, project_id):
                 request.POST.get("policy_version"),
             )
             payment = start_checkout(request.user, project.id)
-        if payment.provider == "razorpay_test":
+        if payment.provider in {"razorpay_test", "razorpay_live"}:
             return redirect("razorpay_checkout", payment_id=payment.id)
     except ValidationError as exc:
         messages.error(request, " ".join(exc.messages))
@@ -520,7 +524,7 @@ def razorpay_checkout(request, payment_id):
         Payment.objects.select_related("order__project__client__user"),
         pk=payment_id,
         order__project__client__user=request.user,
-        provider="razorpay_test",
+        provider=razorpay_provider(),
     )
     try:
         checkout_data = razorpay_checkout_data(payment)

@@ -21,7 +21,7 @@ from .models import (
     RevisionPlanPaymentEvent,
     RevisionRequest,
 )
-from .payments import _razorpay_request, razorpay_test_enabled
+from .payments import _razorpay_request, razorpay_enabled, razorpay_provider
 from .permissions import project_for
 from .policies import current_policy_snapshot, validate_policy_version
 from .views import audit
@@ -123,7 +123,7 @@ def start_revision_checkout(user, order_id, policy_version):
     if order.amount_minor < 100:
         raise ValidationError("Payment amount must be at least INR 1.00.")
     validate_policy_version(order.policy_snapshot, policy_version)
-    if not razorpay_test_enabled():
+    if not razorpay_enabled():
         raise ValidationError("Revision checkout is not configured.")
     existing = order.payments.filter(status="pending").first()
     if existing:
@@ -151,7 +151,7 @@ def start_revision_checkout(user, order_id, policy_version):
     order.save(update_fields=["policy_accepted_at", "updated_at"])
     payment = RevisionPlanPayment.objects.create(
         order=order,
-        provider="razorpay_test",
+        provider=razorpay_provider(),
         provider_reference=reference,
         amount_minor=order.amount_minor,
         currency=order.currency,
@@ -161,7 +161,7 @@ def start_revision_checkout(user, order_id, policy_version):
 
 
 def revision_checkout_data(payment):
-    if not razorpay_test_enabled() or payment.status != "pending" or payment.order.status != "payment_pending":
+    if not razorpay_enabled() or payment.provider != razorpay_provider() or payment.status != "pending" or payment.order.status != "payment_pending":
         raise ValidationError("This payment is not awaiting checkout.")
     return {
         "key": settings.RAZORPAY_KEY_ID,
@@ -174,13 +174,14 @@ def revision_checkout_data(payment):
 
 @transaction.atomic
 def confirm_revision_payment(user, payment_id, payload):
-    if not razorpay_test_enabled() or not isinstance(payload, dict) or set(payload) != {
+    provider = razorpay_provider()
+    if not provider or not isinstance(payload, dict) or set(payload) != {
         "razorpay_payment_id", "razorpay_order_id", "razorpay_signature"
     }:
         raise ValidationError("Invalid Razorpay payment response.")
     payment = RevisionPlanPayment.objects.select_for_update().select_related(
         "order__project__client__user"
-    ).filter(pk=payment_id, order__client__user=user, provider="razorpay_test").first()
+    ).filter(pk=payment_id, order__client__user=user, provider=provider).first()
     if not payment:
         raise ValidationError("Unknown Razorpay payment.")
     gateway_id = payload.get("razorpay_payment_id")
@@ -255,7 +256,7 @@ def confirm_revision_payment(user, payment_id, payload):
     })
     return RevisionPlanPaymentEvent.objects.create(
         payment=payment,
-        provider="razorpay_test",
+        provider=provider,
         event_id=gateway_id,
         payload_digest=digest,
         outcome="confirmed",

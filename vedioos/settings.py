@@ -224,15 +224,25 @@ PAYOUT_MODE = os.getenv("PAYOUT_MODE", "disabled")
 if PAYOUT_MODE not in {"disabled", "sandbox"} or (PAYOUT_MODE == "sandbox" and not DEBUG):
     raise ImproperlyConfigured("Only disabled payouts or an explicitly enabled DEBUG sandbox are supported.")
 SANDBOX_PAYMENT_SECRET = os.getenv("SANDBOX_PAYMENT_SECRET", "")
-if PAYMENT_MODE not in {"disabled", "sandbox", "razorpay_test"} or (
+if PAYMENT_MODE not in {"disabled", "sandbox", "razorpay_test", "razorpay_live"} or (
     PAYMENT_MODE in {"sandbox", "razorpay_test"} and not DEBUG
+) or (
+    PAYMENT_MODE == "razorpay_live" and DEBUG
 ):
     raise ImproperlyConfigured(
-        "Only disabled payments or an explicitly enabled DEBUG test gateway are supported."
+        "Test payments require DEBUG; live Razorpay payments require DEBUG=False."
     )
 RAZORPAY_KEY_ID = os.getenv("RAZORPAY_KEY_ID", "")
 RAZORPAY_KEY_SECRET = os.getenv("RAZORPAY_KEY_SECRET", "")
 RAZORPAY_API_BASE = os.getenv("RAZORPAY_API_BASE", "https://api.razorpay.com/v1").rstrip("/")
+if PAYMENT_MODE == "razorpay_live" and (
+    not RAZORPAY_KEY_ID.startswith("rzp_live_")
+    or len(RAZORPAY_KEY_SECRET) < 16
+    or RAZORPAY_API_BASE != "https://api.razorpay.com/v1"
+):
+    raise ImproperlyConfigured(
+        "Live Razorpay checkout requires valid server-side live credentials and the official API base."
+    )
 # Vercel sets VERCEL=1 at runtime and replaces X-Real-IP with the real client address.
 TRUST_VERCEL_CLIENT_IP = os.getenv("VERCEL") == "1"
 # Previews may boot before cloud storage exists; storage calls then fail as unavailable.
