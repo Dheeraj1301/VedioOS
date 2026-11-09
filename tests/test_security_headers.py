@@ -78,3 +78,21 @@ class VercelHostTests(TestCase):
         for host in ["vedioos-abc123-team.vercel.app", "vedioos-git-ui2-team.vercel.app"]:
             self.assertIn(host, hosts)
             self.assertIn(f"https://{host}", origins)
+
+
+class HeroVideoTests(TestCase):
+    @override_settings(PRIVATE_STORAGE_ENABLED=True, S3_ENDPOINT_URL="https://s3.ap-southeast-2.amazonaws.com")
+    def test_landing_puts_a_signed_hero_link_in_the_page_with_the_redirect_as_fallback(self):
+        from unittest.mock import patch
+
+        from core.models import LandingPageSettings
+
+        LandingPageSettings.objects.update_or_create(pk=1, defaults={"hero_video_object_key": "edits/landing/hero/x.mp4"})
+        with patch("core.views.landing_video_permission", return_value="https://s3.example/signed.mp4") as sign:
+            page = self.client.get("/")
+        sign.assert_called_once()
+        self.assertEqual(sign.call_args.kwargs["expires_in"], 3600)
+        self.assertContains(page, '<source src="https://s3.example/signed.mp4" type="video/mp4">')
+        self.assertContains(page, '<source src="/landing/hero-video/" type="video/mp4">')
+        self.assertContains(page, '<link rel="preconnect" href="https://s3.ap-southeast-2.amazonaws.com">')
+        self.assertContains(page, 'preload="auto"')

@@ -56,6 +56,7 @@ from .storage import (
     delete_private_object_versions,
     download_permission,
     inspect_object,
+    landing_video_permission,
     storage_key,
     upload_permission,
 )
@@ -109,8 +110,23 @@ def landing(request):
             "landing_content": landing_content(saved_content),
             "landing_faqs": [faq for faq in landing_faqs(saved_content) if faq.get("published")],
             "landing_has_video": bool(config and config.hero_video_object_key),
+            "hero_video_src": _hero_video_src(config),
+            "storage_origin": settings.S3_ENDPOINT_URL if settings.PRIVATE_STORAGE_ENABLED else "",
         },
     )
+
+
+def _hero_video_src(config):
+    """Signed hero video link placed straight in the page, so the browser skips the redirect round trip.
+
+    The hero is public landing content, so a one-hour link is used; the redirect URL stays as a fallback.
+    """
+    if not (config and config.hero_video_object_key and settings.PRIVATE_STORAGE_ENABLED):
+        return ""
+    try:
+        return landing_video_permission(config, expires_in=3600)
+    except Exception:
+        return ""
 
 
 def register(request):
