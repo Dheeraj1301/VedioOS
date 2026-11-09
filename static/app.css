@@ -62,3 +62,5 @@ img,video,svg{max-width:100%}img,video{height:auto}.panel,.detail-panel,.form-pa
 .workspace-page .panel .project-filter-summary,.workspace-page .project-filter-panel .project-filter-summary{color:var(--muted);text-shadow:none}
 /* Phone browser chrome (status bar, toolbar and overscroll areas) shows black; page backgrounds are unchanged. */
 @media(max-width:760px){html{background:#000}body{min-height:100vh}}
+/* Phone landing header: keep a small Log in link beside Start creating. */
+@media(max-width:760px){.landing-page .public-header nav>a[href="/login/"]{display:inline-flex;align-items:center;font-size:.8rem;font-weight:600;padding:8px 4px}.landing-page .public-header nav{gap:12px}}
