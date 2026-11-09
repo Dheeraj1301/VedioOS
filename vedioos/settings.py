@@ -78,6 +78,7 @@ MIDDLEWARE = [
     "core.middleware.SingleActiveSessionMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "core.middleware.PrivateResponseMiddleware",
+    "core.middleware.VisitSweepMiddleware",
 ]
 ROOT_URLCONF = "vedioos.urls"
 TEMPLATES = [
@@ -197,6 +198,9 @@ GMAIL_REFRESH_TOKEN = os.getenv("GMAIL_REFRESH_TOKEN", "")
 if EMAIL_USE_TLS and EMAIL_USE_SSL:
     raise ImproperlyConfigured("EMAIL_USE_TLS and EMAIL_USE_SSL cannot both be enabled.")
 NOTIFICATION_EMAIL_ENABLED = os.getenv("NOTIFICATION_EMAIL_ENABLED", "false").lower() == "true"
+# Page visits run the reminder and unpaid-project sweep at most once per interval (no hourly scheduler needed).
+VISIT_SWEEP_ENABLED = os.getenv("VISIT_SWEEP_ENABLED", "true").lower() == "true"
+VISIT_SWEEP_INTERVAL_SECONDS = int(os.getenv("VISIT_SWEEP_INTERVAL_SECONDS", "600"))
 # Public address used in links inside emails.
 PUBLIC_SITE_URL = os.getenv("PUBLIC_SITE_URL", "https://brio.org.in").rstrip("/")
 NOTIFICATION_DELIVERY_MAX_ATTEMPTS = int(os.getenv("NOTIFICATION_DELIVERY_MAX_ATTEMPTS", "5"))

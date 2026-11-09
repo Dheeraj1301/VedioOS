@@ -3,6 +3,7 @@
 from .settings import *  # noqa: F403
 
 SUPABASE_DELETION_SYNC_ENABLED = False
+VISIT_SWEEP_ENABLED = False
 
 DEBUG = True
 SESSION_COOKIE_SECURE = False

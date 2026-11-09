@@ -1,13 +1,18 @@
+import logging
 from urllib.parse import urlsplit
 
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import logout
+from django.core.cache import cache
+from django.db import transaction
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import redirect
 
 from .identity_cleanup import SupabaseDeletionSyncUnavailable, synchronize_supabase_deletions
 from .models import User
+
+logger = logging.getLogger(__name__)
 
 
 class SingleActiveSessionMiddleware:
@@ -126,3 +131,40 @@ class SupabaseDeletionSyncMiddleware:
                 logout(request)
                 return redirect("/login/?account=removed")
         return self.get_response(request)
+
+
+class VisitSweepMiddleware:
+    """Run the reminder and unpaid-project sweep on ordinary page visits, at most every few minutes.
+
+    This keeps editor deadline reminders and unpaid-project cleanup on time without an hourly scheduler.
+    One sweep runs at a time (the assignment policy row is the lock); a failure never affects the page.
+    """
+
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        if (
+            settings.VISIT_SWEEP_ENABLED
+            and request.method == "GET"
+            and not request.path.startswith(("/static/", "/internal/"))
+            and cache.add("visit-sweep", 1, settings.VISIT_SWEEP_INTERVAL_SECONDS)
+        ):
+            try:
+                run_visit_sweep()
+            except Exception:
+                logger.exception("Visit sweep failed")
+        return self.get_response(request)
+
+
+def run_visit_sweep():
+    from operations.editor_deadline import send_deadline_emails
+    from operations.models import AssignmentPolicy
+
+    from .project_storage import expire_unpaid_projects
+
+    with transaction.atomic():
+        if not AssignmentPolicy.objects.select_for_update(skip_locked=True).filter(pk=1).exists():
+            return
+        expire_unpaid_projects()
+        send_deadline_emails()

@@ -65,3 +65,26 @@ class EditorDeadlineTests(TestCase):
         self.client.force_login(self.admin)
         self.assertContains(self.client.get(f"/admin/assignments/{self.project.id}/"), "data-deadline-left")
         self.assertContains(self.client.get("/admin/assignments/?status=assigned"), "data-deadline-left")
+
+
+@override_settings(VISIT_SWEEP_ENABLED=True, **EMAIL)
+class VisitSweepTests(TestCase):
+    def setUp(self):
+        from django.core.cache import cache
+
+        cache.clear()
+        self.admin, self.client_profile, self.editors = create_people()
+        enable_test_policy()
+        self.project = paid_project(self.client_profile, title="Visit sweep reel")
+        classify(self.admin, self.project.id, "beginner", "Synthetic assessment", 0)
+        with self.captureOnCommitCallbacks(execute=False):
+            self.assignment = manual_assign(self.admin, self.project.id, self.editors[0].pk, "")
+        EditorAssignment.objects.filter(pk=self.assignment.pk).update(created_at=timezone.now() - timedelta(hours=13))
+
+    def test_any_page_visit_sends_due_reminders_once_per_interval(self):
+        self.client.get("/")
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertIn("12 hours left", mail.outbox[0].subject)
+        EditorAssignment.objects.filter(pk=self.assignment.pk).update(created_at=timezone.now() - timedelta(hours=19))
+        self.client.get("/")
+        self.assertEqual(len(mail.outbox), 1)
