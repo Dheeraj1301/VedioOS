@@ -18,7 +18,7 @@ from core.views import audit
 from .assignment_forms import AssignmentPolicyForm
 from .availability import active_project_count
 from .calls import notify
-from .editor_deadline import send_deadline_emails
+from .editor_deadline import schedule_deadline_alarms, send_deadline_emails
 from .models import (
     AssignmentPolicy,
     AssignmentQueue,
@@ -289,6 +289,7 @@ def write_assignment(user, project, editor, policy, reason, current=None, automa
         "Project assignment confirmed. Review the project workspace for the assigned-editor update and the saved service, delivery, cancellation, and refund terms.",
     )
     transaction.on_commit(lambda: send_deadline_emails(assignment_id=assignment.pk))
+    transaction.on_commit(lambda: schedule_deadline_alarms(assignment))
     return assignment
 
 

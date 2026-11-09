@@ -2,7 +2,8 @@ import hmac
 
 from django.conf import settings
 from django.http import JsonResponse
-from django.views.decorators.http import require_GET
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_GET, require_POST
 
 from .project_storage import expire_unpaid_projects
 from .security_monitor import run_security_monitor
@@ -29,6 +30,19 @@ def _cron_authorised(request):
     configured = settings.CRON_SECRET
     expected = f"Bearer {configured}" if configured else ""
     return bool(expected) and hmac.compare_digest(request.headers.get("Authorization", ""), expected)
+
+
+@csrf_exempt
+@require_POST
+def timer_alarm(request):
+    """Called by QStash at a scheduled moment; runs the same idempotent sweep as the daily cron."""
+    from operations.editor_deadline import send_deadline_emails
+
+    from .qstash import verify_request
+
+    if not verify_request(request):
+        return JsonResponse({"error": "unauthorized"}, status=401)
+    return JsonResponse({"expired_projects": expire_unpaid_projects(), "deadline_emails": send_deadline_emails()})
 
 
 @require_GET

@@ -17,6 +17,15 @@ STAGES = ((24, "assigned"), (12, "12h"), (6, "6h"))
 EMAIL_ACTION = "assignment.deadline_email"
 
 
+def schedule_deadline_alarms(assignment):
+    """Wake the site when 12 and 6 hours remain (one minute late, so the stage is surely due)."""
+    from core.qstash import schedule_sweep
+
+    for hours_left in (12, 6):
+        run_at = deadline_for(assignment) - timedelta(hours=hours_left) + timedelta(minutes=1)
+        schedule_sweep(run_at, f"assignment-{assignment.pk}-{hours_left}h")
+
+
 def deadline_for(assignment):
     return assignment.created_at + DEADLINE
 

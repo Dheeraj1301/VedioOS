@@ -110,6 +110,34 @@ def _send_expiry_reminder(project):
     ).send(fail_silently=False)
 
 
+def _send_expired_email(project_id):
+    project = Project.objects.select_related("client__user").get(pk=project_id)
+    user = project.client.user
+    if not (settings.NOTIFICATION_EMAIL_ENABLED and user.email):
+        return False
+    body = (
+        f"Hello {user.name or 'there'},\n\n"
+        f"Your BRIO project \"{project.title}\" was not paid within 36 hours, so it has been removed "
+        "together with every file uploaded to it.\n\n"
+        f"You can start a new project at any time: {settings.PUBLIC_SITE_URL}/client/new-order/\n\nTeam BRIO"
+    )
+    try:
+        return EmailMessage(
+            f"Your BRIO project \"{project.title}\" has expired", body, settings.DEFAULT_FROM_EMAIL, [user.email]
+        ).send() == 1
+    except Exception:
+        return False
+
+
+def schedule_unpaid_alarms(project):
+    """Wake the site for the 30-hour reminder and, a few minutes after 36 hours, the removal."""
+    from .qstash import schedule_sweep
+
+    reminder_at = project.created_at + UNPAID_PROJECT_LIFETIME - REMINDER_BEFORE_EXPIRY + timedelta(minutes=1)
+    schedule_sweep(reminder_at, f"unpaid-{project.pk}-reminder")
+    schedule_sweep(project.created_at + UNPAID_PROJECT_LIFETIME + timedelta(minutes=5), f"unpaid-{project.pk}-expiry")
+
+
 def send_expiry_reminders(now=None):
     """Email clients whose projects are 30 hours unpaid, once per project."""
     from .views import audit
@@ -159,6 +187,7 @@ def expire_unpaid_projects(now=None):
         if not cancelled:
             continue
         cleaned = delete_project_files(project_id)
-        audit(None, "project.expired_unpaid", project_id, {"storage_cleared": cleaned})
+        emailed = _send_expired_email(project_id)
+        audit(None, "project.expired_unpaid", project_id, {"storage_cleared": cleaned, "emailed": emailed})
         expired += 1
     return expired
