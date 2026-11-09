@@ -25,6 +25,7 @@ from .availability import (
 )
 from .calls import complete_call, schedule_call
 from .clients import CLIENT_STATES, client_page, client_record
+from .editor_deadline import attach_deadlines, send_deadline_emails
 from .features import feature_controls
 from .models import CallRequest, Editor, EditorAssignment, EditorProficiency, SupportRequest
 from .orders import PROJECT_WORKFLOW_STATES, order_page
@@ -74,6 +75,7 @@ def admin_client_detail(request, client_id):
 @role_required("editor")
 def editor_dashboard(request):
     editor = request.user.editor_profile
+    send_deadline_emails()
     active_count = open_workload(editor)
     return render(
         request,
@@ -83,7 +85,7 @@ def editor_dashboard(request):
             "editor": editor,
             "active_count": active_count,
             "availability": availability_state(editor),
-            "projects": attach_v1_status(visible_projects(request.user)),
+            "projects": attach_deadlines(attach_v1_status(visible_projects(request.user))),
         },
     )
 
@@ -169,6 +171,7 @@ def editor_set_available(request):
 def admin_dashboard(request):
     # Between the daily cron runs, opening the dashboard also clears projects left unpaid for 36 hours.
     expire_unpaid_projects()
+    send_deadline_emails()
     projects = visible_projects(request.user)
     paid = projects.filter(order__payment_status="confirmed")
     unassigned = (

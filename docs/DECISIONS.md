@@ -777,3 +777,11 @@ Status: approved by the owner; code on `ui_2`, awaiting Google authorisation and
 Owner / source of explicit decision: Dheeraj chose a new Google OAuth app (separate from the foryou "BRIO Booking" app) over an SMTP App Password.
 
 Decision: `core.gmail_backend.GmailAPIBackend` is a drop-in Django email backend that exchanges a refresh token (scope `gmail.send` only) for an access token and sends through the Gmail API as brio4edits@gmail.com. It is selected with `EMAIL_BACKEND` and reads `GMAIL_CLIENT_ID`, `GMAIL_CLIENT_SECRET` and `GMAIL_REFRESH_TOKEN` from the environment; failures raise so existing retry and audit paths still apply. `scripts/get_gmail_refresh_token.py` performs the one-time loopback consent locally and writes the values to git-ignored `.env.gmail`. The OAuth consent screen must be published to Production so the refresh token does not expire after seven days.
+
+## 2026-11-09 — 24-hour editor deadline with email reminders
+
+Status: approved by the owner, implemented on `ui_2`
+
+Owner / source of explicit decision: Dheeraj requested a simple timer-based system once an editor is assigned.
+
+Decision: every current assignment carries a 24-hour first-draft deadline measured from the assignment's creation time (no schema change). The editor is emailed on assignment (sent after the transaction commits), then once when 12 hours remain and once when 6 hours remain; each stage is recorded in the audit log so it is sent at most once, and a late sweep sends only the most recent due stage. Reminders stop once version 1 is submitted or the assignment ends. The deadline and a live countdown appear on the editor dashboard and on the admin assignment list and detail pages. Sweeps run from the protected `/internal/expire-unpaid-projects/` endpoint (daily Vercel cron plus an hourly GitHub Actions workflow using the `CRON_SECRET` repository secret) and on admin and editor dashboard loads. Emails go through the configured Gmail API backend and honour `NOTIFICATION_EMAIL_ENABLED`. The deadline is display and reminder only; it does not block or reassign work.

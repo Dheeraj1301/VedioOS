@@ -951,3 +951,19 @@ if (landingPage) {
     scrollToLandingSection(window.location.hash, reducedMotion.matches ? 'auto' : 'smooth');
   });
 }
+
+const deadlineNodes = [...document.querySelectorAll('[data-deadline]')];
+if (deadlineNodes.length) {
+  const renderDeadlines = () => {
+    deadlineNodes.forEach(node => {
+      const left = node.querySelector('[data-deadline-left]');
+      const seconds = Math.floor((new Date(node.dataset.deadline) - Date.now()) / 1000);
+      if (!left || Number.isNaN(seconds)) return;
+      if (seconds <= 0) { left.textContent = 'Time is up'; return; }
+      const minutes = Math.floor(seconds / 60);
+      left.textContent = `${Math.floor(minutes / 60)}h ${String(minutes % 60).padStart(2, '0')}m left`;
+    });
+  };
+  renderDeadlines();
+  window.setInterval(renderDeadlines, 30000);
+}

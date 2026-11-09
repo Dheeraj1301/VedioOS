@@ -35,4 +35,6 @@ def _cron_authorised(request):
 def scheduled_unpaid_cleanup(request):
     if not _cron_authorised(request):
         return JsonResponse({"error": "unauthorized"}, status=401)
-    return JsonResponse({"expired_projects": expire_unpaid_projects()})
+    from operations.editor_deadline import send_deadline_emails
+
+    return JsonResponse({"expired_projects": expire_unpaid_projects(), "deadline_emails": send_deadline_emails()})

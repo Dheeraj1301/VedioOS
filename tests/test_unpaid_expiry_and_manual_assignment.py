@@ -69,7 +69,7 @@ class UnpaidExpiryTests(TestCase):
         url = "/internal/expire-unpaid-projects/"
         self.assertEqual(self.client.get(url).status_code, 401)
         response = self.client.get(url, HTTP_AUTHORIZATION="Bearer synthetic-cron-secret")
-        self.assertEqual(response.json(), {"expired_projects": 1})
+        self.assertEqual(response.json(), {"expired_projects": 1, "deadline_emails": 0})
 
     @override_settings(NOTIFICATION_EMAIL_ENABLED=True, DEFAULT_FROM_EMAIL="BRIO <brio4edits@gmail.com>",
                        EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend")

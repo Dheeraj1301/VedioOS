@@ -27,6 +27,7 @@ from .assignments import (
     save_policy,
 )
 from .availability import availability_state, set_availability_override
+from .editor_deadline import attach_deadlines, deadline_for, time_left_label
 from .models import (
     AssignmentPolicy,
     AssignmentQueue,
@@ -62,7 +63,7 @@ def assignments(request):
         "assignments/overview.html",
         {
             "title": "Assignments",
-            "projects": projects.distinct(),
+            "projects": attach_deadlines(projects.distinct()),
             "mode": mode,
             "policy": AssignmentPolicy.objects.filter(pk=1).first(),
             "rotations": RoundRobinState.objects.select_related("proficiency", "last_editor__user"),
@@ -198,6 +199,7 @@ def assignment_detail(request, project_id):
         .select_related("editor__user")
         .first()
     )
+    current_deadline = deadline_for(current) if current and not project.versions.filter(number=1).exists() else None
     assessment = ComplexityForm(
         prefix="assessment",
         initial={
@@ -262,6 +264,8 @@ def assignment_detail(request, project_id):
             "project": project,
             "complexity": complexity,
             "current": current,
+            "current_deadline": current_deadline,
+            "current_time_left": time_left_label(current_deadline) if current_deadline else "",
             "assessment": assessment,
             "manual": manual,
             "policy": AssignmentPolicy.objects.get(pk=1),
